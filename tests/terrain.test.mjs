@@ -43,8 +43,8 @@ test('姿态俯仰变化分上坡/下坡/不确定', () => {
   assert.equal(classifyPitchChange(NaN, 5), null);
 });
 
-test('地形候选文案：台阶优先，其次坡道', () => {
-  assert.equal(terrainCandidate({ stairs: true }, 'up').text, TERRAIN_TEXTS.stairs);
+test('地形候选文案：台阶暂缓，只播坡道', () => {
+  assert.equal(terrainCandidate({ stairs: true }, 'up').text, TERRAIN_TEXTS.up);
   assert.equal(terrainCandidate(null, 'up').text, TERRAIN_TEXTS.up);
   assert.equal(terrainCandidate(null, 'down').text, TERRAIN_TEXTS.down);
   assert.equal(terrainCandidate(null, 'unknown').text, TERRAIN_TEXTS.slopeUnknown);

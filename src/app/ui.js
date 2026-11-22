@@ -43,6 +43,8 @@ const state = {
   calibrateStart: 0,
   lastTargetSpeechAt: 0,
   frameIndex: 0,
+  debug: new URLSearchParams(location.search).get('debug') === '1',
+  debugAlerts: [],
   lastVideoTime: -1,
   lastProcessAt: 0,
   lastPanelAt: 0,
@@ -71,6 +73,7 @@ const state = {
   }),
   recorder: new FrameRecorder({ maxFrames: 5000, pointStep: 5 }),
 };
+if (state.debug) window.__guidaoAlerts = state.debugAlerts;
 
 function updateDisplayRect() {
   if (!video.videoWidth) return;
@@ -444,6 +447,17 @@ function handleAlert(res) {
     const speak = state.announcer.shouldSpeak(cand, now);
     if (speak) {
       addLog(cand.text, cand.level);
+      if (state.debug) {
+        const p = res.risk && res.risk.perTrack ? res.risk.perTrack.find((x) => x.id === cand.trackId) : null;
+        state.debugAlerts.push({
+          kind: cand.kind,
+          trackId: cand.trackId,
+          level: cand.level,
+          frame: res.frame ? res.frame.index : state.frameIndex,
+          bbox: p && p.bbox ? p.bbox : null,
+          text: cand.text,
+        });
+      }
       if (state.speech) speakAnnouncement(cand);
       state.lastTargetSpeechAt = now;
       return;
@@ -469,6 +483,16 @@ function handleAlert(res) {
     $('alertText').textContent = envCand.text;
     if (state.terrainAnnouncer.shouldSpeak(envCand, now)) {
       addLog(envCand.text, envCand.level);
+      if (state.debug) {
+        state.debugAlerts.push({
+          kind: envCand.kind,
+          trackId: -1,
+          level: envCand.level,
+          frame: res.frame ? res.frame.index : state.frameIndex,
+          bbox: res.crosswalk && res.crosswalk.off ? null : null,
+          text: envCand.text,
+        });
+      }
       if (state.speech) speakAnnouncement(envCand);
     }
     return;

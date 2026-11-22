@@ -102,6 +102,62 @@ test('短时漏检保持同一 ID', () => {
   assert.equal(out[0].confirmed, true);
 });
 
+test('同帧高度重叠的重复检测框合并为一条轨迹', () => {
+  const tracker = new ApproachTracker({ minHits: 1, mergeIou: 0.2 });
+  const a = det(160, 120, 30, 60);
+  const b = det(162, 121, 30, 60);
+  const out = tracker.update([a, b], 0, { width: W, height: H, fps: 30 });
+  assert.equal(out.length, 1);
+});
+
+test('并排但未高度重叠的目标保持两条轨迹', () => {
+  const tracker = new ApproachTracker({ minHits: 1, mergeIou: 0.2 });
+  const out = tracker.update([det(110, 120, 30, 60), det(210, 120, 30, 60)], 0, {
+    width: W,
+    height: H,
+    fps: 30,
+  });
+  assert.equal(out.length, 2);
+});
+
+test('已确认目标站在走廊内且预测不离开：给 level 2 提醒', () => {
+  const tracker = new ApproachTracker({ minHits: 2 });
+  let last = null;
+  for (let f = 0; f <= 5; f++) {
+    const out = tracker.update([det(160, 120, 25, 60)], f, { width: W, height: H, fps: 30, dt: 1 / 30 });
+    last = out.find((t) => t.confirmed) || last;
+  }
+  const risk = assessApproachRisk({
+    tracks: [last],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    warnOnInPath: true,
+  });
+  assert.equal(risk.perTrack[0].level, 2);
+  assert.ok(risk.alerts.length >= 1);
+});
+
+test('矮宽框（横躺杂物）在走廊内不触发 warnOnInPath', () => {
+  const tracker = new ApproachTracker({ minHits: 2 });
+  let last = null;
+  for (let f = 0; f <= 5; f++) {
+    const out = tracker.update([det(160, 140, 60, 30)], f, { width: W, height: H, fps: 30, dt: 1 / 30 });
+    last = out.find((t) => t.confirmed) || last;
+  }
+  const risk = assessApproachRisk({
+    tracks: [last],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    warnOnInPath: true,
+  });
+  assert.equal(risk.perTrack[0].level, 0);
+  assert.equal(risk.alerts.length, 0);
+});
+
 test('光流尺度估计恢复已知膨胀率', () => {
   const prevBbox = { x: 100, y: 100, w: 40, h: 40 };
   const prevCenter = { x: 120, y: 120 };

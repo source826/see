@@ -80,6 +80,9 @@ export async function runBench(args) {
   const { video, gt, fps, analysisWidth, startFrame, endFrame, stride, onlyDynamic, onProgress, onStatus } = args;
   const override = args.options && typeof args.options === 'object' ? args.options : {};
   const useYolo = Boolean(args.yolo);
+  const detectOnCanvas = Boolean(args.detectOnCanvas);
+  const disableEnv = Boolean(args.disableEnv);
+  const debug = Boolean(args.debug);
   const warmupFrames = Math.max(0, Number(args.warmupFrames) || 0);
   const vw = video.videoWidth;
   const vh = video.videoHeight;
@@ -113,11 +116,13 @@ export async function runBench(args) {
   const frames = [];
   const evalAlerts = new Map();
   const alertHistory = [];
+  const debugFrames = [];
   // 环境提醒（斑马线/红绿灯/台阶/地面异物）独立计数：按实时页同样的冷却与让路规则，
   // 统计“实际会播出去几次”，用于评估目标报警之外的额外误报。
   const targetAnnouncer = new SpeechAnnouncer();
   const envAnnouncer = new SpeechAnnouncer();
   const environmentAlerts = { crosswalk: 0, red: 0, green: 0, yellow: 0, stairs: 0, slope: 0, ground: 0 };
+  const environmentAlertDetails = [];
   let lastTargetSpeechAt = -Infinity;
   const timings = [];
   const segStats = [];
@@ -167,14 +172,18 @@ export async function runBench(args) {
     let detections = [];
     let detectMs = 0;
     if (detector) {
+      // 实时页在缩小后的画布上跑 YOLO；评测台默认仍在原视频上跑（历史口径）。
+      // detectOnCanvas=true 时与实时页对齐，用于排查分辨率对边缘小目标的影响。
       const out = await Promise.race([
-        detector.detect(video, vw, vh),
+        detector.detect(detectOnCanvas ? canvas : video, detectOnCanvas ? aw : vw, detectOnCanvas ? ah : vh),
         new Promise((_, reject) => setTimeout(() => reject(new Error('YOLO 推理超时')), 5000)),
       ]);
       detectMs = out.ms;
       detections = out.boxes.map((d) => ({
         ...d,
-        bbox: { x: d.bbox.x * sx, y: d.bbox.y * sy, w: d.bbox.w * sx, h: d.bbox.h * sy },
+        bbox: detectOnCanvas
+          ? { ...d.bbox }
+          : { x: d.bbox.x * sx, y: d.bbox.y * sy, w: d.bbox.w * sx, h: d.bbox.h * sy },
       }));
     }
 
@@ -182,13 +191,88 @@ export async function runBench(args) {
     const alerts = res.risk
       ? res.risk.alerts.map((a) => ({ level: a.level, trackId: a.trackId }))
       : [];
+    if (debug) {
+      debugFrames.push({
+        frame: f,
+        detections: detections.map((d) => ({
+          cls: d.cls,
+          score: Math.round(d.score * 1000) / 1000,
+          bbox: {
+            x: Math.round(d.bbox.x * 10) / 10,
+            y: Math.round(d.bbox.y * 10) / 10,
+            w: Math.round(d.bbox.w * 10) / 10,
+            h: Math.round(d.bbox.h * 10) / 10,
+          },
+        })),
+        tracks: res.tracks.map((t) => ({
+          id: t.id,
+          cls: t.cls,
+          className: t.className,
+          hits: t.hits,
+          misses: t.misses,
+          confirmed: t.confirmed,
+          score: Math.round((t.score ?? 0) * 1000) / 1000,
+          bbox: {
+            x: Math.round(t.bbox.x * 10) / 10,
+            y: Math.round(t.bbox.y * 10) / 10,
+            w: Math.round(t.bbox.w * 10) / 10,
+            h: Math.round(t.bbox.h * 10) / 10,
+          },
+        })),
+        risk: res.risk
+          ? {
+              alerts,
+              perTrack: res.risk.perTrack.map((p) => ({
+                id: p.id,
+                confirmed: p.confirmed,
+                inPath: p.inPath,
+                approaching: p.approaching,
+                areaRate: p.areaRate === null ? null : Math.round(p.areaRate * 1000) / 1000,
+                areaUpRatio: p.areaUpRatio === null || p.areaUpRatio === undefined ? null : Math.round(p.areaUpRatio * 100) / 100,
+                centerRate: p.centerRate === null ? null : Math.round(p.centerRate * 1000) / 1000,
+                ttc: p.ttc === null ? null : Math.round(p.ttc * 100) / 100,
+                distance: p.distance === null ? null : Math.round(p.distance * 10) / 10,
+                level: p.level,
+                hits: p.hits,
+                samples: p.samples,
+              })),
+              corridor: res.risk.corridor
+                ? { apex: res.risk.corridor.apex, halfWidth: res.risk.corridor.halfWidth, wide: res.risk.corridor.wide }
+                : null,
+            }
+          : null,
+        env: {
+          terrain: res.terrain,
+          crosswalk: res.crosswalk ? { active: res.crosswalk.active, off: res.crosswalk.off, side: res.crosswalk.side, center: res.crosswalk.center } : null,
+          traffic: res.traffic ? { active: res.traffic.active, color: res.traffic.color } : null,
+        },
+      });
+    }
     const nowMs = (f / fps) * 1000;
     const targetCand = classifyAnnouncement(res.risk);
     if (targetCand && targetAnnouncer.shouldSpeak(targetCand, nowMs)) lastTargetSpeechAt = nowMs;
-    if (f >= startFrame) {
+    if (f >= startFrame && !disableEnv) {
       const envCand = environmentCandidate(res, null);
       if (envCand && nowMs - lastTargetSpeechAt > 2000 && envAnnouncer.shouldSpeak(envCand, nowMs)) {
         environmentAlerts[envCand.kind] = (environmentAlerts[envCand.kind] || 0) + 1;
+        environmentAlertDetails.push({
+          kind: envCand.kind,
+          frame: f,
+          text: envCand.text,
+          terrain: res.terrain
+            ? {
+                peaks: res.terrain.peaks,
+                cv: res.terrain.cv,
+                score: res.terrain.score,
+                streak: res.terrain.streak,
+              }
+            : null,
+          crosswalk: res.crosswalk
+            ? { side: res.crosswalk.side, off: res.crosswalk.off, center: res.crosswalk.center }
+            : null,
+          traffic: res.traffic ? { color: res.traffic.color } : null,
+          ground: res.ground ? { label: res.ground.label, bbox: res.ground.bbox, hits: res.ground.hits } : null,
+        });
       }
     }
     // YOLO 模式用宽走廊定义 GT 事件（把贴边经过的 id4 也算进去）；
@@ -342,6 +426,9 @@ export async function runBench(args) {
       stride,
       onlyDynamic,
       yolo: useYolo,
+      detectOnCanvas,
+      disableEnv,
+      debug,
       warmupFrames,
       eventPath: useYolo ? 'wide' : 'strict',
       detectorBackend: detector ? detector.backend : null,
@@ -368,7 +455,9 @@ export async function runBench(args) {
       meanBgResidual: mean(segStats, 'residual'),
     },
     environmentAlerts,
+    environmentAlertDetails,
     environmentAlertTotal: Object.values(environmentAlerts).reduce((a, b) => a + b, 0),
+    debugFrames: debug ? debugFrames : undefined,
     frameCount: frames.length,
     sampleCount: samples.length,
   };

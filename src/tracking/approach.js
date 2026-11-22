@@ -27,6 +27,9 @@ export const APPROACH_DEFAULTS = {
   ttcMax: 8,
   // 连续满足逼近条件的帧数，过滤单帧抖动造成的短促误报
   approachMinFrames: 4,
+  // 同一帧内两条同类别轨迹 IoU 超过该值时合并，避免同一目标分裂成多条轨迹。
+  // 0.2 只合并高度重叠的同类别框；并排行人通常低于这个值。
+  mergeIou: 0.2,
 };
 
 function median(values) {
@@ -381,6 +384,22 @@ export class ApproachTracker {
       this.tracks.push(t);
     }
 
+    // 合并同帧内高度重叠的同类别轨迹：保留命中更多、出生更早的 ID，
+    // 避免同一目标被拆成两条轨迹后，一条负责报警、另一条抢走 GT 匹配。
+    if (opts.mergeIou > 0 && this.tracks.length > 1) {
+      const kept = [];
+      for (const t of this.tracks) {
+        const host = kept.find((o) => o.cls === t.cls && boxIoU(o.bbox, t.bbox) >= opts.mergeIou);
+        if (!host) {
+          kept.push(t);
+          continue;
+        }
+        const keep = t.hits > host.hits || (t.hits === host.hits && t.bornAt < host.bornAt) ? t : host;
+        if (keep === t) kept[kept.indexOf(host)] = t;
+      }
+      this.tracks = kept;
+    }
+
     return this.tracks;
   }
 
@@ -461,6 +480,7 @@ export function assessApproachRisk(args) {
   const { tracks, corridor, w, h, fps = 30, horizonSec = 1.4, hfovDeg = 65 } = args;
   const minApproachFrames = args.minApproachFrames ?? APPROACH_DEFAULTS.approachMinFrames;
   const pathMode = args.pathMode ?? 'wide';
+  const warnOnInPath = Boolean(args.warnOnInPath);
   const cameraHeight = Number(args.cameraHeight) || 0;
   const cameraPitchDeg = Number.isFinite(Number(args.cameraPitchDeg)) ? Number(args.cameraPitchDeg) : undefined;
   const horizonRatio = args.horizonRatio ?? 0.5;
@@ -487,16 +507,19 @@ export function assessApproachRisk(args) {
     const distance = useGround ? groundDistance : estimateDistance(t.bbox, w, { hfovDeg });
     const distanceSource = useGround ? 'ground' : 'bbox';
     const dir = directionLabel(cx, w);
-
-    let level = 0;
-    if (approaching) level = 2;
-    if (approaching && t.ttc !== null && t.ttc < 2) level = Math.max(level, 3);
-    if (approaching && t.ttc !== null && t.ttc < 1) level = 4;
-    if (approaching && areaRatio > 0.15) level = Math.max(level, 4);
-
     const pred = predictTrackPath(t, { w, h, fps, seconds: horizonSec });
     const path = pred.points;
     const predictedInPath = pointInPolygon(corridor.wide, pred.ground.x, pred.ground.y);
+
+    let level = 0;
+    // 已确认目标：正在逼近，或当前在宽走廊内、预测仍会留在走廊里、且框形像“立着的人”，
+    // 就先给 level 2。后者兜住 id4 这类刚进走廊、面积增长还不稳定的贴边目标；
+    // 路过/横躺的杂物（如矮宽框）和预测会离开走廊的背景行人不会触发。
+    const personLike = t.bbox.h >= t.bbox.w * 1.1;
+    if (approaching || (warnOnInPath && inWide && predictedInPath && personLike)) level = 2;
+    if (approaching && t.ttc !== null && t.ttc < 2) level = Math.max(level, 3);
+    if (approaching && t.ttc !== null && t.ttc < 1) level = 4;
+    if (approaching && areaRatio > 0.15) level = Math.max(level, 4);
 
     const item = {
       id: t.id,

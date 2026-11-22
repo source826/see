@@ -124,17 +124,27 @@ test('地面障碍：香蕉连续三帧确认', () => {
   assert.equal(r.alert, true);
 });
 
-test('环境候选优先级：斑马线偏离 > 台阶 > 红灯', () => {
+test('环境候选优先级：坡道 > 红灯（斑马线/台阶/地面暂缓）', () => {
   const all = {
-    crosswalk: { off: true },
+    crosswalk: { off: true, side: 'left' },
     terrain: { stairs: true },
     traffic: { active: true, color: 'red' },
     ground: { active: true, text: '前方地面有香蕉皮，请小心' },
   };
-  assert.equal(environmentCandidate(all, null).kind, 'crosswalk');
-  assert.equal(environmentCandidate({ terrain: all.terrain, traffic: all.traffic }, null).kind, 'stairs');
+  assert.equal(environmentCandidate(all, null).kind, 'red');
+  assert.equal(environmentCandidate({ terrain: all.terrain }, 'up').kind, 'slope');
   assert.equal(environmentCandidate({ traffic: all.traffic, ground: all.ground }, null).kind, 'red');
   assert.equal(groundCandidate(all.ground).text, '前方地面有香蕉皮，请小心');
+});
+
+test('斑马线暂缓：不进入环境播报候选，但方向文案保留', () => {
+  const env = { crosswalk: { off: true, side: 'left' } };
+  assert.equal(environmentCandidate(env, null), null);
+  assert.equal(crosswalkCandidate(env.crosswalk).text, '已向左偏离斑马线，请向右靠');
+});
+
+test('台阶暂缓：不进入环境播报候选', () => {
+  assert.equal(environmentCandidate({ terrain: { stairs: true } }, null), null);
 });
 
 test('地面小障碍暂缓：不进入环境播报候选', () => {

@@ -49,21 +49,17 @@ export function groundCandidate(ground) {
   return { kind: 'ground', text: ground.text, priority: 3, level: 3, trackId: -1 };
 }
 
-/** 从地形、红绿灯、斑马线里挑优先级最高的环境提醒；地面小障碍暂缓，不进入播报。 */
+/** 从坡道、红绿灯里挑优先级最高的环境提醒；斑马线/台阶/地面小障碍暂缓播报。 */
 export function environmentCandidate(env, slope) {
   const candidates = [
-    crosswalkCandidate(env && env.crosswalk),
     terrainCandidate(env && env.terrain, slope),
     trafficCandidate(env && env.traffic),
   ].filter(Boolean);
   return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
 }
 
-/** 把台阶/坡道状态转成播报候选；没有地形时返回 null。 */
+/** 把坡道状态转成播报候选；台阶暂缓播报，避免街景误报让人在车道上停下摸索。 */
 export function terrainCandidate(terrain, slope) {
-  if (terrain && terrain.stairs) {
-    return { kind: 'stairs', text: TERRAIN_TEXTS.stairs, priority: 3, level: 3, trackId: -1 };
-  }
   if (slope === 'up') {
     return { kind: 'slope', text: TERRAIN_TEXTS.up, priority: 2, level: 2, trackId: -1 };
   }

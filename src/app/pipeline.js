@@ -43,6 +43,9 @@ export const PIPELINE_DEFAULTS = {
   approachMinScore: 0.15,
   approachMinFrames: 4,
   alertPath: 'wide',
+  // 已确认目标只要落在宽走廊内、且预测仍会留在走廊里，就先给 level 2 提醒
+  // （不等面积增长），用于兜住 id4 这类刚进入走廊、增长信号还不稳定的贴边目标。
+  warnOnInPath: true,
   // 相机离地高度（米）与地平线位置（占图像高度比例），用于地面几何估距
   cameraHeight: 1.5,
   horizonRatio: 0.5,
@@ -120,6 +123,7 @@ export class GuidePipeline {
       minBoxHeight: this.options.approachMinHeight,
       minScore: this.options.approachMinScore,
       approachMinFrames: this.options.approachMinFrames,
+      mergeIou: this.options.approachMergeIou ?? 0.2,
     };
   }
 
@@ -281,6 +285,7 @@ export class GuidePipeline {
         horizonRatio: this.options.horizonRatio,
         cameraPitchDeg: this.options.cameraPitchDeg,
         distanceMode: this.options.distanceMode,
+        warnOnInPath: this.options.warnOnInPath,
       });
       this.lastBgH = null;
       crosswalk = this.crosswalkTracker.update(

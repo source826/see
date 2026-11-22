@@ -111,8 +111,14 @@ export function assessRisk(args) {
 
   for (const t of tracks) {
     const path = predictTrack(t, steps, bgH, {});
+    // 先用当前位置判定：目标已经在走廊里时必须立刻报，不能被“未来轨迹预测”
+    // 推出去而漏报（id4 这类贴边进入的目标尤其明显）。
     let strictStep = -1;
     let wideStep = -1;
+    const groundNowX = t.kf.x[0];
+    const groundNowY = t.kf.x[1] + t.bbox.h * 0.5;
+    if (pointInPolygon(corridor.poly, groundNowX, groundNowY)) strictStep = 0;
+    if (pointInPolygon(corridor.wide, groundNowX, groundNowY)) wideStep = 0;
     for (let k = 0; k < path.length; k++) {
       const ground = { x: path[k].x, y: path[k].y + t.bbox.h * 0.5 };
       if (strictStep < 0 && pointInPolygon(corridor.poly, ground.x, ground.y)) strictStep = k + 1;
