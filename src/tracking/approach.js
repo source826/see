@@ -335,7 +335,9 @@ export class ApproachTracker {
       const t = this.tracks[ti];
       const tc = boxCenter(t.bbox);
       const diag = Math.hypot(t.bbox.w, t.bbox.h);
-      const gate = Math.max(14, diag * 0.75);
+      // 小目标（如贴边行人）在低采样率下帧间位移可达 10–20px，
+      // 门限过紧会把同一目标拆成新 ID；按框对角线放宽，但保留 IoU 通道。
+      const gate = Math.max(18, diag * 1.1);
       for (let di = 0; di < dets.length; di++) {
         const iou = boxIoU(t.bbox, dets[di].bbox);
         const dc = boxCenter(dets[di].bbox);

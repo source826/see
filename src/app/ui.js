@@ -45,6 +45,7 @@ const state = {
   frameIndex: 0,
   debug: new URLSearchParams(location.search).get('debug') === '1',
   debugAlerts: [],
+  debugFrames: [],
   lastVideoTime: -1,
   lastProcessAt: 0,
   lastPanelAt: 0,
@@ -73,7 +74,10 @@ const state = {
   }),
   recorder: new FrameRecorder({ maxFrames: 5000, pointStep: 5 }),
 };
-if (state.debug) window.__guidaoAlerts = state.debugAlerts;
+if (state.debug) {
+  window.__guidaoAlerts = state.debugAlerts;
+  window.__guidaoFrames = state.debugFrames;
+}
 
 function updateDisplayRect() {
   if (!video.videoWidth) return;
@@ -116,6 +120,7 @@ function setupAnalysis() {
   ah = Math.max(64, ah);
   analysis.width = aw;
   analysis.height = ah;
+  window.__guidaoAnalysis = { width: aw, height: ah };
   frameCanvas.width = vw;
   frameCanvas.height = vh;
   state.pipeline.reset();
@@ -175,6 +180,46 @@ async function processFrame(ts) {
 
     const res = state.pipeline.process(image, frameIndex, { detections, dt });
     state.lastResult = res;
+    if (state.debug) {
+      const risk = res.risk;
+      state.debugFrames.push({
+        frame: res.frame.index,
+        t: Math.round(performance.now() * 10) / 10,
+        dt: Math.round(dt * 10000) / 10000,
+        detections: detections.map((d) => ({
+          cls: d.cls,
+          score: Math.round(d.score * 1000) / 1000,
+          bbox: {
+            x: Math.round(d.bbox.x * 10) / 10,
+            y: Math.round(d.bbox.y * 10) / 10,
+            w: Math.round(d.bbox.w * 10) / 10,
+            h: Math.round(d.bbox.h * 10) / 10,
+          },
+        })),
+        alerts: risk ? risk.alerts.map((a) => ({ level: a.level, trackId: a.trackId })) : [],
+        perTrack: risk
+          ? risk.perTrack.map((p) => ({
+              id: p.id,
+              level: p.level,
+              confirmed: p.confirmed,
+              inPath: p.inPath,
+              approaching: p.approaching,
+              ttc: p.ttc === null ? null : Math.round(p.ttc * 100) / 100,
+              distance: p.distance === null ? null : Math.round(p.distance * 10) / 10,
+              bbox: {
+                x: Math.round(p.bbox.x * 10) / 10,
+                y: Math.round(p.bbox.y * 10) / 10,
+                w: Math.round(p.bbox.w * 10) / 10,
+                h: Math.round(p.bbox.h * 10) / 10,
+              },
+            }))
+          : [],
+        corridor: risk && risk.corridor
+          ? { apex: risk.corridor.apex, halfWidth: risk.corridor.halfWidth, wide: risk.corridor.wide, poly: risk.corridor.poly }
+          : null,
+      });
+      if (state.debugFrames.length > 5000) state.debugFrames.shift();
+    }
     if (state.recorder.active) state.recorder.add(res);
     drawOverlay(res);
     const now = ts ?? performance.now();
