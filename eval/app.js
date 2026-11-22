@@ -800,6 +800,30 @@ function raf() {
   draw();
 }
 const bootParams = new URLSearchParams(location.search);
+// ?video=...&gt=... 直接从同源 URL 载入视频与 GT，便于无头/脚本化复现评测
+async function loadUrlAsFile(url, inputId, type) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`载入失败 ${r.status}: ${url}`);
+  const blob = await r.blob();
+  const name = decodeURIComponent(url.split('?')[0].split('/').pop()) || 'file';
+  const input = $(inputId);
+  const dt = new DataTransfer();
+  dt.items.add(new File([blob], name, { type: type || blob.type }));
+  input.files = dt.files;
+  input.dispatchEvent(new Event('change'));
+}
+(async () => {
+  if (bootParams.has('video')) {
+    await loadUrlAsFile(bootParams.get('video'), 'evalFile');
+    if (video.readyState < 1) {
+      await new Promise((resolve) => {
+        video.addEventListener('loadedmetadata', resolve, { once: true });
+        setTimeout(resolve, 5000);
+      });
+    }
+  }
+  if (bootParams.has('gt')) await loadUrlAsFile(bootParams.get('gt'), 'importGt', 'application/json');
+})();
 // ?yolo=1&warmup=45 直接启用 YOLO 检测层并设置预热帧
 if (bootParams.get('yolo') === '1' || bootParams.get('yolo') === 'true') {
   $('useYolo').checked = true;

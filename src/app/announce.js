@@ -49,13 +49,12 @@ export function groundCandidate(ground) {
   return { kind: 'ground', text: ground.text, priority: 3, level: 3, trackId: -1 };
 }
 
-/** 从地形、红绿灯、斑马线、地面异物里挑优先级最高的环境提醒。 */
+/** 从地形、红绿灯、斑马线里挑优先级最高的环境提醒；地面小障碍暂缓，不进入播报。 */
 export function environmentCandidate(env, slope) {
   const candidates = [
     crosswalkCandidate(env && env.crosswalk),
     terrainCandidate(env && env.terrain, slope),
     trafficCandidate(env && env.traffic),
-    groundCandidate(env && env.ground),
   ].filter(Boolean);
   return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
 }

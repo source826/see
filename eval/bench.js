@@ -1,5 +1,6 @@
 // 在真实视频上逐帧跑管线，并与人工标注 GT 对比。
 import { GuidePipeline } from '../src/app/pipeline.js';
+import { SpeechAnnouncer, classifyAnnouncement, environmentCandidate } from '../src/app/announce.js';
 import { gtCentersOf, summarizeDetections, timingSummary, trajectoryMetrics } from './metrics.js';
 import { evaluateAlarmEvents } from './events.js';
 
@@ -112,6 +113,12 @@ export async function runBench(args) {
   const frames = [];
   const evalAlerts = new Map();
   const alertHistory = [];
+  // 环境提醒（斑马线/红绿灯/台阶/地面异物）独立计数：按实时页同样的冷却与让路规则，
+  // 统计“实际会播出去几次”，用于评估目标报警之外的额外误报。
+  const targetAnnouncer = new SpeechAnnouncer();
+  const envAnnouncer = new SpeechAnnouncer();
+  const environmentAlerts = { crosswalk: 0, red: 0, green: 0, yellow: 0, stairs: 0, slope: 0, ground: 0 };
+  let lastTargetSpeechAt = -Infinity;
   const timings = [];
   const segStats = [];
   const samples = [];
@@ -175,6 +182,15 @@ export async function runBench(args) {
     const alerts = res.risk
       ? res.risk.alerts.map((a) => ({ level: a.level, trackId: a.trackId }))
       : [];
+    const nowMs = (f / fps) * 1000;
+    const targetCand = classifyAnnouncement(res.risk);
+    if (targetCand && targetAnnouncer.shouldSpeak(targetCand, nowMs)) lastTargetSpeechAt = nowMs;
+    if (f >= startFrame) {
+      const envCand = environmentCandidate(res, null);
+      if (envCand && nowMs - lastTargetSpeechAt > 2000 && envAnnouncer.shouldSpeak(envCand, nowMs)) {
+        environmentAlerts[envCand.kind] = (environmentAlerts[envCand.kind] || 0) + 1;
+      }
+    }
     // YOLO 模式用宽走廊定义 GT 事件（把贴边经过的 id4 也算进去）；
     // 报警判定同样走宽走廊，保证“判定路径”和“评测路径”一致。
     const eventCorridor =
@@ -351,6 +367,8 @@ export async function runBench(args) {
       meanRansacIterations: mean(segStats, 'ransacIterations'),
       meanBgResidual: mean(segStats, 'residual'),
     },
+    environmentAlerts,
+    environmentAlertTotal: Object.values(environmentAlerts).reduce((a, b) => a + b, 0),
     frameCount: frames.length,
     sampleCount: samples.length,
   };
@@ -381,6 +399,14 @@ export function resultToCSV(result) {
     ['fp_per_min', result.events ? result.events.fpPerMin ?? '' : ''],
     ['lead_median_s', result.events ? result.events.leadMedian ?? '' : ''],
     ['lead_p10_s', result.events ? result.events.leadP10 ?? '' : ''],
+    ['env_crosswalk', result.environmentAlerts ? result.environmentAlerts.crosswalk : ''],
+    ['env_red', result.environmentAlerts ? result.environmentAlerts.red : ''],
+    ['env_green', result.environmentAlerts ? result.environmentAlerts.green : ''],
+    ['env_yellow', result.environmentAlerts ? result.environmentAlerts.yellow : ''],
+    ['env_stairs', result.environmentAlerts ? result.environmentAlerts.stairs : ''],
+    ['env_slope', result.environmentAlerts ? result.environmentAlerts.slope : ''],
+    ['env_ground', result.environmentAlerts ? result.environmentAlerts.ground : ''],
+    ['env_total', result.environmentAlertTotal ?? ''],
     ['ade_px', result.trajectory.ade ?? ''],
     ['fde_px', result.trajectory.fde ?? ''],
     ['ade_norm', result.trajectory.adeNorm ?? ''],
