@@ -6,6 +6,7 @@ import { classifyTrafficLight, TrafficLightTracker } from '../src/vision/traffic
 import { GroundObstacleTracker } from '../src/vision/ground.js';
 import {
   ENV_TEXTS,
+  crosswalkCandidate,
   environmentCandidate,
   groundCandidate,
   trafficCandidate,
@@ -46,10 +47,20 @@ test('斑马线：连续白条检测为在线内', () => {
   assert.ok(r.stripes >= 4);
 });
 
-test('斑马线：整体偏移后判定偏离', () => {
+test('斑马线：整体偏移后判定偏离并给出偏离侧', () => {
   const r = detectCrosswalk(crosswalkImage(120), W, H);
   assert.equal(r.active, true);
   assert.equal(r.off, true);
+  assert.equal(r.side, 'left');
+});
+
+test('斑马线：左偏/右偏给相反方向的回正提示', () => {
+  const leftOff = detectCrosswalk(crosswalkImage(120), W, H);
+  assert.equal(leftOff.side, 'left');
+  assert.equal(crosswalkCandidate(leftOff).text, '已向左偏离斑马线，请向右靠');
+  const rightOff = detectCrosswalk(crosswalkImage(-120), W, H);
+  assert.equal(rightOff.side, 'right');
+  assert.equal(crosswalkCandidate(rightOff).text, '已向右偏离斑马线，请向左靠');
 });
 
 test('斑马线：中间缺一块仍按直线补齐', () => {

@@ -108,9 +108,12 @@ export function detectCrosswalk(imageData, w, h, opts = {}) {
   const center = (left + right) * 0.5;
   const margin = opts.margin ?? 0.15;
   const off = Math.abs(w * 0.5 - center) > half * (1 + margin);
+  // side 表示“人偏向哪一侧”：拟合带在画面左侧说明人偏右，反之偏左。
+  const side = off ? (center < w * 0.5 ? 'right' : 'left') : null;
   return {
     active: true,
     off,
+    side,
     complete: false,
     left,
     right,

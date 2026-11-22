@@ -18,6 +18,8 @@ export const TERRAIN_TEXTS = {
 
 export const ENV_TEXTS = {
   crosswalkOff: '已偏离斑马线，请回到斑马线',
+  crosswalkOffLeft: '已向左偏离斑马线，请向右靠',
+  crosswalkOffRight: '已向右偏离斑马线，请向左靠',
   red: '前方红灯，请等待',
   green: '前方绿灯，请确认行人信号',
   yellow: '前方黄灯，请等待',
@@ -25,7 +27,13 @@ export const ENV_TEXTS = {
 
 export function crosswalkCandidate(crosswalk) {
   if (!crosswalk || !crosswalk.off) return null;
-  return { kind: 'crosswalk', text: ENV_TEXTS.crosswalkOff, priority: 4, level: 3, trackId: -1 };
+  const text =
+    crosswalk.side === 'left'
+      ? ENV_TEXTS.crosswalkOffLeft
+      : crosswalk.side === 'right'
+        ? ENV_TEXTS.crosswalkOffRight
+        : ENV_TEXTS.crosswalkOff;
+  return { kind: 'crosswalk', text, priority: 4, level: 3, trackId: -1 };
 }
 
 export function trafficCandidate(traffic) {
