@@ -16,6 +16,12 @@ node tools/serve.mjs 8080
 - 实时页：`http://localhost:8080/index.html`
 - 评测台：`http://localhost:8080/eval.html`
 - 测试：`npm test`；本机没有 npm 时用 `node --test tests`
+- 实时对齐评测（Edge，需先启动本地服务）：
+  ```bash
+  node tools/live_eval.mjs --videoUrl=assets/videos/tune/nanjing_00.mp4 --port=9400 --out=tmp/live.json
+  node tools/live_eval_report.mjs tmp/live.json gt/nanjing_00_sample.json
+  ```
+  第一个脚本让实时页按真实速度播放并记录实际处理帧（frame/dt/检测/轨迹/报警）；第二个脚本把 GT 按 track id 插值到这些帧，用同一套事件评测计算召回、提前量和误报。
 
 ### 相机高度、俯角与估距
 
