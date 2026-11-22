@@ -5,7 +5,7 @@
 - 实时页：[index.html](index.html)（`?video=` 载入本地视频，`?t=` 指定起始秒，`?webgpu=1` 尝试 WebGPU）
 - 量化评测台：[eval.html](eval.html)
 - YOLO 独立演示页：[yolo-demo/index.html](yolo-demo/index.html)
-- 演示视频：[demo/yolo_approach_demo.mp4](demo/yolo_approach_demo.mp4)
+- 演示视频：[GitHub Releases v0.1](https://github.com/source826/see/releases/tag/v0.1)（视频不放入 commit；B站链接待补）
 
 ## 快速开始
 
@@ -69,7 +69,7 @@ f = W / (2 * tan(HFOV / 2))
 
 | 组件 | 文件 / 版本 | 来源 | 许可 |
 |---|---|---|---|
-| YOLOv8n 权重 | `yolo-demo/models/yolov8n.pt` | Ultralytics 官方资源：https://github.com/ultralytics/assets/releases | AGPL-3.0 |
+| YOLOv8n 权重 | `yolo-demo/models/yolov8n.pt`（本地导出用，未入库） | Ultralytics 官方资源：https://github.com/ultralytics/assets/releases | AGPL-3.0 |
 | YOLOv8n ONNX（fp32） | `yolo-demo/models/yolov8n.onnx` | 由上述官方权重经 Ultralytics `export` 导出，见 `yolo-demo/tools/export_onnx.py` | AGPL-3.0 |
 | YOLOv8n ONNX（fp16） | `yolo-demo/models/yolov8n.fp16.onnx` | 由 fp32 ONNX 转换，见 `yolo-demo/tools/convert_fp16.py` | AGPL-3.0 |
 | onnxruntime-web | 1.20.1，`yolo-demo/vendor/ort/` | 微软 ONNX Runtime 官方 Web 发行包：https://github.com/microsoft/onnxruntime ；npm：`onnxruntime-web@1.20.1` | MIT |
@@ -94,11 +94,11 @@ f = W / (2 * tan(HFOV / 2))
 
 ### 视频与标注素材
 
-- `assets/videos/manifest.json`：tune / holdout 素材清单。素材为 **B 站公开视频的本地缓存**，只用于参数校准与检验，不含合成画面；tune 组用于调参，holdout 组在参数冻结前不参与调参。
+- `assets/videos/manifest.json`：tune / holdout 素材清单。tune 7 条、holdout 4 条逐条包含 `bv` 与 `sourceNote`；能追溯的填写 BV 号，未能追溯的统一写“来源未记录，仅本地使用，不对外分发”。素材为 **B 站公开视频的本地缓存**，只用于参数校准与检验，不含合成画面；tune 组用于调参，holdout 组在参数冻结前不参与调参。
 - `assets/videos/README-extreme-videos.md`：10 段极端场景视频的来源 BV 号、截取点与用途。
 - `assets/videos/tune/nanjing_00.mp4`、`nanjing_02.mp4`：来源描述为“上海南京西路傍晚步行 POV”，具体 BV 号未在仓库记录。
 - `assets/videos/narrow_street_approach.mp4`：来源 BV14Jyiz3EUL，用于“迎面逼近/静止障碍”演示。
-- `assets/videos/hongkong_walk_02.webm`、`pedestrian_avoidance.ogv`：项目原有真实素材，来源信息未在仓库记录。
+- `assets/videos/hongkong_walk_02.webm`、`pedestrian_avoidance.ogv`：来源未记录，仅本地使用，不对外分发。
 - `gt/*.json`：人工逐帧标注；标注辅助工具为 `tools/gt_tracks.py`、`tools/make_gt_sample.py`。
 - `demo/yolo_approach_demo.mp4`：由上述真实素材离线渲染，包含 nanjing_00、nanjing_02、narrow_street_approach（BV14Jyiz3EUL）三段；语音来自系统中文 TTS，不含第三方音乐或录音。
 
@@ -113,7 +113,8 @@ f = W / (2 * tan(HFOV / 2))
 - 本项目集成了 **YOLOv8n（AGPL-3.0）** 权重与 ONNX 模型。分发包含该模型的应用时，需按 AGPL-3.0 兼容方式处理；如需闭源商用，请先向 Ultralytics 取得商业授权。
 - onnxruntime-web 为 MIT，需保留其版权与许可声明。
 - 视频素材版权归原作者/平台所有，仓库内仅作本地评测与演示缓存；对外发布演示视频前请确认素材授权。
-- 自写代码如无另行声明，不对外授予额外许可。
+- 本项目整体按 AGPL-3.0 发布（因集成 YOLOv8n 权重），自写代码同样适用 AGPL-3.0。
+- 根目录 [LICENSE](LICENSE) 为 AGPL-3.0 全文；[yolo-demo/vendor/ort/LICENSE](yolo-demo/vendor/ort/LICENSE) 为 ONNX Runtime MIT 全文。
 
 ## 主要目录
 
@@ -135,4 +136,4 @@ tests/            单元测试
 - **已包含**：`src/`、`eval/`、`tests/`、`tools/`、`gt/` 样例、页面文件、YOLOv8n ONNX 模型、onnxruntime-web 运行时。
 - **未包含**（体积或版权原因）：`assets/videos/` 真实视频、`demo/` 演示视频与音源、`yolo-demo/.venv/` 离线 Python 环境、`bench/` 与 `tmp/` 生成结果。
 - 复现评测：把真实视频按 `assets/videos/manifest.json` 的路径放回本地；模型权重与 ORT 运行时已随仓库提供。
-- 演示视频 `demo/yolo_approach_demo.mp4` 体积约 10MB，未放入代码提交；如需对外分发，建议放到 GitHub Releases 而不是普通 commit。
+- 演示视频 `demo/yolo_approach_demo.mp4` 体积约 10MB，未放入代码提交；对外分发见 [GitHub Releases v0.1](https://github.com/source826/see/releases/tag/v0.1)。
