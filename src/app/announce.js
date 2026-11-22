@@ -16,6 +16,42 @@ export const TERRAIN_TEXTS = {
   slopeUnknown: '前方有坡道，请小心',
 };
 
+export const ENV_TEXTS = {
+  crosswalkOff: '已偏离斑马线，请回到斑马线',
+  red: '前方红灯，请等待',
+  green: '前方绿灯，请确认行人信号',
+  yellow: '前方黄灯，请等待',
+};
+
+export function crosswalkCandidate(crosswalk) {
+  if (!crosswalk || !crosswalk.off) return null;
+  return { kind: 'crosswalk', text: ENV_TEXTS.crosswalkOff, priority: 4, level: 3, trackId: -1 };
+}
+
+export function trafficCandidate(traffic) {
+  if (!traffic || !traffic.active) return null;
+  if (traffic.color === 'red') return { kind: 'red', text: ENV_TEXTS.red, priority: 3, level: 3, trackId: -1 };
+  if (traffic.color === 'yellow') return { kind: 'yellow', text: ENV_TEXTS.yellow, priority: 2, level: 2, trackId: -1 };
+  if (traffic.color === 'green') return { kind: 'green', text: ENV_TEXTS.green, priority: 2, level: 2, trackId: -1 };
+  return null;
+}
+
+export function groundCandidate(ground) {
+  if (!ground || !ground.active || !ground.text) return null;
+  return { kind: 'ground', text: ground.text, priority: 3, level: 3, trackId: -1 };
+}
+
+/** 从地形、红绿灯、斑马线、地面异物里挑优先级最高的环境提醒。 */
+export function environmentCandidate(env, slope) {
+  const candidates = [
+    crosswalkCandidate(env && env.crosswalk),
+    terrainCandidate(env && env.terrain, slope),
+    trafficCandidate(env && env.traffic),
+    groundCandidate(env && env.ground),
+  ].filter(Boolean);
+  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
+}
+
 /** 把台阶/坡道状态转成播报候选；没有地形时返回 null。 */
 export function terrainCandidate(terrain, slope) {
   if (terrain && terrain.stairs) {
@@ -183,16 +219,19 @@ export class SpeechAnnouncer {
       if (this.lastSeen && now - this.lastSeen.at > 1500) this.lastSeen = null;
       return false;
     }
-    const cooldown =
-      candidate.kind === 'rush'
-        ? this.opts.rushCooldown
-        : candidate.kind === 'static'
-          ? this.opts.staticCooldown
-          : candidate.kind === 'stairs'
-            ? (this.opts.stairsCooldown ?? 4000)
-            : candidate.kind === 'slope'
-              ? (this.opts.slopeCooldown ?? 6000)
-              : this.opts.uncertainCooldown;
+    const cooldowns = {
+      rush: this.opts.rushCooldown,
+      static: this.opts.staticCooldown,
+      uncertain: this.opts.uncertainCooldown,
+      stairs: this.opts.stairsCooldown ?? 4000,
+      slope: this.opts.slopeCooldown ?? 6000,
+      crosswalk: this.opts.crosswalkCooldown ?? 4000,
+      red: this.opts.redCooldown ?? 5000,
+      green: this.opts.greenCooldown ?? 8000,
+      yellow: this.opts.yellowCooldown ?? 5000,
+      ground: this.opts.groundCooldown ?? 5000,
+    };
+    const cooldown = cooldowns[candidate.kind] ?? this.opts.uncertainCooldown;
     if (this.lastSpokeAt !== null && now - this.lastSpokeAt < this.opts.globalCooldown) {
       this.lastSeen = { ...candidate, at: now };
       return false;

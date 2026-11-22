@@ -6,6 +6,6 @@
   "description": "导盲视觉：YOLO 检测 + 面积/中心逼近判定 + 分级语音 + 量化评测",
   "scripts": {
     "serve": "node tools/serve.mjs 8080",
-    "test": "node --test tests/math.test.mjs tests/ransac.test.mjs tests/tracking.test.mjs tests/metrics.test.mjs tests/stages.test.mjs tests/events.test.mjs tests/approach.test.mjs tests/announce.test.mjs tests/terrain.test.mjs"
+    "test": "node --test tests/math.test.mjs tests/ransac.test.mjs tests/tracking.test.mjs tests/metrics.test.mjs tests/stages.test.mjs tests/events.test.mjs tests/approach.test.mjs tests/announce.test.mjs tests/terrain.test.mjs tests/env.test.mjs"
   }
 }

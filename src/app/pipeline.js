@@ -5,6 +5,9 @@ import { detectFast } from '../vision/features.js';
 import { buildPyramid, lkTrack, lkTrackFB } from '../vision/flow.js';
 import { segmentScene } from '../vision/segmentation.js';
 import { TerrainTracker } from '../vision/terrain.js';
+import { CrosswalkTracker, detectCrosswalk } from '../vision/crosswalk.js';
+import { GroundObstacleTracker, GROUND_CLASSES } from '../vision/ground.js';
+import { TrafficLightTracker } from '../vision/traffic.js';
 import { Tracker } from '../tracking/tracker.js';
 import { ApproachTracker, assessApproachRisk } from '../tracking/approach.js';
 import { assessRisk, buildCorridor } from '../tracking/risk.js';
@@ -131,6 +134,9 @@ export class GuidePipeline {
     });
     this.approachTracker = new ApproachTracker(this.approachOptions());
     this.terrainTracker = new TerrainTracker();
+    this.trafficTracker = new TrafficLightTracker();
+    this.crosswalkTracker = new CrosswalkTracker();
+    this.groundTracker = new GroundObstacleTracker();
     this.frameIndex = 0;
     this.lastTimestamp = null;
     this.instantFps = 0;
@@ -200,6 +206,9 @@ export class GuidePipeline {
     let detections = [];
     let tracks = [];
     let risk = null;
+    let traffic = null;
+    let crosswalk = null;
+    let ground = null;
     let flowUsed = 0;
     let flowOk = 0;
     let tFlow = tPyr;
@@ -234,9 +243,13 @@ export class GuidePipeline {
     if (yoloMode) {
       // 目标发现只走 YOLO + 逼近跟踪；光流仅用于估计已检出目标的相对膨胀率。
       const external = Array.isArray(ctx.detections) ? ctx.detections : [];
+      const trafficLights = external.filter((d) => d.cls === 9);
+      const groundDets = external.filter((d) => GROUND_CLASSES.has(d.cls));
+      const targetDets = external.filter((d) => d.cls !== 9 && !GROUND_CLASSES.has(d.cls));
       tSeg = now();
       const dt = ctx.dt ?? 1 / this.options.fps;
-      tracks = this.approachTracker.update(external, frameIndex, {
+      traffic = this.trafficTracker.update(trafficLights, imageData, w, h, now());
+      tracks = this.approachTracker.update(targetDets, frameIndex, {
         width: w,
         height: h,
         fps: this.options.fps,
@@ -270,8 +283,13 @@ export class GuidePipeline {
         distanceMode: this.options.distanceMode,
       });
       this.lastBgH = null;
-      // 下一帧在检测框内布光流点，避免背景点稀释目标膨胀估计。
-      this.prevPts = this.seedFlowPoints(gray, external, w, h);
+      crosswalk = this.crosswalkTracker.update(
+        detectCrosswalk(imageData, w, h, { boxes: external.map((d) => d.bbox) }),
+        now(),
+      );
+      ground = this.groundTracker.update(groundDets, { w, h, nowMs: now() });
+      // 下一帧在目标检测框内布光流点，避免背景/地面小物体稀释目标膨胀估计。
+      this.prevPts = this.seedFlowPoints(gray, targetDets, w, h);
       tTrack = now();
     } else if (flowPts && flowOk >= 12) {
       // 拟合使用全部 valid 点，不做 TTC/距离/ROI 预筛选
@@ -343,6 +361,9 @@ export class GuidePipeline {
       frame: { width: w, height: h, index: frameIndex },
       mode: yoloMode ? 'yolo' : 'motion',
       terrain,
+      traffic,
+      crosswalk,
+      ground,
       seg,
       detections,
       tracks,

@@ -1,7 +1,7 @@
 // 浏览器实时界面：真实视频/摄像头 -> YOLO 检测 + 逼近跟踪 -> 叠加层 + 分级语音提示。
 import { GuidePipeline } from './pipeline.js';
 import { FrameRecorder } from './recorder.js';
-import { classifyAnnouncement, SpeechAnnouncer, terrainCandidate } from './announce.js';
+import { classifyAnnouncement, SpeechAnnouncer, environmentCandidate } from './announce.js';
 import { classifyPitchChange } from '../vision/terrain.js';
 
 const $ = (id) => document.getElementById(id);
@@ -61,6 +61,11 @@ const state = {
   terrainAnnouncer: new SpeechAnnouncer({
     stairsCooldown: 4000,
     slopeCooldown: 6000,
+    crosswalkCooldown: 4000,
+    redCooldown: 5000,
+    greenCooldown: 8000,
+    yellowCooldown: 5000,
+    groundCooldown: 5000,
     globalCooldown: 800,
     downgradeHold: 0,
   }),
@@ -382,6 +387,20 @@ function updatePanel(res) {
         : state.slope === 'unknown'
           ? '坡道?'
           : '平坦/未知';
+  $('stTraffic').textContent =
+    res.traffic && res.traffic.color === 'red'
+      ? '红灯'
+      : res.traffic && res.traffic.color === 'green'
+        ? '绿灯'
+        : res.traffic && res.traffic.color === 'yellow'
+          ? '黄灯'
+          : '–';
+  $('stCrosswalk').textContent =
+    res.crosswalk && res.crosswalk.off
+      ? '偏离'
+      : res.crosswalk && res.crosswalk.active
+        ? '在线内'
+        : '–';
   $('stPoints').textContent = `${res.flowStats.valid} / ${res.flowStats.used}`;
   $('stBg').textContent = seg ? `${(seg.stats.bgInlierRatio * 100).toFixed(1)}%` : '–';
   $('stLayers').textContent = seg ? String(seg.stats.layerCount) : '–';
@@ -431,16 +450,26 @@ function handleAlert(res) {
     }
   }
 
-  // 地形提醒：目标语音刚播完时先让路 2 秒，避免和“冲过来”叠在一起。
-  const terrainCand = terrainCandidate(res.terrain, state.slope);
-  if (terrainCand && now - state.lastTargetSpeechAt > 2000) {
+  // 环境提醒：地形/红绿灯/斑马线/地面异物；目标语音刚播完时先让路 2 秒。
+  const envCand = environmentCandidate(res, state.slope);
+  if (envCand && now - state.lastTargetSpeechAt > 2000) {
     banner.hidden = false;
-    banner.className = `alert-banner${terrainCand.kind === 'stairs' ? ' high' : ' medium'}`;
-    $('alertLevel').textContent = terrainCand.kind === 'stairs' ? '台阶' : '地形';
-    $('alertText').textContent = terrainCand.text;
-    if (state.terrainAnnouncer.shouldSpeak(terrainCand, now)) {
-      addLog(terrainCand.text, terrainCand.level);
-      if (state.speech) speakAnnouncement(terrainCand);
+    const urgent = envCand.kind === 'crosswalk' || envCand.kind === 'ground' || envCand.kind === 'red';
+    banner.className = `alert-banner${urgent || envCand.kind === 'stairs' ? ' high' : ' medium'}`;
+    $('alertLevel').textContent =
+      envCand.kind === 'crosswalk'
+        ? '斑马线'
+        : envCand.kind === 'ground'
+          ? '地面'
+          : envCand.kind === 'stairs'
+            ? '台阶'
+            : envCand.kind === 'red' || envCand.kind === 'green' || envCand.kind === 'yellow'
+              ? '信号'
+              : '地形';
+    $('alertText').textContent = envCand.text;
+    if (state.terrainAnnouncer.shouldSpeak(envCand, now)) {
+      addLog(envCand.text, envCand.level);
+      if (state.speech) speakAnnouncement(envCand);
     }
     return;
   }

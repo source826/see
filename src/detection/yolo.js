@@ -28,8 +28,8 @@ export const ZH_NAMES = [
   '牙刷',
 ];
 
-// 行人 / 自行车 / 汽车 / 摩托车 / 公交车 / 卡车
-export const DETECT_CLASS_IDS = [0, 1, 2, 3, 5, 7];
+// 行人 / 自行车 / 汽车 / 摩托车 / 公交车 / 卡车 / 红绿灯 / 地面小障碍
+export const DETECT_CLASS_IDS = [0, 1, 2, 3, 5, 7, 9, 10, 39, 41, 46, 47, 49];
 
 const INPUT_SIZE = 640;
 const PAD_VALUE = 114;
