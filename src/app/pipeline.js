@@ -4,6 +4,7 @@ import { GrayImage } from '../vision/image.js';
 import { detectFast } from '../vision/features.js';
 import { buildPyramid, lkTrack, lkTrackFB } from '../vision/flow.js';
 import { segmentScene } from '../vision/segmentation.js';
+import { TerrainTracker } from '../vision/terrain.js';
 import { Tracker } from '../tracking/tracker.js';
 import { ApproachTracker, assessApproachRisk } from '../tracking/approach.js';
 import { assessRisk, buildCorridor } from '../tracking/risk.js';
@@ -46,6 +47,8 @@ export const PIPELINE_DEFAULTS = {
   cameraPitchDeg: 0,
   // 'bbox'：框高估距（历史指标兼容）；'ground'：按相机高度与地面线估距
   distanceMode: 'bbox',
+  // 地形提醒：下方中央水平边缘周期检测台阶
+  terrainDetect: true,
   flowPointsPerBox: 32,
 };
 
@@ -127,6 +130,7 @@ export class GuidePipeline {
       minHits: this.options.recallFirst ? 1 : 2,
     });
     this.approachTracker = new ApproachTracker(this.approachOptions());
+    this.terrainTracker = new TerrainTracker();
     this.frameIndex = 0;
     this.lastTimestamp = null;
     this.instantFps = 0;
@@ -190,6 +194,7 @@ export class GuidePipeline {
     const tGray = now();
     const pyr = buildPyramid(gray, this.options.pyramidLevels);
     const tPyr = now();
+    const terrain = this.options.terrainDetect ? this.terrainTracker.update(gray, now()) : null;
 
     let seg = null;
     let detections = [];
@@ -337,6 +342,7 @@ export class GuidePipeline {
     return {
       frame: { width: w, height: h, index: frameIndex },
       mode: yoloMode ? 'yolo' : 'motion',
+      terrain,
       seg,
       detections,
       tracks,

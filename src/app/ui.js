@@ -1,7 +1,8 @@
 // 浏览器实时界面：真实视频/摄像头 -> YOLO 检测 + 逼近跟踪 -> 叠加层 + 分级语音提示。
 import { GuidePipeline } from './pipeline.js';
 import { FrameRecorder } from './recorder.js';
-import { classifyAnnouncement, SpeechAnnouncer } from './announce.js';
+import { classifyAnnouncement, SpeechAnnouncer, terrainCandidate } from './announce.js';
+import { classifyPitchChange } from '../vision/terrain.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -33,6 +34,14 @@ const state = {
   horizonRatio: 0.5,
   cameraPitchDeg: 10,
   predictSec: 1.4,
+  slope: null,
+  terrainStatus: '未启用',
+  pitchBaseline: null,
+  pitchSamples: [],
+  pitchCandidate: null,
+  pitchSince: 0,
+  calibrateStart: 0,
+  lastTargetSpeechAt: 0,
   frameIndex: 0,
   lastVideoTime: -1,
   lastProcessAt: 0,
@@ -49,6 +58,12 @@ const state = {
   lastDetectMs: 0,
   lastProcessedFrame: null,
   announcer: new SpeechAnnouncer(),
+  terrainAnnouncer: new SpeechAnnouncer({
+    stairsCooldown: 4000,
+    slopeCooldown: 6000,
+    globalCooldown: 800,
+    downgradeHold: 0,
+  }),
   recorder: new FrameRecorder({ maxFrames: 5000, pointStep: 5 }),
 };
 
@@ -358,6 +373,15 @@ function updatePanel(res) {
         ? '相机高度'
         : '框高'
       : '–';
+  $('stTerrain').textContent = res.terrain && res.terrain.stairs
+    ? '台阶'
+    : state.slope === 'up'
+      ? '上坡'
+      : state.slope === 'down'
+        ? '下坡'
+        : state.slope === 'unknown'
+          ? '坡道?'
+          : '平坦/未知';
   $('stPoints').textContent = `${res.flowStats.valid} / ${res.flowStats.used}`;
   $('stBg').textContent = seg ? `${(seg.stats.bgInlierRatio * 100).toFixed(1)}%` : '–';
   $('stLayers').textContent = seg ? String(seg.stats.layerCount) : '–';
@@ -389,19 +413,38 @@ function updatePanel(res) {
 
 function handleAlert(res) {
   const banner = $('alert');
+  const now = performance.now();
   const cand = classifyAnnouncement(res.risk);
+  let targetVisible = false;
   if (cand) {
+    targetVisible = true;
     banner.hidden = false;
     banner.className = `alert-banner${cand.kind === 'rush' ? '' : cand.kind === 'static' ? ' high' : ' medium'}`;
     $('alertLevel').textContent = cand.kind === 'rush' ? '危险' : cand.kind === 'static' ? '障碍' : '留意';
     $('alertText').textContent = cand.text;
-    const speak = state.announcer.shouldSpeak(cand, performance.now());
+    const speak = state.announcer.shouldSpeak(cand, now);
     if (speak) {
       addLog(cand.text, cand.level);
       if (state.speech) speakAnnouncement(cand);
+      state.lastTargetSpeechAt = now;
+      return;
+    }
+  }
+
+  // 地形提醒：目标语音刚播完时先让路 2 秒，避免和“冲过来”叠在一起。
+  const terrainCand = terrainCandidate(res.terrain, state.slope);
+  if (terrainCand && now - state.lastTargetSpeechAt > 2000) {
+    banner.hidden = false;
+    banner.className = `alert-banner${terrainCand.kind === 'stairs' ? ' high' : ' medium'}`;
+    $('alertLevel').textContent = terrainCand.kind === 'stairs' ? '台阶' : '地形';
+    $('alertText').textContent = terrainCand.text;
+    if (state.terrainAnnouncer.shouldSpeak(terrainCand, now)) {
+      addLog(terrainCand.text, terrainCand.level);
+      if (state.speech) speakAnnouncement(terrainCand);
     }
     return;
   }
+  if (targetVisible) return;
 
   const top = res.risk && res.risk.topAlert;
   if (top && top.level >= 2) {
@@ -707,7 +750,80 @@ function initDistanceOptions() {
   state.pipeline.setOptions({ horizonSec: state.predictSec });
 }
 
+function median(values) {
+  if (!values.length) return 0;
+  const s = [...values].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+}
+
+function initTerrainSensor() {
+  const btn = $('terrainBtn');
+  const status = $('terrainStatus');
+  let attached = false;
+
+  const onOrient = (e) => {
+    const beta = Number(e.beta);
+    if (!Number.isFinite(beta)) return;
+    const now = performance.now();
+    state.pitchSamples.push(beta);
+    if (state.pitchSamples.length > 40) state.pitchSamples.shift();
+    if (state.pitchBaseline === null) {
+      if (now - state.calibrateStart > 1500 && state.pitchSamples.length >= 20) {
+        state.pitchBaseline = median(state.pitchSamples);
+        state.pitchSamples = [];
+        state.terrainStatus = '已校准';
+        status.textContent = '姿态已校准，开始检测上/下坡';
+      }
+      return;
+    }
+    const recent = median(state.pitchSamples.slice(-8));
+    const next = classifyPitchChange(state.pitchBaseline, recent);
+    if (next !== state.pitchCandidate) {
+      state.pitchCandidate = next;
+      state.pitchSince = now;
+    }
+    if (next && now - state.pitchSince > 800) state.slope = next;
+    else if (!next) state.slope = null;
+  };
+
+  btn.addEventListener('click', async () => {
+    if (!('DeviceOrientationEvent' in window)) {
+      status.textContent = '当前设备不支持姿态传感器';
+      return;
+    }
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== 'granted') {
+          status.textContent = '姿态权限被拒绝';
+          return;
+        }
+      }
+      if (!attached) {
+        window.addEventListener('deviceorientation', onOrient);
+        attached = true;
+      }
+      state.pitchBaseline = null;
+      state.pitchSamples = [];
+      state.pitchCandidate = null;
+      state.pitchSince = 0;
+      state.slope = null;
+      state.calibrateStart = performance.now();
+      state.terrainStatus = '校准中';
+      status.textContent = '请把手机放在平常握持角度，在平地上站 2 秒';
+      setTimeout(() => {
+        if (state.pitchBaseline === null) {
+          status.textContent = '没有收到姿态数据（桌面浏览器通常不支持）';
+        }
+      }, 2500);
+    } catch (err) {
+      status.textContent = `姿态不可用：${err.message}`;
+    }
+  });
+}
+
 initDistanceOptions();
+initTerrainSensor();
 initYolo();
 requestAnimationFrame(tick);
 

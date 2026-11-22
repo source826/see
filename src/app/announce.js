@@ -9,6 +9,30 @@ export const ANNOUNCE_TEXTS = {
   uncertain: '前方有情况请确认',
 };
 
+export const TERRAIN_TEXTS = {
+  stairs: '前方台阶，请小心',
+  up: '前方上坡，请小心',
+  down: '前方下坡，请小心',
+  slopeUnknown: '前方有坡道，请小心',
+};
+
+/** 把台阶/坡道状态转成播报候选；没有地形时返回 null。 */
+export function terrainCandidate(terrain, slope) {
+  if (terrain && terrain.stairs) {
+    return { kind: 'stairs', text: TERRAIN_TEXTS.stairs, priority: 3, level: 3, trackId: -1 };
+  }
+  if (slope === 'up') {
+    return { kind: 'slope', text: TERRAIN_TEXTS.up, priority: 2, level: 2, trackId: -1 };
+  }
+  if (slope === 'down') {
+    return { kind: 'slope', text: TERRAIN_TEXTS.down, priority: 2, level: 2, trackId: -1 };
+  }
+  if (slope === 'unknown') {
+    return { kind: 'slope', text: TERRAIN_TEXTS.slopeUnknown, priority: 2, level: 2, trackId: -1 };
+  }
+  return null;
+}
+
 /** 用户侧距离档位：很近 / 近 / 有点远。具体米数只留在调试信息里。 */
 export function distanceBucket(distance) {
   if (!(distance > 0)) return '附近';
@@ -164,7 +188,11 @@ export class SpeechAnnouncer {
         ? this.opts.rushCooldown
         : candidate.kind === 'static'
           ? this.opts.staticCooldown
-          : this.opts.uncertainCooldown;
+          : candidate.kind === 'stairs'
+            ? (this.opts.stairsCooldown ?? 4000)
+            : candidate.kind === 'slope'
+              ? (this.opts.slopeCooldown ?? 6000)
+              : this.opts.uncertainCooldown;
     if (this.lastSpokeAt !== null && now - this.lastSpokeAt < this.opts.globalCooldown) {
       this.lastSeen = { ...candidate, at: now };
       return false;
