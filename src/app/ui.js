@@ -1,0 +1,634 @@
+// 浏览器实时界面：真实视频/摄像头 -> YOLO 检测 + 逼近跟踪 -> 叠加层 + 分级语音提示。
+import { GuidePipeline } from './pipeline.js';
+import { FrameRecorder } from './recorder.js';
+import { classifyAnnouncement, SpeechAnnouncer } from './announce.js';
+
+const $ = (id) => document.getElementById(id);
+
+const video = $('video');
+const overlay = $('overlay');
+const overlayCtx = overlay.getContext('2d');
+const analysis = document.createElement('canvas');
+const analysisCtx = analysis.getContext('2d', { willReadFrequently: true });
+const frameCanvas = document.createElement('canvas');
+const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
+
+const LAYER_COLORS = ['rgba(148,163,184,0.55)', '#a78bfa', '#34d399', '#f472b6'];
+
+const state = {
+  pipeline: new GuidePipeline({ fps: 30 }),
+  source: null,
+  stream: null,
+  objectUrl: null,
+  running: true,
+  analysisWidth: 320,
+  fps: 30,
+  frameIndex: 0,
+  lastVideoTime: -1,
+  lastProcessAt: 0,
+  lastPanelAt: 0,
+  disp: { x: 0, y: 0, w: 0, h: 0, dpr: 1 },
+  show: { flow: true, tracks: true, predict: true, corridor: true },
+  speech: true,
+  seeking: false,
+  lastResult: null,
+  startAt: 0,
+  detector: null,
+  yoloReady: false,
+  busy: false,
+  lastDetectMs: 0,
+  lastProcessedFrame: null,
+  announcer: new SpeechAnnouncer(),
+  recorder: new FrameRecorder({ maxFrames: 5000, pointStep: 5 }),
+};
+
+function updateDisplayRect() {
+  if (!video.videoWidth) return;
+  const wrap = $('videoWrap');
+  const vr = video.getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  if (vr.width < 2 || vr.height < 2) return;
+  const scale = Math.min(vr.width / video.videoWidth, vr.height / video.videoHeight);
+  const w = video.videoWidth * scale;
+  const h = video.videoHeight * scale;
+  const x = vr.left - wr.left + (vr.width - w) / 2;
+  const y = vr.top - wr.top + (vr.height - h) / 2;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  state.disp = { x, y, w, h, dpr };
+  overlay.style.left = `${x}px`;
+  overlay.style.top = `${y}px`;
+  overlay.style.width = `${w}px`;
+  overlay.style.height = `${h}px`;
+  const pw = Math.max(1, Math.round(w * dpr));
+  const ph = Math.max(1, Math.round(h * dpr));
+  if (overlay.width !== pw || overlay.height !== ph) {
+    overlay.width = pw;
+    overlay.height = ph;
+  }
+}
+
+function setupAnalysis() {
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) return;
+  let aw = state.analysisWidth;
+  let ah = Math.round((aw * vh) / vw);
+  if (ah > 540) {
+    ah = 540;
+    aw = Math.round((ah * vw) / vh);
+  }
+  aw -= aw % 2;
+  ah -= ah % 2;
+  aw = Math.max(64, aw);
+  ah = Math.max(64, ah);
+  analysis.width = aw;
+  analysis.height = ah;
+  frameCanvas.width = vw;
+  frameCanvas.height = vh;
+  state.pipeline.reset();
+  state.announcer.reset();
+  state.frameIndex = 0;
+  state.lastVideoTime = -1;
+  updateDisplayRect();
+  const label = state.source === 'camera' ? '摄像头' : '本地真实视频';
+  $('sourceName').textContent = `${label} · 源 ${vw}×${vh} · 分析 ${aw}×${ah}`;
+  $('status').textContent = state.source === 'camera' ? '摄像头实时分析中' : '真实视频分析中';
+  $('empty').hidden = true;
+}
+
+async function processFrame(ts) {
+  if (state.busy || !video.videoWidth || !analysis.width) return;
+  state.busy = true;
+  try {
+    if (frameCanvas.width !== video.videoWidth || frameCanvas.height !== video.videoHeight) {
+      frameCanvas.width = video.videoWidth;
+      frameCanvas.height = video.videoHeight;
+    }
+    // 先抓同一帧，再分别给 YOLO 和管线，避免推理期间视频前进导致框与画面错位。
+    frameCtx.drawImage(video, 0, 0);
+    analysisCtx.drawImage(frameCanvas, 0, 0, analysis.width, analysis.height);
+    const image = analysisCtx.getImageData(0, 0, analysis.width, analysis.height);
+
+    let detections = [];
+    let detectMs = 0;
+    if (state.detector && state.yoloReady) {
+      const t0 = performance.now();
+      // 部分机器的 WebGPU 推理会永久挂起，必须限时并回退，不能把实时循环卡死。
+      const out = await Promise.race([
+        state.detector.detect(frameCanvas, frameCanvas.width, frameCanvas.height),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('YOLO 推理超时')), 3000)),
+      ]);
+      detectMs = performance.now() - t0;
+      const sx = analysis.width / frameCanvas.width;
+      const sy = analysis.height / frameCanvas.height;
+      detections = out.boxes.map((d) => ({
+        ...d,
+        bbox: { x: d.bbox.x * sx, y: d.bbox.y * sy, w: d.bbox.w * sx, h: d.bbox.h * sy },
+      }));
+    }
+    state.lastDetectMs = detectMs;
+
+    const isFile = state.source === 'file';
+    if (isFile && state.lastVideoTime > 0 && video.currentTime < state.lastVideoTime - 0.5) {
+      // 视频循环回到开头：清空轨迹与播报状态，避免跨越循环的错误关联。
+      state.pipeline.reset();
+      state.announcer.reset();
+      state.lastProcessedFrame = null;
+    }
+    const frameIndex = isFile ? Math.round(video.currentTime * state.fps) : state.frameIndex++;
+    const prev = state.lastProcessedFrame;
+    const dt = isFile && prev !== null ? Math.max(1, frameIndex - prev) / state.fps : 1 / state.fps;
+    state.lastProcessedFrame = frameIndex;
+
+    const res = state.pipeline.process(image, frameIndex, { detections, dt });
+    state.lastResult = res;
+    if (state.recorder.active) state.recorder.add(res);
+    drawOverlay(res);
+    const now = ts ?? performance.now();
+    if (now - state.lastPanelAt > 120) {
+      state.lastPanelAt = now;
+      updatePanel(res);
+    }
+    handleAlert(res);
+    state.lastVideoTime = video.currentTime;
+    state.lastProcessAt = now;
+  } catch (err) {
+    console.error(err);
+    if (state.yoloReady && /超时/.test(err.message)) {
+      state.yoloReady = false;
+      state.detector = null;
+      state.pipeline.setOptions({ yoloDetect: false });
+      state.pipeline.reset();
+      $('enginePill').textContent = 'YOLO 超时 · 运动分层';
+      $('status').textContent = 'YOLO 推理超时，已回退运动分层';
+    } else {
+      $('status').textContent = `处理失败：${err.message}`;
+    }
+  } finally {
+    state.busy = false;
+  }
+}
+
+let rafId = 0;
+function tick(ts) {
+  rafId = requestAnimationFrame(tick);
+  const v = video;
+  if (!state.running || state.busy || !v.videoWidth || v.readyState < 2) return;
+  if (state.source === 'camera') {
+    if (ts - state.lastProcessAt < 1000 / Math.max(10, state.fps)) return;
+  } else if (state.source === 'file') {
+    if (v.paused) return;
+    if (v.currentTime === state.lastVideoTime) return;
+  } else {
+    return;
+  }
+  processFrame(ts);
+}
+
+function drawOverlay(res) {
+  updateDisplayRect();
+  const ctx = overlayCtx;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  if (!res || !res.frame || overlay.width < 2) return;
+  const dpr = state.disp.dpr;
+  const sx = overlay.width / res.frame.width;
+  const sy = overlay.height / res.frame.height;
+  const X = (x) => x * sx;
+  const Y = (y) => y * sy;
+  const lw = Math.max(1, dpr);
+
+  if (state.show.corridor && res.risk) {
+    const c = res.risk.corridor;
+    ctx.beginPath();
+    ctx.moveTo(X(c.apex.x), Y(c.apex.y));
+    ctx.lineTo(X(c.poly[1].x), Y(c.poly[1].y));
+    ctx.lineTo(X(c.poly[2].x), Y(c.poly[2].y));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(56,189,248,0.10)';
+    ctx.fill();
+    ctx.setLineDash([6 * dpr, 5 * dpr]);
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = 'rgba(56,189,248,0.7)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (state.show.flow && res.seg && res.flow) {
+    const pts = res.flow.src;
+    const size = Math.max(1.6, 1.4 * dpr);
+    for (let li = 0; li < res.seg.layers.length; li++) {
+      const L = res.seg.layers[li];
+      ctx.fillStyle = LAYER_COLORS[Math.min(li, LAYER_COLORS.length - 1)];
+      ctx.beginPath();
+      for (let k = 0; k < L.indices.length; k++) {
+        const i = L.indices[k];
+        ctx.rect(X(pts[2 * i]) - size / 2, Y(pts[2 * i + 1]) - size / 2, size, size);
+      }
+      ctx.fill();
+    }
+    if (res.seg.leftover && res.seg.leftover.length) {
+      ctx.fillStyle = 'rgba(251,191,36,0.9)';
+      ctx.beginPath();
+      for (let k = 0; k < res.seg.leftover.length; k++) {
+        const i = res.seg.leftover[k];
+        ctx.rect(X(pts[2 * i]) - size / 2, Y(pts[2 * i + 1]) - size / 2, size, size);
+      }
+      ctx.fill();
+    }
+  }
+
+  if (res.seg) {
+    ctx.setLineDash([4 * dpr, 3 * dpr]);
+    ctx.lineWidth = Math.max(1, dpr * 1.1);
+    ctx.strokeStyle = 'rgba(251,191,36,0.75)';
+    for (const o of res.seg.objects) {
+      const b = o.bbox;
+      ctx.strokeRect(X(b.x), Y(b.y), X(b.w), Y(b.h));
+    }
+    ctx.setLineDash([]);
+  }
+
+  const riskById = new Map();
+  if (res.risk) for (const p of res.risk.perTrack) riskById.set(p.id, p);
+
+  if (state.show.tracks) {
+    for (const tr of res.tracks) {
+      if (!tr.confirmed) continue;
+      const p = riskById.get(tr.id);
+      const level = p ? p.level : 0;
+      const color = level >= 4 ? '#ef4444' : level === 3 ? '#fb923c' : level === 2 ? '#facc15' : '#2dd4bf';
+      const b = tr.bbox;
+      ctx.lineWidth = level >= 3 ? 2.2 * dpr : 1.6 * dpr;
+      ctx.strokeStyle = color;
+      ctx.strokeRect(X(b.x), Y(b.y), X(b.w), Y(b.h));
+      const label = `#${tr.id}${p ? ` ${p.distance.toFixed(1)}m` : ''}${p && p.ttc ? ` ${p.ttc.toFixed(1)}s` : ''}`;
+      ctx.font = `${Math.round(11 * dpr)}px "Segoe UI", sans-serif`;
+      const tw = ctx.measureText(label).width;
+      const lx = Math.max(0, X(b.x));
+      const ly = Math.max(0, Y(b.y) - 16 * dpr);
+      ctx.fillStyle = 'rgba(4,7,12,0.72)';
+      ctx.fillRect(lx, ly, tw + 8 * dpr, 15 * dpr);
+      ctx.fillStyle = color;
+      ctx.fillText(label, lx + 4 * dpr, ly + 11 * dpr);
+    }
+  }
+
+  if (state.show.predict && res.risk) {
+    for (const p of res.risk.perTrack) {
+      if (!p.confirmed || !p.path || p.path.length < 2) continue;
+      const color = p.level >= 4 ? 'rgba(239,68,68,0.95)' : p.level === 3 ? 'rgba(251,146,60,0.9)' : 'rgba(45,212,191,0.8)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(X(p.path[0].x), Y(p.path[0].y));
+      for (let k = 1; k < p.path.length; k++) ctx.lineTo(X(p.path[k].x), Y(p.path[k].y));
+      ctx.stroke();
+      const last = p.path[p.path.length - 1];
+      ctx.beginPath();
+      ctx.arc(X(last.x), Y(last.y), 3.2 * dpr, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+  }
+
+  if (res.foe && Number.isFinite(res.foe.x) && Number.isFinite(res.foe.y)) {
+    const fx = X(res.foe.x);
+    const fy = Y(res.foe.y);
+    if (fx > 0 && fy > 0 && fx < overlay.width && fy < overlay.height) {
+      ctx.strokeStyle = 'rgba(56,189,248,0.9)';
+      ctx.lineWidth = 1.5 * dpr;
+      const r = 7 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(fx - r, fy);
+      ctx.lineTo(fx + r, fy);
+      ctx.moveTo(fx, fy - r);
+      ctx.lineTo(fx, fy + r);
+      ctx.stroke();
+    }
+  }
+}
+
+function setBar(barId, valId, value, max) {
+  const pct = Math.max(2, Math.min(100, (value / Math.max(1, max)) * 100));
+  $(barId).style.width = `${pct}%`;
+  $(valId).textContent = `${value.toFixed(1)} ms`;
+}
+
+function updatePanel(res) {
+  const t = res.timings;
+  const seg = res.seg;
+  const detect = state.lastDetectMs || 0;
+  const totalMs = t.total + detect;
+  $('stFps').textContent = totalMs > 0 ? (1000 / totalMs).toFixed(1) : '–';
+  $('stMs').textContent = `${totalMs.toFixed(1)} ms`;
+  $('stDetect').textContent = state.yoloReady ? `${detect.toFixed(1)} ms` : '–';
+  $('stMode').textContent = res.mode === 'yolo' ? 'YOLO' : '运动分层';
+  $('stRisk').textContent = res.risk ? `${res.risk.perTrack.length} / ${res.risk.alerts.length}` : '–';
+  $('stPoints').textContent = `${res.flowStats.valid} / ${res.flowStats.used}`;
+  $('stBg').textContent = seg ? `${(seg.stats.bgInlierRatio * 100).toFixed(1)}%` : '–';
+  $('stLayers').textContent = seg ? String(seg.stats.layerCount) : '–';
+  $('stObjects').textContent = seg ? String(seg.stats.objectCount) : '–';
+  $('stTracks').textContent = String(res.tracks.filter((x) => x.confirmed).length);
+  $('stRansac').textContent = seg ? String(seg.stats.ransacIterations) : '–';
+  const max = Math.max(totalMs, 1);
+  setBar('tDetect', 'vDetect', detect, max);
+  setBar('tGray', 'vGray', t.gray, max);
+  setBar('tPyr', 'vPyr', t.pyramid, max);
+  setBar('tFlow', 'vFlow', t.flow, max);
+  setBar('tSeg', 'vSeg', t.segment, max);
+  setBar('tTrack', 'vTrack', t.track, max);
+
+  const rec = state.recorder;
+  if (rec.active) {
+    $('recStatus').textContent = `记录中 ${rec.frameCount} 帧 · ~${Math.round(rec.bytes / 1024)} KB`;
+  }
+
+  const instruction = $('instruction');
+  const top = res.risk && res.risk.topAlert;
+  instruction.textContent = res.risk ? res.risk.instruction : '前方通畅，可以直行';
+  instruction.className = 'instruction';
+  if (top) {
+    if (top.level >= 4) instruction.classList.add('danger');
+    else if (top.level >= 3) instruction.classList.add('warn');
+  }
+}
+
+function handleAlert(res) {
+  const banner = $('alert');
+  const cand = classifyAnnouncement(res.risk);
+  if (cand) {
+    banner.hidden = false;
+    banner.className = `alert-banner${cand.kind === 'rush' ? '' : cand.kind === 'static' ? ' high' : ' medium'}`;
+    $('alertLevel').textContent = cand.kind === 'rush' ? '危险' : cand.kind === 'static' ? '障碍' : '留意';
+    $('alertText').textContent = cand.text;
+    const speak = state.announcer.shouldSpeak(cand, performance.now());
+    if (speak) {
+      addLog(cand.text, cand.level);
+      if (state.speech) speakAnnouncement(cand);
+    }
+    return;
+  }
+
+  const top = res.risk && res.risk.topAlert;
+  if (top && top.level >= 2) {
+    banner.hidden = false;
+    banner.className = `alert-banner${top.level >= 4 ? '' : top.level === 3 ? ' high' : ' medium'}`;
+    $('alertLevel').textContent = top.level >= 4 ? '危险' : top.level === 3 ? '注意' : '留意';
+    $('alertText').textContent = top.text;
+  } else {
+    banner.hidden = true;
+  }
+}
+
+function speakAnnouncement(cand) {
+  if ('speechSynthesis' in window) {
+    if (cand.kind === 'rush') window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(cand.text);
+    u.lang = 'zh-CN';
+    u.rate = cand.kind === 'rush' ? 1.18 : 1.05;
+    u.pitch = cand.kind === 'rush' ? 1.05 : 1;
+    window.speechSynthesis.speak(u);
+  }
+  if (navigator.vibrate) navigator.vibrate(cand.kind === 'rush' ? [120, 60, 120] : 70);
+}
+
+function addLog(text, level) {
+  const list = $('log');
+  const muted = list.querySelector('.muted');
+  if (muted) muted.remove();
+  const li = document.createElement('li');
+  li.className = level >= 4 ? 'critical' : level === 3 ? 'high' : 'medium';
+  const time = document.createElement('time');
+  time.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  li.appendChild(time);
+  li.appendChild(document.createTextNode(text));
+  list.prepend(li);
+  while (list.children.length > 20) list.lastElementChild.remove();
+}
+
+function updatePlayLabel() {
+  $('playBtn').textContent = video.paused ? '播放' : '暂停';
+}
+
+function stopCamera() {
+  if (state.stream) {
+    for (const t of state.stream.getTracks()) t.stop();
+    state.stream = null;
+  }
+}
+
+function loadFile(file) {
+  if (!file) return;
+  if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
+  state.objectUrl = URL.createObjectURL(file);
+  loadUrl(state.objectUrl);
+}
+
+function loadUrl(url) {
+  stopCamera();
+  state.source = 'file';
+  const params = new URLSearchParams(location.search);
+  const t = Number(params.get('t'));
+  state.startAt = Number.isFinite(t) && t > 0 ? t : 0;
+  video.pause();
+  video.srcObject = null;
+  video.src = url;
+  video.loop = true;
+  video.muted = true;
+  $('empty').hidden = true;
+  if (state.startAt > 0) {
+    // 指定起始时间时先暂停，等 YOLO 就绪后再从该时间播放，保证演示段被完整判定。
+    video.pause();
+  } else {
+    video.play().catch(() => {});
+  }
+}
+
+async function startCamera() {
+  try {
+    stopCamera();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    state.stream = stream;
+    state.source = 'camera';
+    if (state.objectUrl) {
+      URL.revokeObjectURL(state.objectUrl);
+      state.objectUrl = null;
+    }
+    video.src = '';
+    video.srcObject = stream;
+    video.loop = false;
+    $('empty').hidden = true;
+    await video.play();
+  } catch (err) {
+    $('status').textContent = `摄像头不可用：${err.message}`;
+  }
+}
+
+function stepFrame(dir) {
+  if (!video.duration || !Number.isFinite(video.duration)) return;
+  video.pause();
+  updatePlayLabel();
+  const dt = 1 / state.fps;
+  const target = Math.min(video.duration - 0.001, Math.max(0, video.currentTime + dir * dt));
+  state.seeking = true;
+  video.currentTime = target;
+}
+
+video.addEventListener('loadedmetadata', () => {
+  updatePlayLabel();
+  setupAnalysis();
+  if (state.startAt > 0 && state.startAt < video.duration) {
+    state.lastProcessedFrame = null;
+    video.currentTime = state.startAt;
+    if (state.yoloReady) video.play().catch(() => {});
+    else video.pause();
+    updatePlayLabel();
+  }
+});
+
+video.addEventListener('seeked', () => {
+  if (!state.seeking) return;
+  state.seeking = false;
+  if (video.paused) processFrame(performance.now());
+});
+
+$('fileInput').addEventListener('change', (e) => {
+  loadFile(e.target.files && e.target.files[0]);
+});
+
+$('cameraBtn').addEventListener('click', startCamera);
+
+$('demoBtn').addEventListener('click', () => {
+  loadUrl('assets/videos/hongkong_walk_02.webm');
+});
+
+$('recBtn').addEventListener('click', () => {
+  const rec = state.recorder;
+  if (rec.active) {
+    rec.stop();
+    $('recBtn').textContent = '● 记录中间结果';
+    $('recBtn').classList.remove('primary');
+    if (rec.frameCount) {
+      rec.download();
+      $('recStatus').textContent = `已导出 ${rec.frameCount} 帧`;
+    } else {
+      $('recStatus').textContent = '未捕获帧';
+    }
+  } else {
+    rec.start({
+      source: state.source || 'none',
+      sourceSize: [video.videoWidth || 0, video.videoHeight || 0],
+      analysisSize: [analysis.width, analysis.height],
+      fps: state.fps,
+      options: { ...state.pipeline.options },
+    });
+    $('recBtn').textContent = '■ 停止并导出';
+    $('recBtn').classList.add('primary');
+    $('recStatus').textContent = '记录中 0 帧';
+  }
+});
+
+$('playBtn').addEventListener('click', () => {
+  if (video.paused) video.play().catch(() => {});
+  else video.pause();
+  updatePlayLabel();
+});
+
+$('prevBtn').addEventListener('click', () => stepFrame(-1));
+$('nextBtn').addEventListener('click', () => stepFrame(1));
+
+$('precisionToggle').addEventListener('change', (e) => {
+  state.pipeline.setOptions({ fbCheck: e.target.checked });
+  state.pipeline.reset();
+  state.frameIndex = 0;
+});
+
+$('speechToggle').addEventListener('change', (e) => {
+  state.speech = e.target.checked;
+  if (!state.speech && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+});
+
+$('resSelect').addEventListener('change', (e) => {
+  state.analysisWidth = Number(e.target.value);
+  setupAnalysis();
+});
+
+$('fpsSelect').addEventListener('change', (e) => {
+  state.fps = Number(e.target.value);
+  state.pipeline.setOptions({ fps: state.fps });
+});
+
+const toggle = (id, key) => {
+  $(id).addEventListener('change', (e) => {
+    state.show[key] = e.target.checked;
+  });
+};
+toggle('showFlow', 'flow');
+toggle('showTracks', 'tracks');
+toggle('showPredict', 'predict');
+toggle('showCorridor', 'corridor');
+
+const wrap = $('videoWrap');
+wrap.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  wrap.style.outline = '2px dashed rgba(45,212,191,0.7)';
+});
+wrap.addEventListener('dragleave', () => {
+  wrap.style.outline = '';
+});
+wrap.addEventListener('drop', (e) => {
+  e.preventDefault();
+  wrap.style.outline = '';
+  const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (file && file.type.startsWith('video/')) loadFile(file);
+});
+
+window.addEventListener('resize', updateDisplayRect);
+if ('ResizeObserver' in window) new ResizeObserver(updateDisplayRect).observe(video);
+
+document.addEventListener('visibilitychange', () => {
+  state.running = !document.hidden;
+});
+
+async function initYolo() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('yolo') === '0') {
+    $('enginePill').textContent = 'YOLO 已关闭 · 运动分层';
+    return;
+  }
+  try {
+    const { YoloDetector } = await import('../detection/yolo.js');
+    // 实时循环优先用 WASM：本机 WebGPU 在部分会话会挂起，WASM 延迟已足够演示。
+    // 需要 WebGPU 时加 ?webgpu=1。
+    const detector = new YoloDetector({ preferWebGPU: params.get('webgpu') === '1' });
+    state.detector = detector;
+    await detector.load();
+    while (state.busy) await new Promise((r) => setTimeout(r, 50));
+    state.yoloReady = true;
+    state.pipeline.setOptions({ yoloDetect: true });
+    state.pipeline.reset();
+    state.frameIndex = 0;
+    $('enginePill').textContent = `YOLOv8n · ${detector.backend}`;
+    if (state.source !== 'camera') $('status').textContent = `YOLO ${detector.backend} · 逼近判定就绪`;
+    if (state.startAt > 0 && state.source === 'file' && video.readyState >= 1) {
+      state.lastProcessedFrame = null;
+      video.currentTime = state.startAt;
+      video.play().catch(() => {});
+      updatePlayLabel();
+    }
+  } catch (err) {
+    console.warn(err);
+    $('enginePill').textContent = 'YOLO 不可用 · 运动分层';
+    $('status').textContent = `YOLO 加载失败：${err.message}`;
+  }
+}
+
+initYolo();
+requestAnimationFrame(tick);
+
+const demoParam = new URLSearchParams(location.search).get('video');
+if (demoParam) loadUrl(demoParam);

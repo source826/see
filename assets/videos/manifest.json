@@ -1,0 +1,19 @@
+{
+  "note": "真实素材（B 站公开视频的本地缓存），仅用于参数校准与检验，不含任何合成画面。tune 组用于调参；holdout 组在参数冻结前不参与调参。",
+  "fps": 30,
+  "tune": [
+    { "file": "tune/nanjing_00.mp4", "source": "上海南京西路傍晚步行 POV", "durationSec": 40, "size": "854x480" },
+    { "file": "tune/nanjing_01.mp4", "source": "上海南京西路傍晚步行 POV", "durationSec": 40, "size": "854x480" },
+    { "file": "tune/nanjing_02.mp4", "source": "上海南京西路傍晚步行 POV", "durationSec": 40, "size": "854x480" },
+    { "file": "tune/walk_00.mp4", "source": "第一人称走路", "durationSec": 40, "size": "360x640" },
+    { "file": "tune/walk_01.mp4", "source": "第一人称走路", "durationSec": 40, "size": "360x640" },
+    { "file": "tune/walk_02.mp4", "source": "第一人称走路", "durationSec": 40, "size": "360x640" },
+    { "file": "tune/seaside_00.mp4", "source": "海边雪景步行", "durationSec": 40, "size": "360x640" }
+  ],
+  "holdout": [
+    { "file": "holdout/nanjing_03.mp4", "source": "上海南京西路傍晚步行 POV", "durationSec": 40, "size": "854x480" },
+    { "file": "holdout/walk_03.mp4", "source": "第一人称走路", "durationSec": 40, "size": "360x640" },
+    { "file": "holdout/walk_05.mp4", "source": "第一人称走路", "durationSec": 33.3, "size": "360x640" },
+    { "file": "holdout/seaside_01.mp4", "source": "海边雪景步行", "durationSec": 39.3, "size": "360x640" }
+  ]
+}

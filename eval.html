@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>导盲视觉 · 量化评测台</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="eval/eval.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>量化评测台</h1>
+        <p>真实视频人工标注 · MOT 指标 · 轨迹 ADE/FDE · 阶段耗时</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill" id="evalStatus">未加载视频</span>
+      <a class="btn ghost" href="index.html">← 返回实时界面</a>
+    </div>
+  </header>
+
+  <main class="eval-layout">
+    <section class="stage-card">
+      <div class="video-wrap" id="evalWrap">
+        <video id="evalVideo" playsinline muted preload="auto"></video>
+        <canvas id="annoCanvas"></canvas>
+        <div class="empty" id="evalEmpty">
+          <strong>载入真实视频后开始标注</strong>
+          <span>标注动态目标（行人/车辆）与静止障碍，用于计算 MOTA / ADE / FDE</span>
+        </div>
+      </div>
+
+      <div class="frame-bar">
+        <button class="btn small" id="evalPrev" type="button">◀</button>
+        <input type="range" id="frameSlider" min="0" max="0" value="0" />
+        <button class="btn small" id="evalNext" type="button">▶</button>
+        <span class="frame-label" id="frameLabel">帧 0 / 0</span>
+        <input type="number" id="frameJump" min="0" value="0" style="width:76px" title="跳到指定帧" />
+      </div>
+
+      <div class="controls">
+        <label class="btn primary" for="evalFile">打开真实视频</label>
+        <input id="evalFile" type="file" accept="video/*" hidden />
+        <button class="btn" id="evalPlay" type="button">播放</button>
+        <label class="select">
+          源帧率
+          <select id="evalFps">
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="30" selected>30</option>
+            <option value="60">60</option>
+          </select>
+        </label>
+        <span class="divider"></span>
+        <span class="hint">标注类别</span>
+        <button class="btn cls-btn active" data-cls="ped" type="button">行人</button>
+        <button class="btn cls-btn" data-cls="veh" type="button">车辆</button>
+        <button class="btn cls-btn" data-cls="static" type="button">静止障碍</button>
+        <span class="divider"></span>
+        <label class="select">
+          轨迹 ID
+          <input id="trackId" type="number" min="1" value="1" />
+        </label>
+        <button class="btn small" id="nextTrack" type="button">下一条轨迹</button>
+        <button class="btn small" id="undoBtn" type="button">撤销</button>
+        <button class="btn small" id="delBtn" type="button">删除选中</button>
+      </div>
+
+      <div class="controls sub">
+        <label class="btn" for="importGt">导入 GT JSON</label>
+        <input id="importGt" type="file" accept="application/json,.json" hidden />
+        <button class="btn" id="exportGt" type="button">导出 GT JSON</button>
+        <button class="btn" id="clearFrame" type="button">清空当前帧</button>
+        <button class="btn" id="clearAll" type="button">清空全部</button>
+        <span class="divider"></span>
+        <span class="hint" id="gtStats">已标注 0 帧 / 0 个框 / 0 条轨迹</span>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="section">
+        <h3>评测范围</h3>
+        <div class="bench-config">
+          <label>起始帧 <input id="benchStart" type="number" min="0" value="0" /></label>
+          <label>结束帧 <input id="benchEnd" type="number" min="0" value="0" /></label>
+          <label>步长 <input id="benchStride" type="number" min="1" value="1" /></label>
+          <label>分析分辨率
+            <select id="benchRes">
+              <option value="256">256</option>
+              <option value="320" selected>320</option>
+              <option value="400">400</option>
+              <option value="480">480</option>
+            </select>
+          </label>
+          <label>预热帧 <input id="benchWarmup" type="number" min="0" value="0" title="事件判定预热帧，不计入指标" /></label>
+          <label class="toggle"><input type="checkbox" id="onlyDynamic" checked /> 只评测动态目标</label>
+          <label class="toggle"><input type="checkbox" id="useYolo" /> YOLO 检测层（实验）</label>
+        </div>
+        <button class="btn primary wide" id="runBench" type="button">在真实视频上运行评测</button>
+        <div class="progress"><i id="benchBar"></i></div>
+        <p class="hint" id="benchStatus">尚未运行</p>
+      </div>
+
+      <div class="section">
+        <h3>单参数实验（每次只改一个）</h3>
+        <div class="bench-config">
+          <label>参数
+            <select id="expParam"></select>
+          </label>
+          <label>基线值
+            <input id="expBase" type="text" readonly />
+          </label>
+          <label>试验值
+            <input id="expTrial" type="number" step="any" />
+          </label>
+        </div>
+        <button class="btn primary wide" id="runExp" type="button">运行单参数实验并记录</button>
+        <p class="hint" id="expStatus">先运行一次基准评测，再修改一个参数</p>
+        <table class="exp-table" id="expTable">
+          <thead>
+            <tr><th>参数</th><th>基线→试验</th><th>事件召回</th><th>误报/分</th><th>提前量</th><th>F1</th><th>耗时</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="row-buttons">
+          <button class="btn" id="exportExp" type="button" disabled>导出实验 CSV</button>
+          <button class="btn" id="clearExp" type="button">清空实验记录</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>指标</h3>
+        <div class="metrics result-grid">
+          <div class="metric"><span>Precision</span><strong id="mPrecision">–</strong></div>
+          <div class="metric"><span>Recall</span><strong id="mRecall">–</strong></div>
+          <div class="metric"><span>F1</span><strong id="mF1">–</strong></div>
+          <div class="metric"><span>MOTA</span><strong id="mMOTA">–</strong></div>
+          <div class="metric"><span>MOTP (IoU)</span><strong id="mMOTP">–</strong></div>
+          <div class="metric"><span>IDSW</span><strong id="mIDSW">–</strong></div>
+          <div class="metric"><span>事件召回</span><strong id="mEventRecall">–</strong></div>
+          <div class="metric"><span>漏报事件</span><strong id="mFnEvents">–</strong></div>
+          <div class="metric"><span>误报 次/分钟</span><strong id="mFpPerMin">–</strong></div>
+          <div class="metric"><span>提前量 中位</span><strong id="mLead">–</strong></div>
+          <div class="metric"><span>迟到事件</span><strong id="mLate">–</strong></div>
+          <div class="metric"><span>ADE (px)</span><strong id="mADE">–</strong></div>
+          <div class="metric"><span>FDE (px)</span><strong id="mFDE">–</strong></div>
+          <div class="metric"><span>ADE (%对角)</span><strong id="mADErel">–</strong></div>
+          <div class="metric"><span>FDE (%对角)</span><strong id="mFDErel">–</strong></div>
+          <div class="metric"><span>背景内点率</span><strong id="mBg">–</strong></div>
+          <div class="metric"><span>RANSAC 迭代</span><strong id="mRansac">–</strong></div>
+          <div class="metric"><span>单帧耗时</span><strong id="mMs">–</strong></div>
+          <div class="metric"><span>P95 耗时</span><strong id="mP95">–</strong></div>
+          <div class="metric"><span>YOLO 推理</span><strong id="mDetect">–</strong></div>
+          <div class="metric"><span>评测帧数</span><strong id="mFrames">–</strong></div>
+          <div class="metric"><span>轨迹样本</span><strong id="mSamples">–</strong></div>
+        </div>
+        <div class="row-buttons">
+          <button class="btn" id="exportJson" type="button" disabled>导出结果 JSON</button>
+          <button class="btn" id="exportCsv" type="button" disabled>导出 CSV</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>验收门槛（阶段 1 · 动态目标）</h3>
+        <ul class="accept-list">
+          <li>事件召回 ≥ 95%；高危事件（即将碰撞）漏报为 0</li>
+          <li>误报 ≤ 3 次/分钟（安全优先模式允许 ≤ 5）</li>
+          <li>提前量：中位 ≥ 1.5 s，P10 ≥ 0.8 s</li>
+          <li>单帧耗时 P95 ≤ 40 ms（320 宽分析分辨率）</li>
+          <li>背景内点率中位 ≥ 55%</li>
+          <li>调参组与检验组分离：检验组只测、不改参数</li>
+          <li>阶段 1 不承诺：静止障碍、语义识别、上下楼梯</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>极端场景清单（每条素材单独评测）</h3>
+        <ul class="checklist" id="checklist">
+          <li><label><input type="checkbox" data-tag="低照度/夜间" /> 低照度 / 夜间行走</label></li>
+          <li><label><input type="checkbox" data-tag="强逆光" /> 强逆光 / 隧道出入口</label></li>
+          <li><label><input type="checkbox" data-tag="雨天镜头水珠" /> 雨天 / 镜头水珠 / 雨刷</label></li>
+          <li><label><input type="checkbox" data-tag="密集人群遮挡" /> 密集人群 / 长时间遮挡</label></li>
+          <li><label><input type="checkbox" data-tag="快速横穿" /> 自行车/电动车快速横穿</label></li>
+          <li><label><input type="checkbox" data-tag="剧烈手抖" /> 剧烈手抖 / 小跑</label></li>
+          <li><label><input type="checkbox" data-tag="积水反光" /> 积水反光 / 镜面倒影</label></li>
+          <li><label><input type="checkbox" data-tag="台阶路缘" /> 上下楼梯 / 路缘石</label></li>
+        </ul>
+        <p class="hint" id="checklistStatus">已完成 0 / 8 类极端场景</p>
+      </div>
+
+      <div class="section note">
+        <p><strong>标注方式：</strong>在视频上拖拽画框；同一目标跨帧保持相同轨迹 ID，用于 ADE/FDE。</p>
+        <p><strong>YOLO 模式：</strong>目标发现只走 YOLO + 逼近跟踪；光流只估计已检出目标的相对膨胀速度，背景内点率/RANSAC 指标不适用。事件按宽走廊统计，贴边经过的目标（如 id4）也计入。</p>
+        <p><strong>后续备选：</strong>多帧时序基线（如 TSM/3D CNN）排在当前 YOLO + 面积/中心判定之后，本阶段不实现。</p>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="eval/app.js"></script>
+</body>
+</html>

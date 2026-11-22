@@ -1,0 +1,32 @@
+# Python / YOLO 离线环境
+yolo-demo/.venv/
+yolo-demo/.ultralytics/
+yolo-demo/.pip-cache/
+yolo-demo/.tmp/
+.tools/
+__pycache__/
+*.pyc
+
+# 大体积权重：保留 ONNX，排除 .pt
+yolo-demo/models/*.pt
+
+# 真实视频素材：保留 manifest / README，排除视频本体
+assets/videos/**/*.mp4
+assets/videos/**/*.webm
+assets/videos/**/*.ogv
+assets/videos/**/*.mov
+assets/videos/**/*.mkv
+
+# 演示视频、开发资料包（体积/版权原因不入代码库）
+demo/
+dev-package-20261122/
+
+# 生成结果与临时文件
+bench/
+tmp/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

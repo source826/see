@@ -1,0 +1,166 @@
+.eval-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+#annoCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+#evalVideo { max-height: 58vh; }
+
+.frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.frame-bar input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.frame-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 96px;
+  text-align: right;
+}
+
+.cls-btn.active {
+  outline: 2px solid var(--accent);
+  background: rgba(45, 212, 191, 0.12);
+  color: #ccfbf1;
+}
+.btn.cls-btn[data-cls="ped"].active { outline-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
+.btn.cls-btn[data-cls="veh"].active { outline-color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
+.btn.cls-btn[data-cls="static"].active { outline-color: #a78bfa; background: rgba(167, 139, 250, 0.12); }
+
+label.select input[type="number"] {
+  width: 64px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+}
+
+.bench-config {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.bench-config label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.bench-config input[type="number"] {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+.bench-config .toggle { grid-column: 1 / -1; }
+.bench-config select {
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+}
+
+.btn.wide { width: 100%; margin-top: 4px; }
+
+.progress {
+  height: 7px;
+  margin-top: 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.progress i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.15s;
+}
+
+.result-grid { margin-top: 0; }
+.row-buttons { display: flex; gap: 8px; margin-top: 10px; }
+.row-buttons .btn { flex: 1; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.checklist label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+}
+.checklist input { accent-color: var(--accent); }
+
+.accept-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.exp-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 11px;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.exp-table th,
+.exp-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.exp-table th {
+  color: var(--muted);
+  font-weight: 500;
+}
+.exp-table tbody tr:last-child td { color: var(--text); }
+
+@media (max-width: 1180px) {
+  .eval-layout { grid-template-columns: 1fr; }
+}

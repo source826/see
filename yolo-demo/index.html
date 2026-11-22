@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YOLOv8n 实时检测</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>YOLOv8n 实时检测</h1>
+    <div class="badges">
+      <span id="modelState" class="badge">模型加载中…</span>
+      <span id="epBadge" class="badge muted"></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="hint" class="hint">点击「开启摄像头」开始检测</div>
+    </div>
+
+    <div class="toolbar">
+      <button id="startBtn" class="btn primary" disabled>开启摄像头</button>
+      <button id="stopBtn" class="btn" disabled>停止</button>
+      <button id="imageBtn" class="btn ghost">用示例图片检测</button>
+
+      <label class="ctl">
+        置信度 <input id="conf" type="range" min="0.05" max="0.9" step="0.05" value="0.25" />
+        <output id="confVal">0.25</output>
+      </label>
+      <label class="ctl">
+        IoU <input id="iou" type="range" min="0.1" max="0.9" step="0.05" value="0.45" />
+        <output id="iouVal">0.45</output>
+      </label>
+
+      <span id="stats" class="stats"></span>
+    </div>
+
+    <p class="note">
+      检测 COCO 80 类中的行人、车辆等常见目标。YOLOv8 由 Ultralytics 以 AGPL-3.0 发布；
+      推理运行时 onnxruntime-web 1.20.1（MIT，microsoft/onnxruntime）。来源见 README。
+    </p>
+  </main>
+
+  <script src="vendor/ort/ort.webgpu.min.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

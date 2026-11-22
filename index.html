@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>导盲视觉 · YOLO 逼近判定与语音提示</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>导盲视觉</h1>
+        <p>YOLO 检测 → 跟踪 ID → 面积/中心逼近判定 → 分级语音提示</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill" id="status">等待真实视频源</span>
+      <span class="pill ghost" id="enginePill">YOLOv8n · 加载中…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage-card">
+      <div class="video-wrap" id="videoWrap">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="empty" id="empty">
+          <strong>选择真实视频或开启摄像头</strong>
+          <span>只接受真实拍摄素材，不使用任何合成数据</span>
+          <button class="btn primary" id="demoBtn" type="button">载入内置真实街景素材</button>
+        </div>
+        <div class="alert-banner" id="alert" hidden>
+          <span class="alert-level" id="alertLevel">危险</span>
+          <strong class="alert-text" id="alertText"></strong>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="btn primary" for="fileInput">打开真实视频</label>
+        <input id="fileInput" type="file" accept="video/*" hidden />
+        <button class="btn" id="cameraBtn" type="button">开启摄像头</button>
+        <button class="btn" id="playBtn" type="button">暂停</button>
+        <button class="btn small" id="prevBtn" type="button" title="上一帧">◀ 帧</button>
+        <button class="btn small" id="nextBtn" type="button" title="下一帧">帧 ▶</button>
+        <span class="divider"></span>
+        <label class="toggle"><input type="checkbox" id="precisionToggle" checked /> 高精度双向光流</label>
+        <label class="toggle"><input type="checkbox" id="speechToggle" checked /> 语音提示</label>
+        <label class="select">
+          分析分辨率
+          <select id="resSelect">
+            <option value="256">256</option>
+            <option value="320" selected>320</option>
+            <option value="400">400</option>
+            <option value="480">480</option>
+          </select>
+        </label>
+        <label class="select">
+          源帧率
+          <select id="fpsSelect">
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="30" selected>30</option>
+            <option value="60">60</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="controls sub">
+        <span class="hint">叠加层：</span>
+        <label class="toggle"><input type="checkbox" id="showFlow" checked /> 光流分层</label>
+        <label class="toggle"><input type="checkbox" id="showTracks" checked /> 轨迹框</label>
+        <label class="toggle"><input type="checkbox" id="showPredict" checked /> 轨迹预测</label>
+        <label class="toggle"><input type="checkbox" id="showCorridor" checked /> 通行走廊</label>
+        <span class="divider"></span>
+        <span class="hint" id="sourceName">未加载素材</span>
+        <span class="divider"></span>
+        <button class="btn" id="recBtn" type="button">● 记录中间结果</button>
+        <span class="hint" id="recStatus">未记录</span>
+        <a class="btn ghost right" href="eval.html">量化评测台 →</a>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="instruction" id="instruction">前方通畅，可以直行</div>
+
+      <div class="metrics">
+        <div class="metric"><span>处理帧率</span><strong id="stFps">–</strong></div>
+        <div class="metric"><span>单帧耗时</span><strong id="stMs">–</strong></div>
+        <div class="metric"><span>YOLO 推理</span><strong id="stDetect">–</strong></div>
+        <div class="metric"><span>判定模式</span><strong id="stMode">–</strong></div>
+        <div class="metric"><span>风险目标</span><strong id="stRisk">–</strong></div>
+        <div class="metric"><span>valid 光流点</span><strong id="stPoints">–</strong></div>
+        <div class="metric"><span>背景内点率</span><strong id="stBg">–</strong></div>
+        <div class="metric"><span>运动层数</span><strong id="stLayers">–</strong></div>
+        <div class="metric"><span>运动目标</span><strong id="stObjects">–</strong></div>
+        <div class="metric"><span>确认轨迹</span><strong id="stTracks">–</strong></div>
+        <div class="metric"><span>RANSAC 迭代</span><strong id="stRansac">–</strong></div>
+      </div>
+
+      <div class="section">
+        <h3>阶段耗时</h3>
+        <div class="bars">
+          <div class="bar-row"><span>YOLO</span><div class="bar"><i id="tDetect"></i></div><em id="vDetect">–</em></div>
+          <div class="bar-row"><span>灰度</span><div class="bar"><i id="tGray"></i></div><em id="vGray">–</em></div>
+          <div class="bar-row"><span>金字塔</span><div class="bar"><i id="tPyr"></i></div><em id="vPyr">–</em></div>
+          <div class="bar-row"><span>光流</span><div class="bar"><i id="tFlow"></i></div><em id="vFlow">–</em></div>
+          <div class="bar-row"><span>RANSAC 分层</span><div class="bar"><i id="tSeg"></i></div><em id="vSeg">–</em></div>
+          <div class="bar-row"><span>跟踪/预测</span><div class="bar"><i id="tTrack"></i></div><em id="vTrack">–</em></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>风险事件</h3>
+        <ol class="log" id="log">
+          <li class="muted">暂无风险事件</li>
+        </ol>
+      </div>
+
+      <div class="section note">
+        <p><strong>检测层：</strong>YOLOv8n（ONNX，浏览器本地推理）；跟踪、面积/中心逼近判定和语音策略为自写逻辑。</p>
+        <p><strong>语音分级：</strong>明确快速逼近才说“有人冲过来”；静止目标说“前方静止障碍”；拿不准时说“前方有情况请确认”。</p>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="src/app/ui.js"></script>
+</body>
+</html>
