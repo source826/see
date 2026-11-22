@@ -827,10 +827,10 @@ async function loadUrlAsFile(url, inputId, type) {
   }
   if (bootParams.has('gt')) await loadUrlAsFile(bootParams.get('gt'), 'importGt', 'application/json');
 })();
-// ?yolo=1&warmup=45 直接启用 YOLO 检测层并设置预热帧
+// ?yolo=1&warmup=120 直接启用 YOLO 检测层并设置预热帧
 if (bootParams.get('yolo') === '1' || bootParams.get('yolo') === 'true') {
   $('useYolo').checked = true;
-  if (!bootParams.has('warmup')) $('benchWarmup').value = '45';
+  if (!bootParams.has('warmup')) $('benchWarmup').value = '120';
 }
 if (bootParams.has('warmup')) {
   $('benchWarmup').value = String(Math.max(0, Number(bootParams.get('warmup')) || 0));
@@ -840,7 +840,7 @@ if (bootParams.get('wasm') === '1') state.yoloOptions.preferWebGPU = false;
 if (bootParams.has('conf')) state.yoloOptions.conf = Number(bootParams.get('conf'));
 if (bootParams.has('iou')) state.yoloOptions.iou = Number(bootParams.get('iou'));
 $('useYolo').addEventListener('change', () => {
-  if ($('useYolo').checked && !(Number($('benchWarmup').value) > 0)) $('benchWarmup').value = '45';
+  if ($('useYolo').checked && !(Number($('benchWarmup').value) > 0)) $('benchWarmup').value = '120';
   if (!$('useYolo').checked) $('benchWarmup').value = '0';
 });
 // 允许 ?opt=ransacThreshold:1.5&opt=minLayerRatio:0.05 直接带入参数实验
