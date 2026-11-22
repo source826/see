@@ -382,6 +382,25 @@ export class ApproachTracker {
 }
 
 /**
+ * 地面几何估距：假设地面平坦、相机离地 H、地平线在 horizonRatio * 图像高。
+ * d = f * H / (y_ground - y_horizon)，f = W / (2*tan(HFOV/2))。
+ * 只返回可信范围（0.3–200m）；框底在地平线以上时返回 null，由框高估距兜底。
+ */
+export function estimateGroundDistance(bbox, imageWidth, imageHeight, opts = {}) {
+  const cameraHeight = Number(opts.cameraHeight) || 0;
+  if (!(cameraHeight > 0)) return null;
+  const hfov = ((opts.hfovDeg ?? 65) * Math.PI) / 180;
+  const f = (imageWidth * 0.5) / Math.tan(hfov * 0.5);
+  const horizonY = imageHeight * (opts.horizonRatio ?? 0.5);
+  const groundY = bbox.y + bbox.h;
+  const dy = groundY - horizonY;
+  if (!(dy > 1)) return null;
+  const d = (f * cameraHeight) / dy;
+  if (!Number.isFinite(d) || d < 0.3 || d > 200) return null;
+  return d;
+}
+
+/**
  * 逼近风险：面积持续增长 + 中心朝行进中心移动 + 脚下点进入通行走廊。
  * 输出结构与 risk.assessRisk 兼容（alerts/perTrack/instruction/topAlert）。
  */
@@ -389,6 +408,9 @@ export function assessApproachRisk(args) {
   const { tracks, corridor, w, h, fps = 30, horizonSec = 1.4, hfovDeg = 65 } = args;
   const minApproachFrames = args.minApproachFrames ?? APPROACH_DEFAULTS.approachMinFrames;
   const pathMode = args.pathMode ?? 'wide';
+  const cameraHeight = Number(args.cameraHeight) || 0;
+  const horizonRatio = args.horizonRatio ?? 0.5;
+  const distanceMode = args.distanceMode ?? 'bbox';
   const steps = Math.max(4, Math.round(horizonSec * fps));
   const perTrack = [];
   const alerts = [];
@@ -402,7 +424,10 @@ export function assessApproachRisk(args) {
     const inPath = pathMode === 'strict' ? inStrict : inWide;
     const approaching = Boolean(t.approaching && t.approachFrames >= minApproachFrames && inPath);
     const areaRatio = (t.bbox.w * t.bbox.h) / Math.max(1, w * h);
-    const distance = estimateDistance(t.bbox, w, { hfovDeg });
+    const groundDistance = estimateGroundDistance(t.bbox, w, h, { cameraHeight, hfovDeg, horizonRatio });
+    const useGround = distanceMode === 'ground' && groundDistance !== null;
+    const distance = useGround ? groundDistance : estimateDistance(t.bbox, w, { hfovDeg });
+    const distanceSource = useGround ? 'ground' : 'bbox';
     const dir = directionLabel(cx, w);
 
     let level = 0;
@@ -426,6 +451,8 @@ export function assessApproachRisk(args) {
       ttc: t.ttc,
       ttcSource: t.ttcSource,
       distance,
+      distanceSource,
+      groundDistance,
       direction: dir,
       strictStep: inStrict ? 1 : -1,
       wideStep: inWide ? 1 : -1,

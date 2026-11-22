@@ -39,6 +39,11 @@ export const PIPELINE_DEFAULTS = {
   approachMinScore: 0.15,
   approachMinFrames: 4,
   alertPath: 'wide',
+  // 相机离地高度（米）与地平线位置（占图像高度比例），用于地面几何估距
+  cameraHeight: 1.5,
+  horizonRatio: 0.5,
+  // 'bbox'：框高估距（历史指标兼容）；'ground'：按相机高度与地面线估距
+  distanceMode: 'bbox',
   flowPointsPerBox: 32,
 };
 
@@ -252,6 +257,9 @@ export class GuidePipeline {
         hfovDeg: this.options.hfovDeg,
         minApproachFrames: this.options.approachMinFrames,
         pathMode: this.options.alertPath,
+        cameraHeight: this.options.cameraHeight,
+        horizonRatio: this.options.horizonRatio,
+        distanceMode: this.options.distanceMode,
       });
       this.lastBgH = null;
       // 下一帧在检测框内布光流点，避免背景点稀释目标膨胀估计。

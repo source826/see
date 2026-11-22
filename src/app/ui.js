@@ -16,13 +16,15 @@ const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 const LAYER_COLORS = ['rgba(148,163,184,0.55)', '#a78bfa', '#34d399', '#f472b6'];
 
 const state = {
-  pipeline: new GuidePipeline({ fps: 30 }),
+  pipeline: new GuidePipeline({ fps: 30, cameraHeight: 1.5, horizonRatio: 0.5, distanceMode: 'ground' }),
   source: null,
   stream: null,
   objectUrl: null,
   running: true,
   analysisWidth: 320,
   fps: 30,
+  cameraHeight: 1.5,
+  horizonRatio: 0.5,
   frameIndex: 0,
   lastVideoTime: -1,
   lastProcessAt: 0,
@@ -325,6 +327,12 @@ function updatePanel(res) {
   $('stDetect').textContent = state.yoloReady ? `${detect.toFixed(1)} ms` : '–';
   $('stMode').textContent = res.mode === 'yolo' ? 'YOLO' : '运动分层';
   $('stRisk').textContent = res.risk ? `${res.risk.perTrack.length} / ${res.risk.alerts.length}` : '–';
+  $('stDistance').textContent =
+    res.risk && res.risk.perTrack.length
+      ? res.risk.perTrack[0].distanceSource === 'ground'
+        ? '相机高度'
+        : '框高'
+      : '–';
   $('stPoints').textContent = `${res.flowStats.valid} / ${res.flowStats.used}`;
   $('stBg').textContent = seg ? `${(seg.stats.bgInlierRatio * 100).toFixed(1)}%` : '–';
   $('stLayers').textContent = seg ? String(seg.stats.layerCount) : '–';
@@ -562,6 +570,17 @@ $('fpsSelect').addEventListener('change', (e) => {
   state.pipeline.setOptions({ fps: state.fps });
 });
 
+$('cameraHeight').addEventListener('change', (e) => {
+  const v = Math.min(2.5, Math.max(0.3, Number(e.target.value) || 1.5));
+  e.target.value = String(v);
+  state.cameraHeight = v;
+  state.pipeline.setOptions({
+    cameraHeight: v,
+    horizonRatio: state.horizonRatio,
+    distanceMode: 'ground',
+  });
+});
+
 const toggle = (id, key) => {
   $(id).addEventListener('change', (e) => {
     state.show[key] = e.target.checked;
@@ -627,6 +646,21 @@ async function initYolo() {
   }
 }
 
+function initDistanceOptions() {
+  const params = new URLSearchParams(location.search);
+  const cam = Number(params.get('cam'));
+  if (Number.isFinite(cam) && cam > 0) state.cameraHeight = Math.min(2.5, Math.max(0.3, cam));
+  const horizon = Number(params.get('horizon'));
+  if (Number.isFinite(horizon) && horizon > 0 && horizon < 1) state.horizonRatio = horizon;
+  $('cameraHeight').value = String(state.cameraHeight);
+  state.pipeline.setOptions({
+    cameraHeight: state.cameraHeight,
+    horizonRatio: state.horizonRatio,
+    distanceMode: 'ground',
+  });
+}
+
+initDistanceOptions();
 initYolo();
 requestAnimationFrame(tick);
 

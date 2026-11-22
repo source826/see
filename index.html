@@ -56,6 +56,10 @@
             <option value="480">480</option>
           </select>
         </label>
+        <label class="select" title="相机离地高度（米），用于地面几何估距">
+          相机高度
+          <input id="cameraHeight" type="number" min="0.3" max="2.5" step="0.05" value="1.5" style="width:70px" /> m
+        </label>
         <label class="select">
           源帧率
           <select id="fpsSelect">
@@ -91,6 +95,7 @@
         <div class="metric"><span>YOLO 推理</span><strong id="stDetect">–</strong></div>
         <div class="metric"><span>判定模式</span><strong id="stMode">–</strong></div>
         <div class="metric"><span>风险目标</span><strong id="stRisk">–</strong></div>
+        <div class="metric"><span>估距方式</span><strong id="stDistance">–</strong></div>
         <div class="metric"><span>valid 光流点</span><strong id="stPoints">–</strong></div>
         <div class="metric"><span>背景内点率</span><strong id="stBg">–</strong></div>
         <div class="metric"><span>运动层数</span><strong id="stLayers">–</strong></div>

@@ -5,6 +5,7 @@ import {
   assessApproachRisk,
   computeApproachMetrics,
   estimateFlowScale,
+  estimateGroundDistance,
 } from '../src/tracking/approach.js';
 import { buildCorridor } from '../src/tracking/risk.js';
 
@@ -132,4 +133,62 @@ test('指标计算：窗口不足时不判定', () => {
   );
   assert.equal(m.ready, false);
   assert.equal(m.approaching, false);
+});
+
+test('地面几何估距与相机高度成正比', () => {
+  const bbox = { x: 120, y: 300, w: 40, h: 180 }; // 框底 480，地平线 240
+  const d1 = estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, hfovDeg: 65, horizonRatio: 0.5 });
+  const d2 = estimateGroundDistance(bbox, 854, 480, { cameraHeight: 3.0, hfovDeg: 65, horizonRatio: 0.5 });
+  assert.ok(d1 !== null && d2 !== null);
+  assert.ok(Math.abs(d2 / d1 - 2) < 1e-9, `d1=${d1}, d2=${d2}`);
+});
+
+test('框底在地平线以上时地面估距返回 null', () => {
+  const bbox = { x: 120, y: 100, w: 40, h: 40 }; // 框底 140 < 地平线 240
+  assert.equal(estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, horizonRatio: 0.5 }), null);
+});
+
+test('ground 模式使用相机高度估距，bbox 模式保持框高估距', () => {
+  const track = {
+    id: 1,
+    confirmed: true,
+    bbox: { x: 150, y: 120, w: 20, h: 50 },
+    cls: 0,
+    className: '行人',
+    hits: 12,
+    samples: 8,
+    age: 12,
+    approaching: true,
+    approachFrames: 5,
+    areaRate: 1,
+    centerRate: -0.01,
+    ttc: 1.5,
+    ttcSource: 'area',
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 0, y: 1 },
+  };
+  const corridor = buildCorridor(null, W, H);
+  const ground = assessApproachRisk({
+    tracks: [track],
+    corridor,
+    w: W,
+    h: H,
+    fps: 30,
+    cameraHeight: 1.5,
+    horizonRatio: 0.5,
+    distanceMode: 'ground',
+  });
+  const bbox = assessApproachRisk({
+    tracks: [track],
+    corridor,
+    w: W,
+    h: H,
+    fps: 30,
+    distanceMode: 'bbox',
+  });
+  assert.equal(ground.perTrack[0].distanceSource, 'ground');
+  assert.ok(ground.perTrack[0].distance > 0);
+  assert.equal(bbox.perTrack[0].distanceSource, 'bbox');
+  assert.ok(Math.abs(ground.perTrack[0].distance - bbox.perTrack[0].distance) > 0.1);
 });
