@@ -42,6 +42,8 @@ export const PIPELINE_DEFAULTS = {
   // 相机离地高度（米）与地平线位置（占图像高度比例），用于地面几何估距
   cameraHeight: 1.5,
   horizonRatio: 0.5,
+  // 相机光轴向下俯角（度）；实时页默认 10°，评测/演示默认不启用地面模式
+  cameraPitchDeg: 0,
   // 'bbox'：框高估距（历史指标兼容）；'ground'：按相机高度与地面线估距
   distanceMode: 'bbox',
   flowPointsPerBox: 32,
@@ -259,6 +261,7 @@ export class GuidePipeline {
         pathMode: this.options.alertPath,
         cameraHeight: this.options.cameraHeight,
         horizonRatio: this.options.horizonRatio,
+        cameraPitchDeg: this.options.cameraPitchDeg,
         distanceMode: this.options.distanceMode,
       });
       this.lastBgH = null;

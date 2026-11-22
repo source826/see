@@ -5,9 +5,24 @@ export const ANNOUNCE_TEXTS = {
   rushPerson: '有人冲过来，请停下',
   rushVehicle: '有车冲过来，请停下',
   rushObject: '有目标冲过来，请停下',
-  staticObject: '前方静止障碍，请绕行',
+  staticObject: '有静止障碍，请绕行',
   uncertain: '前方有情况请确认',
 };
+
+/** 用户侧距离档位：很近 / 近 / 有点远。具体米数只留在调试信息里。 */
+export function distanceBucket(distance) {
+  if (!(distance > 0)) return '附近';
+  if (distance <= 3) return '很近';
+  if (distance <= 8) return '近';
+  return '有点远';
+}
+
+function placeLabel(p) {
+  const dir = p.direction || '前方';
+  const bucket = distanceBucket(p.distance);
+  const suffix = bucket === '很近' ? '很近处' : bucket === '近' ? '近处' : bucket === '有点远' ? '有点远处' : '附近';
+  return `${dir}${suffix}`;
+}
 
 function classKind(className = '') {
   if (/行人|自行车|摩托车/.test(className)) return 'person';
@@ -38,6 +53,7 @@ export function classifyAnnouncement(risk, opts = {}) {
   for (const p of risk.perTrack) {
     if (!p.confirmed || !p.inPath) continue;
     const kind = classKind(p.className);
+    const place = placeLabel(p);
     const fast =
       p.approaching &&
       p.distance <= rushMaxDist &&
@@ -47,10 +63,10 @@ export function classifyAnnouncement(risk, opts = {}) {
     if (fast) {
       const text =
         kind === 'person'
-          ? ANNOUNCE_TEXTS.rushPerson
+          ? `${place}${ANNOUNCE_TEXTS.rushPerson}`
           : kind === 'vehicle'
-            ? ANNOUNCE_TEXTS.rushVehicle
-            : ANNOUNCE_TEXTS.rushObject;
+            ? `${place}${ANNOUNCE_TEXTS.rushVehicle}`
+            : `${place}${ANNOUNCE_TEXTS.rushObject}`;
       const cand = {
         kind: 'rush',
         text,
@@ -80,7 +96,7 @@ export function classifyAnnouncement(risk, opts = {}) {
     if (isStatic) {
       const cand = {
         kind: 'static',
-        text: ANNOUNCE_TEXTS.staticObject,
+        text: `${place}${ANNOUNCE_TEXTS.staticObject}`,
         trackId: p.id,
         level: 2,
         priority: 2,

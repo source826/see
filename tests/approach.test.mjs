@@ -148,6 +148,14 @@ test('框底在地平线以上时地面估距返回 null', () => {
   assert.equal(estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, horizonRatio: 0.5 }), null);
 });
 
+test('俯角越大，同一框底估距越近', () => {
+  const bbox = { x: 120, y: 300, w: 40, h: 180 }; // 框底 480
+  const flat = estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, cameraPitchDeg: 0 });
+  const down = estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, cameraPitchDeg: 10 });
+  assert.ok(flat !== null && down !== null);
+  assert.ok(down < flat, `flat=${flat}, down=${down}`);
+});
+
 test('ground 模式使用相机高度估距，bbox 模式保持框高估距', () => {
   const track = {
     id: 1,

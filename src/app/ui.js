@@ -16,7 +16,13 @@ const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 const LAYER_COLORS = ['rgba(148,163,184,0.55)', '#a78bfa', '#34d399', '#f472b6'];
 
 const state = {
-  pipeline: new GuidePipeline({ fps: 30, cameraHeight: 1.5, horizonRatio: 0.5, distanceMode: 'ground' }),
+  pipeline: new GuidePipeline({
+    fps: 30,
+    cameraHeight: 1.5,
+    horizonRatio: 0.5,
+    cameraPitchDeg: 10,
+    distanceMode: 'ground',
+  }),
   source: null,
   stream: null,
   objectUrl: null,
@@ -25,6 +31,7 @@ const state = {
   fps: 30,
   cameraHeight: 1.5,
   horizonRatio: 0.5,
+  cameraPitchDeg: 10,
   frameIndex: 0,
   lastVideoTime: -1,
   lastProcessAt: 0,
@@ -570,15 +577,27 @@ $('fpsSelect').addEventListener('change', (e) => {
   state.pipeline.setOptions({ fps: state.fps });
 });
 
+function applyDistanceOptions() {
+  state.pipeline.setOptions({
+    cameraHeight: state.cameraHeight,
+    horizonRatio: state.horizonRatio,
+    cameraPitchDeg: state.cameraPitchDeg,
+    distanceMode: 'ground',
+  });
+}
+
 $('cameraHeight').addEventListener('change', (e) => {
   const v = Math.min(2.5, Math.max(0.3, Number(e.target.value) || 1.5));
   e.target.value = String(v);
   state.cameraHeight = v;
-  state.pipeline.setOptions({
-    cameraHeight: v,
-    horizonRatio: state.horizonRatio,
-    distanceMode: 'ground',
-  });
+  applyDistanceOptions();
+});
+
+$('cameraPitch').addEventListener('change', (e) => {
+  const v = Math.min(45, Math.max(-10, Number(e.target.value) || 0));
+  e.target.value = String(v);
+  state.cameraPitchDeg = v;
+  applyDistanceOptions();
 });
 
 const toggle = (id, key) => {
@@ -650,14 +669,13 @@ function initDistanceOptions() {
   const params = new URLSearchParams(location.search);
   const cam = Number(params.get('cam'));
   if (Number.isFinite(cam) && cam > 0) state.cameraHeight = Math.min(2.5, Math.max(0.3, cam));
+  const pitch = Number(params.get('pitch'));
+  if (Number.isFinite(pitch)) state.cameraPitchDeg = Math.min(45, Math.max(-10, pitch));
   const horizon = Number(params.get('horizon'));
   if (Number.isFinite(horizon) && horizon > 0 && horizon < 1) state.horizonRatio = horizon;
   $('cameraHeight').value = String(state.cameraHeight);
-  state.pipeline.setOptions({
-    cameraHeight: state.cameraHeight,
-    horizonRatio: state.horizonRatio,
-    distanceMode: 'ground',
-  });
+  $('cameraPitch').value = String(state.cameraPitchDeg);
+  applyDistanceOptions();
 }
 
 initDistanceOptions();

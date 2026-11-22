@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyAnnouncement, SpeechAnnouncer, ANNOUNCE_TEXTS } from '../src/app/announce.js';
+import { classifyAnnouncement, distanceBucket, SpeechAnnouncer, ANNOUNCE_TEXTS } from '../src/app/announce.js';
 
 function track(over = {}) {
   return {
@@ -8,6 +8,7 @@ function track(over = {}) {
     confirmed: true,
     inPath: true,
     className: '行人',
+    direction: '正前方',
     approaching: true,
     ttc: 1.2,
     areaRate: 0.8,
@@ -28,13 +29,13 @@ function risk(...tracks) {
 test('快速逼近的行人说“有人冲过来”', () => {
   const a = classifyAnnouncement(risk(track()));
   assert.equal(a.kind, 'rush');
-  assert.equal(a.text, ANNOUNCE_TEXTS.rushPerson);
+  assert.ok(a.text.includes(ANNOUNCE_TEXTS.rushPerson));
 });
 
 test('快速逼近的车辆说“有车冲过来”', () => {
   const a = classifyAnnouncement(risk(track({ className: '汽车', distance: 9 })));
   assert.equal(a.kind, 'rush');
-  assert.equal(a.text, ANNOUNCE_TEXTS.rushVehicle);
+  assert.ok(a.text.includes(ANNOUNCE_TEXTS.rushVehicle));
 });
 
 test('距离很远时不喊冲过来，退为“前方有情况请确认”', () => {
@@ -48,7 +49,20 @@ test('走廊内静止目标说“前方静止障碍”', () => {
     risk(track({ approaching: false, ttc: null, areaRate: 0.02, centerRate: 0.001, distance: 4, samples: 8, hits: 15, level: 0 })),
   );
   assert.equal(a.kind, 'static');
-  assert.equal(a.text, ANNOUNCE_TEXTS.staticObject);
+  assert.ok(a.text.includes(ANNOUNCE_TEXTS.staticObject));
+});
+
+test('距离只用很近/近/有点远三档', () => {
+  assert.equal(distanceBucket(2), '很近');
+  assert.equal(distanceBucket(5), '近');
+  assert.equal(distanceBucket(12), '有点远');
+});
+
+test('播报带方向和粗距离，不报具体米数', () => {
+  const a = classifyAnnouncement(risk(track({ distance: 5, direction: '左前方' })));
+  assert.match(a.text, /左前方近处/);
+  assert.match(a.text, /有人冲过来/);
+  assert.doesNotMatch(a.text, /米/);
 });
 
 test('同类播报有全局冷却，不会因换了目标就连喊', () => {

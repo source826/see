@@ -382,8 +382,10 @@ export class ApproachTracker {
 }
 
 /**
- * 地面几何估距：假设地面平坦、相机离地 H、地平线在 horizonRatio * 图像高。
- * d = f * H / (y_ground - y_horizon)，f = W / (2*tan(HFOV/2))。
+ * 地面几何估距：相机离地 H，俯角 θ（向下为正）。
+ * 令 y' = (y_ground - H/2) / f，则
+ * d = H * (1 - y'*tanθ) / (y' + tanθ)。
+ * 未给俯角时退回“地平线在 horizonRatio * 图像高”的简化式。
  * 只返回可信范围（0.3–200m）；框底在地平线以上时返回 null，由框高估距兜底。
  */
 export function estimateGroundDistance(bbox, imageWidth, imageHeight, opts = {}) {
@@ -391,11 +393,21 @@ export function estimateGroundDistance(bbox, imageWidth, imageHeight, opts = {})
   if (!(cameraHeight > 0)) return null;
   const hfov = ((opts.hfovDeg ?? 65) * Math.PI) / 180;
   const f = (imageWidth * 0.5) / Math.tan(hfov * 0.5);
-  const horizonY = imageHeight * (opts.horizonRatio ?? 0.5);
   const groundY = bbox.y + bbox.h;
-  const dy = groundY - horizonY;
-  if (!(dy > 1)) return null;
-  const d = (f * cameraHeight) / dy;
+  let d;
+  const pitchDeg = Number(opts.cameraPitchDeg);
+  if (Number.isFinite(pitchDeg)) {
+    const tanP = Math.tan((pitchDeg * Math.PI) / 180);
+    const yp = (groundY - imageHeight * 0.5) / f;
+    const denom = yp + tanP;
+    if (!(denom > 1e-6)) return null;
+    d = (cameraHeight * (1 - yp * tanP)) / denom;
+  } else {
+    const horizonY = imageHeight * (opts.horizonRatio ?? 0.5);
+    const dy = groundY - horizonY;
+    if (!(dy > 1)) return null;
+    d = (f * cameraHeight) / dy;
+  }
   if (!Number.isFinite(d) || d < 0.3 || d > 200) return null;
   return d;
 }
@@ -409,6 +421,7 @@ export function assessApproachRisk(args) {
   const minApproachFrames = args.minApproachFrames ?? APPROACH_DEFAULTS.approachMinFrames;
   const pathMode = args.pathMode ?? 'wide';
   const cameraHeight = Number(args.cameraHeight) || 0;
+  const cameraPitchDeg = Number.isFinite(Number(args.cameraPitchDeg)) ? Number(args.cameraPitchDeg) : undefined;
   const horizonRatio = args.horizonRatio ?? 0.5;
   const distanceMode = args.distanceMode ?? 'bbox';
   const steps = Math.max(4, Math.round(horizonSec * fps));
@@ -424,7 +437,12 @@ export function assessApproachRisk(args) {
     const inPath = pathMode === 'strict' ? inStrict : inWide;
     const approaching = Boolean(t.approaching && t.approachFrames >= minApproachFrames && inPath);
     const areaRatio = (t.bbox.w * t.bbox.h) / Math.max(1, w * h);
-    const groundDistance = estimateGroundDistance(t.bbox, w, h, { cameraHeight, hfovDeg, horizonRatio });
+    const groundDistance = estimateGroundDistance(t.bbox, w, h, {
+      cameraHeight,
+      hfovDeg,
+      horizonRatio,
+      cameraPitchDeg,
+    });
     const useGround = distanceMode === 'ground' && groundDistance !== null;
     const distance = useGround ? groundDistance : estimateDistance(t.bbox, w, { hfovDeg });
     const distanceSource = useGround ? 'ground' : 'bbox';
