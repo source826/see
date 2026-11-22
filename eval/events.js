@@ -68,6 +68,7 @@ export function evaluateAlarmEvents(args) {
   const inside = new Map();
   const lastEntry = new Map();
   const events = [];
+  const bgGtIds = new Set();
   let corridorPoly = null;
   let gtSamples = 0;
   let gtInsideSamples = 0;
@@ -77,6 +78,11 @@ export function evaluateAlarmEvents(args) {
   for (const rec of sorted) {
     if (rec.corridor && Array.isArray(rec.corridor.poly)) corridorPoly = rec.corridor.poly;
     for (const box of rec.gt || []) {
+      // 背景行人/车辆只用于“报警打到了真实目标”判定，不构成事件。
+      if (box.bg) {
+        bgGtIds.add(box.id);
+        continue;
+      }
       const wasInside = inside.get(box.id) || false;
       const g = groundPoint(box.bbox);
       let nowInside = false;
@@ -185,7 +191,7 @@ export function evaluateAlarmEvents(args) {
       if (usedAlerts.has(key)) continue;
       if (eventTrackIds.has(a.trackId)) continue;
       const mapped = mappedGt(rec.frame, a.trackId);
-      if (mapped !== undefined && eventGtIds.has(mapped)) continue;
+      if (mapped !== undefined && (eventGtIds.has(mapped) || bgGtIds.has(mapped))) continue;
       fpFrameSet.add(rec.frame);
       fpAlerts.push({ frame: rec.frame, trackId: a.trackId, level: a.level, gtId: mapped ?? null });
     }

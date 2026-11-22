@@ -132,6 +132,7 @@ export async function runBench(args) {
     boxes.map((b) => ({
       id: b.id,
       cls: b.cls,
+      bg: Boolean(b.bg),
       bbox: { x: b.x * sx, y: b.y * sy, w: b.w * sx, h: b.h * sy },
     }));
 
@@ -349,13 +350,15 @@ export async function runBench(args) {
       if (usedA[p.a] || usedB[p.b]) continue;
       usedA[p.a] = 1;
       usedB[p.b] = 1;
-      map.set(pred[p.b].id, gt[p.a].id);
+      const rawId = gt[p.a].id;
+      const mappedId = gt[p.a].bg && gt.bgMap && gt.bgMap[String(rawId)] ? Number(gt.bgMap[String(rawId)]) : rawId;
+      map.set(pred[p.b].id, mappedId);
       let votes = idVotes.get(pred[p.b].id);
       if (!votes) {
         votes = new Map();
         idVotes.set(pred[p.b].id, votes);
       }
-      votes.set(gt[p.a].id, (votes.get(gt[p.a].id) || 0) + 1);
+      votes.set(mappedId, (votes.get(mappedId) || 0) + 1);
     }
     matchByFrame[frames[i].frame] = map;
   }

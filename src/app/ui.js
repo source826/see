@@ -806,8 +806,8 @@ async function initYolo() {
   }
   try {
     const { YoloDetector } = await import('../detection/yolo.js');
-    // 实时循环优先用 WASM：本机 WebGPU 在部分会话会挂起，WASM 延迟已足够演示。
-    // 需要 WebGPU 时加 ?webgpu=1。
+    // 实时循环默认 WASM；需要 WebGPU 时加 ?webgpu=1。
+    // 当前 ONNX 固定 1x3x640x640，不能改 inputSize。
     const detector = new YoloDetector({ preferWebGPU: params.get('webgpu') === '1' });
     state.detector = detector;
     await detector.load();

@@ -46,6 +46,7 @@ function gtAt(frame) {
     out.push({
       id,
       cls: a.cls,
+      bg: Boolean(a.bg || b.bg),
       bbox: scale({
         x: a.x + (b.x - a.x) * k,
         y: a.y + (b.y - a.y) * k,
@@ -56,8 +57,10 @@ function gtAt(frame) {
   }
   return out;
 }
+const firstGtFrame = Math.min(...Object.keys(gt.frames).map(Number));
 const matchByFrame = {};
 const eventFrames = [];
+const idVotes = new Map();
 for (const rec of frames) {
   const gtBoxes = gtAt(rec.frame);
   const pred = (rec.perTrack || []).filter((p) => p.confirmed).map((p) => ({ id: p.id, bbox: p.bbox }));
@@ -65,10 +68,12 @@ for (const rec of frames) {
   for (let a = 0; a < gtBoxes.length; a++) {
     for (let b = 0; b < pred.length; b++) {
       const v = iou(gtBoxes[a].bbox, pred[b].bbox);
-      if (v >= 0.3) pairs.push({ a, b, v });
+      // 小目标（贴边行人）框抖动大，实时匹配用 0.2；大目标仍用 0.3。
+      const small = gtBoxes[a].bbox.w * gtBoxes[a].bbox.h < 0.01 * analysis.width * analysis.height;
+      if (v >= (small ? 0.2 : 0.3)) pairs.push({ a, b, v, small });
     }
   }
-  pairs.sort((p, q) => q.v - p.v);
+  pairs.sort((p, q) => q.v - p.v || (q.small ? 1 : 0) - (p.small ? 1 : 0));
   const usedA = new Uint8Array(gtBoxes.length);
   const usedB = new Uint8Array(pred.length);
   const map = new Map();
@@ -76,7 +81,19 @@ for (const rec of frames) {
     if (usedA[p.a] || usedB[p.b]) continue;
     usedA[p.a] = 1;
     usedB[p.b] = 1;
-    map.set(pred[p.b].id, gtBoxes[p.a].id);
+    // 背景轨迹如果和事件目标重叠，报警映射到事件 id（只用于事件对齐，
+    // 背景框本身仍 bg=true，不参与事件定义）。
+    const rawId = gtBoxes[p.a].id;
+    const mappedId = gtBoxes[p.a].bg && gt.bgMap && gt.bgMap[String(rawId)]
+      ? Number(gt.bgMap[String(rawId)])
+      : rawId;
+    map.set(pred[p.b].id, mappedId);
+    let votes = idVotes.get(pred[p.b].id);
+    if (!votes) {
+      votes = new Map();
+      idVotes.set(pred[p.b].id, votes);
+    }
+    votes.set(mappedId, (votes.get(mappedId) || 0) + 1);
   }
   matchByFrame[rec.frame] = map;
   eventFrames.push({
@@ -85,6 +102,23 @@ for (const rec of frames) {
     alerts: (rec.alerts || []).filter((a) => a.level >= 2),
     corridor: rec.corridor && rec.corridor.wide ? { poly: rec.corridor.wide } : null,
   });
+}
+// GT 起点之前的帧没有 GT，用全局 ID 多数票映射（和评测台 warmup 口径一致），
+// 这样“事件发生前的报警”才能算提前量，而不是一律 0。
+const idMap = new Map();
+for (const [trackId, votes] of idVotes) {
+  let bestId;
+  let best = -1;
+  for (const [gtId, n] of votes) {
+    if (n > best) {
+      best = n;
+      bestId = gtId;
+    }
+  }
+  idMap.set(trackId, bestId);
+}
+for (const rec of frames) {
+  if (rec.frame < firstGtFrame) matchByFrame[rec.frame] = idMap;
 }
 const events = evaluateAlarmEvents({
   frames: eventFrames,

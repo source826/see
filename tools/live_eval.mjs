@@ -13,13 +13,14 @@ const profile = `D:/guidao/tmp/edge-live-${port}`;
 const out = args.out || 'D:/guidao/tmp/live_fa.json';
 const videoUrl = args.videoUrl;
 if (!videoUrl) {
-  console.error('用法: node tmp/live_fa.mjs --videoUrl=assets/... [--port=9400] [--out=...]');
+  console.error('用法: node tools/live_eval.mjs --videoUrl=assets/... [--webgpu=1] [--input=416] [--port=9400] [--out=...]');
   process.exit(1);
 }
+const webgpu = args.webgpu === '1';
+const headful = args.headful === '1';
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 if (existsSync(profile)) rmSync(profile, { recursive: true, force: true });
-const proc = spawn(edge, [
-  '--headless=new',
+const flags = [
   '--enable-unsafe-webgpu',
   '--no-first-run',
   '--no-default-browser-check',
@@ -30,8 +31,10 @@ const proc = spawn(edge, [
   `--user-data-dir=${profile}`,
   `--remote-debugging-port=${port}`,
   '--window-size=1400,1000',
-  'about:blank',
-], { stdio: 'ignore' });
+];
+if (!headful) flags.push('--headless=new');
+flags.push('about:blank');
+const proc = spawn(edge, flags, { stdio: 'ignore' });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitJson(url, tries = 80, delay = 250) {
@@ -97,7 +100,8 @@ async function main() {
     throw new Error(`超时: ${label}`);
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:8080/index.html?video=${encodeURIComponent(videoUrl)}&yolo=1&debug=1` });
+  const gpuParam = webgpu ? '&webgpu=1' : '';
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:8080/index.html?video=${encodeURIComponent(videoUrl)}&yolo=1&debug=1${gpuParam}` });
   await waitFor("document.readyState==='complete' && !!document.getElementById('video')", 20000, '实时页加载');
   await waitFor("document.getElementById('enginePill').textContent.includes('YOLOv8n')", 60000, 'YOLO 就绪');
   await waitFor("Number.isFinite(document.getElementById('video').duration) && document.getElementById('video').duration > 5", 30000, '视频元数据');

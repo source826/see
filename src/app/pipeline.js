@@ -116,6 +116,8 @@ export class GuidePipeline {
     return {
       minHits: this.options.yoloMinHits,
       window: this.options.approachWindow,
+      windowSec: this.options.approachWindowSec ?? 1.5,
+      historyLength: this.options.approachHistoryLength ?? 60,
       minSamples: this.options.approachMinSamples,
       minAreaGrowth: this.options.minAreaGrowth,
       maxCenterRate: this.options.maxCenterRate,

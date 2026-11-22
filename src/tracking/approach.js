@@ -11,7 +11,9 @@ export const APPROACH_DEFAULTS = {
   iouThreshold: 0.25,
   maxMissed: 3,
   minHits: 2,
-  historyLength: 14,
+  // 历史保留 2 秒左右；窗口按秒计算，避免 30fps 和 5fps 下窗口时长不一致。
+  historyLength: 60,
+  windowSec: 1.5,
   window: 8,
   minSamples: 5,
   // ln(框面积) 的每秒增长率；0.35 ≈ 面积每秒增长 35%
@@ -87,7 +89,14 @@ export function computeApproachMetrics(history, opts = {}) {
   const minAreaUpRatio = opts.minAreaUpRatio ?? APPROACH_DEFAULTS.minAreaUpRatio;
   const centerRef = opts.centerRef ?? APPROACH_DEFAULTS.centerRef;
 
-  const h = history.slice(-window);
+  const windowSec = opts.windowSec ?? APPROACH_DEFAULTS.windowSec;
+  let h = history.slice(-(opts.historyLength ?? APPROACH_DEFAULTS.historyLength));
+  if (windowSec > 0 && h.length) {
+    const lastFrame = h[h.length - 1].frame;
+    h = h.filter((v) => v.frame >= lastFrame - windowSec * fps);
+  } else {
+    h = h.slice(-window);
+  }
   if (h.length < minSamples) {
     return {
       ready: false,
@@ -187,6 +196,7 @@ class ApproachTrack {
     this.hits = 1;
     this.misses = 0;
     this.age = 1;
+    this.lastFrame = frameIndex;
     this.confirmed = opts.minHits <= 1;
     this.bornAt = frameIndex;
     this.history = [];
@@ -233,6 +243,7 @@ class ApproachTrack {
     this.score = det.score ?? this.score;
     this._push(frameIndex, det.bbox);
     this.velocity = estimateVelocity(this.history);
+    this.lastFrame = frameIndex;
     this.hits++;
     this.misses = 0;
     this.confirmed = this.hits >= this.options.minHits;
@@ -246,6 +257,8 @@ class ApproachTrack {
       height: this._h,
       fps,
       window: opts.window,
+      windowSec: opts.windowSec,
+      historyLength: opts.historyLength,
       minSamples: opts.minSamples,
       minAreaGrowth: opts.minAreaGrowth,
       maxCenterRate: opts.maxCenterRate,
@@ -335,13 +348,20 @@ export class ApproachTracker {
       const t = this.tracks[ti];
       const tc = boxCenter(t.bbox);
       const diag = Math.hypot(t.bbox.w, t.bbox.h);
+      // 低采样率下帧间位移大：用轨迹速度外推中心，再做关联。
+      const gap = Math.max(1, frameIndex - (t.lastFrame ?? frameIndex));
+      const predicted = {
+        x: tc.x + (t.velocity ? t.velocity.x * gap : 0),
+        y: tc.y + (t.velocity ? t.velocity.y * gap : 0),
+      };
       // 小目标（如贴边行人）在低采样率下帧间位移可达 10–20px，
       // 门限过紧会把同一目标拆成新 ID；按框对角线放宽，但保留 IoU 通道。
-      const gate = Math.max(18, diag * 1.1);
+      const speed = t.velocity ? Math.hypot(t.velocity.x, t.velocity.y) * gap : 0;
+      const gate = Math.max(18, diag * 1.1) + speed * 0.5;
       for (let di = 0; di < dets.length; di++) {
         const iou = boxIoU(t.bbox, dets[di].bbox);
         const dc = boxCenter(dets[di].bbox);
-        const dist = Math.hypot(dc.x - tc.x, dc.y - tc.y);
+        const dist = Math.hypot(dc.x - predicted.x, dc.y - predicted.y);
         if (iou < opts.iouThreshold && dist > gate) continue;
         const cost =
           1 - iou +

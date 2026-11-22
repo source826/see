@@ -36,6 +36,8 @@ def parse_args():
     p.add_argument("--step", type=int, default=5)
     p.add_argument("--keep", default="", help='轨迹映射，如 "3:1,2:2"')
     p.add_argument("--out", default="")
+    p.add_argument("--imgsz", type=int, default=960, help="YOLO 推理尺寸；内存不足时降到 640")
+    p.add_argument("--batch", type=int, default=8)
     return p.parse_args()
 
 
@@ -64,7 +66,14 @@ def main():
         paths.append(out)
 
     model = YOLO(str(MODEL))
-    results = model.predict([str(p) for p in paths], conf=0.12, classes=list(CLASSES), imgsz=960, verbose=False)
+    results = model.predict(
+        [str(p) for p in paths],
+        conf=0.12,
+        classes=list(CLASSES),
+        imgsz=args.imgsz,
+        batch=args.batch,
+        verbose=False,
+    )
 
     tracks = []
     active = []
