@@ -32,6 +32,7 @@ const state = {
   cameraHeight: 1.5,
   horizonRatio: 0.5,
   cameraPitchDeg: 10,
+  predictSec: 1.4,
   frameIndex: 0,
   lastVideoTime: -1,
   lastProcessAt: 0,
@@ -286,7 +287,14 @@ function drawOverlay(res) {
   if (state.show.predict && res.risk) {
     for (const p of res.risk.perTrack) {
       if (!p.confirmed || !p.path || p.path.length < 2) continue;
-      const color = p.level >= 4 ? 'rgba(239,68,68,0.95)' : p.level === 3 ? 'rgba(251,146,60,0.9)' : 'rgba(45,212,191,0.8)';
+      const color =
+        p.level >= 4
+          ? 'rgba(239,68,68,0.95)'
+          : p.level === 3
+            ? 'rgba(251,146,60,0.9)'
+            : p.predictedInPath
+              ? 'rgba(250,204,21,0.9)'
+              : 'rgba(45,212,191,0.8)';
       ctx.strokeStyle = color;
       ctx.lineWidth = 2 * dpr;
       ctx.beginPath();
@@ -298,6 +306,16 @@ function drawOverlay(res) {
       ctx.arc(X(last.x), Y(last.y), 3.2 * dpr, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
+      // 末端标出预判秒数，提醒这是短时外推而不是确定轨迹。
+      const label = `${(p.predictSec ?? state.predictSec).toFixed(1)}s`;
+      ctx.font = `${Math.round(9 * dpr)}px "Segoe UI", sans-serif`;
+      const tw = ctx.measureText(label).width;
+      const lx = Math.min(overlay.width - tw - 8 * dpr, X(last.x) + 5 * dpr);
+      const ly = Math.max(2, Y(last.y) - 7 * dpr);
+      ctx.fillStyle = 'rgba(4,7,12,0.72)';
+      ctx.fillRect(lx, ly, tw + 6 * dpr, 13 * dpr);
+      ctx.fillStyle = color;
+      ctx.fillText(label, lx + 3 * dpr, ly + 10 * dpr);
     }
   }
 
@@ -600,6 +618,13 @@ $('cameraPitch').addEventListener('change', (e) => {
   applyDistanceOptions();
 });
 
+$('predictSec').addEventListener('change', (e) => {
+  const v = Math.min(2.5, Math.max(0.8, Number(e.target.value) || 1.4));
+  e.target.value = String(v);
+  state.predictSec = v;
+  state.pipeline.setOptions({ horizonSec: v });
+});
+
 const toggle = (id, key) => {
   $(id).addEventListener('change', (e) => {
     state.show[key] = e.target.checked;
@@ -673,9 +698,13 @@ function initDistanceOptions() {
   if (Number.isFinite(pitch)) state.cameraPitchDeg = Math.min(45, Math.max(-10, pitch));
   const horizon = Number(params.get('horizon'));
   if (Number.isFinite(horizon) && horizon > 0 && horizon < 1) state.horizonRatio = horizon;
+  const predict = Number(params.get('predict'));
+  if (Number.isFinite(predict) && predict > 0) state.predictSec = Math.min(2.5, Math.max(0.8, predict));
   $('cameraHeight').value = String(state.cameraHeight);
   $('cameraPitch').value = String(state.cameraPitchDeg);
+  $('predictSec').value = String(state.predictSec);
   applyDistanceOptions();
+  state.pipeline.setOptions({ horizonSec: state.predictSec });
 }
 
 initDistanceOptions();

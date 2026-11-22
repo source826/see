@@ -4,7 +4,7 @@
 // 备选增强（未实现，排在本在线判定之后）：多帧时序基线（连续多帧特征/3D CNN），
 // 当前先以逐帧检测 + 短窗口几何统计满足实时性与可解释性。
 import { boxCenter, boxIoU } from '../math/boxes.js';
-import { pointInPolygon } from '../math/matrix.js';
+import { clamp, pointInPolygon } from '../math/matrix.js';
 import { buildCorridor, estimateDistance, directionLabel } from './risk.js';
 
 export const APPROACH_DEFAULTS = {
@@ -54,6 +54,18 @@ function linreg(xs, ys) {
     num += dx * (ys[i] - my);
   }
   return den > 1e-9 ? num / den : 0;
+}
+
+/** 用最近几帧中心做线性回归，得到更稳的每帧速度（px/帧）。 */
+function estimateVelocity(history, window = 6) {
+  const h = history.slice(-window);
+  if (h.length < 2) return { x: 0, y: 0 };
+  const t0 = h[0].frame;
+  const xs = h.map((v) => v.frame - t0);
+  return {
+    x: linreg(xs, h.map((v) => v.cx)),
+    y: linreg(xs, h.map((v) => v.cy)),
+  };
 }
 
 /**
@@ -212,16 +224,12 @@ class ApproachTrack {
 
   update(det, frameIndex, flow, dt, fps) {
     this.prevBbox = { ...this.bbox };
-    if (this.history.length) {
-      const last = this.history[this.history.length - 1];
-      const df = Math.max(1, frameIndex - last.frame);
-      this.velocity = { x: (boxCenter(det.bbox).x - last.cx) / df, y: (boxCenter(det.bbox).y - last.cy) / df };
-    }
     this.bbox = { ...det.bbox };
     this.cls = det.cls ?? this.cls;
     this.className = det.className ?? this.className;
     this.score = det.score ?? this.score;
     this._push(frameIndex, det.bbox);
+    this.velocity = estimateVelocity(this.history);
     this.hits++;
     this.misses = 0;
     this.confirmed = this.hits >= this.options.minHits;
@@ -413,6 +421,39 @@ export function estimateGroundDistance(bbox, imageWidth, imageHeight, opts = {})
 }
 
 /**
+ * 短时匀速轨迹预判：用平滑后的中心速度外推 seconds 秒，默认 1.4s。
+ * 只做“够盲人反应”的短轨迹，不做长时预测。
+ */
+export function predictTrackPath(track, opts = {}) {
+  const fps = opts.fps ?? 30;
+  const seconds = opts.seconds ?? 1.4;
+  const steps = Math.max(2, Math.round(seconds * fps));
+  const v = track.velocity || { x: 0, y: 0 };
+  const cx = track.bbox.x + track.bbox.w * 0.5;
+  const cy = track.bbox.y + track.bbox.h * 0.5;
+  const groundOffset = track.bbox.h * 0.5;
+  const w = opts.w ?? 1e9;
+  const h = opts.h ?? 1e9;
+  const points = [];
+  for (let k = 1; k <= steps; k++) {
+    points.push({
+      x: clamp(cx + v.x * k, 0, w),
+      y: clamp(cy + v.y * k, 0, h),
+      sigma: 2 * Math.sqrt(k),
+    });
+  }
+  const last = points[points.length - 1];
+  return {
+    points,
+    seconds,
+    ground: {
+      x: last.x,
+      y: clamp(last.y + groundOffset, 0, h),
+    },
+  };
+}
+
+/**
  * 逼近风险：面积持续增长 + 中心朝行进中心移动 + 脚下点进入通行走廊。
  * 输出结构与 risk.assessRisk 兼容（alerts/perTrack/instruction/topAlert）。
  */
@@ -424,7 +465,6 @@ export function assessApproachRisk(args) {
   const cameraPitchDeg = Number.isFinite(Number(args.cameraPitchDeg)) ? Number(args.cameraPitchDeg) : undefined;
   const horizonRatio = args.horizonRatio ?? 0.5;
   const distanceMode = args.distanceMode ?? 'bbox';
-  const steps = Math.max(4, Math.round(horizonSec * fps));
   const perTrack = [];
   const alerts = [];
 
@@ -454,14 +494,9 @@ export function assessApproachRisk(args) {
     if (approaching && t.ttc !== null && t.ttc < 1) level = 4;
     if (approaching && areaRatio > 0.15) level = Math.max(level, 4);
 
-    const path = [];
-    for (let k = 1; k <= steps; k++) {
-      path.push({
-        x: cx + t.velocity.x * k,
-        y: t.bbox.y + t.bbox.h * 0.5 + t.velocity.y * k,
-        sigma: 2 * Math.sqrt(k),
-      });
-    }
+    const pred = predictTrackPath(t, { w, h, fps, seconds: horizonSec });
+    const path = pred.points;
+    const predictedInPath = pointInPolygon(corridor.wide, pred.ground.x, pred.ground.y);
 
     const item = {
       id: t.id,
@@ -472,6 +507,9 @@ export function assessApproachRisk(args) {
       distanceSource,
       groundDistance,
       direction: dir,
+      predictSec: horizonSec,
+      predictedInPath,
+      predictedGround: pred.ground,
       strictStep: inStrict ? 1 : -1,
       wideStep: inWide ? 1 : -1,
       inPath,

@@ -6,6 +6,7 @@ import {
   computeApproachMetrics,
   estimateFlowScale,
   estimateGroundDistance,
+  predictTrackPath,
 } from '../src/tracking/approach.js';
 import { buildCorridor } from '../src/tracking/risk.js';
 
@@ -154,6 +155,26 @@ test('俯角越大，同一框底估距越近', () => {
   const down = estimateGroundDistance(bbox, 854, 480, { cameraHeight: 1.5, cameraPitchDeg: 10 });
   assert.ok(flat !== null && down !== null);
   assert.ok(down < flat, `flat=${flat}, down=${down}`);
+});
+
+test('短时轨迹按平滑速度外推', () => {
+  const track = { bbox: { x: 100, y: 100, w: 20, h: 40 }, velocity: { x: 1, y: 0.5 } };
+  const p = predictTrackPath(track, { fps: 10, seconds: 1, w: 320, h: 180 });
+  assert.equal(p.points.length, 10);
+  const last = p.points[p.points.length - 1];
+  assert.ok(Math.abs(last.x - 120) < 1e-9, `x=${last.x}`);
+  assert.ok(Math.abs(last.y - 125) < 1e-9, `y=${last.y}`);
+  assert.ok(p.ground.y > last.y);
+});
+
+test('轨迹速度用最近窗口回归，抗单帧抖动', () => {
+  const tracker = new ApproachTracker({ minHits: 1 });
+  for (let f = 0; f < 8; f++) {
+    tracker.update([det(100 + 2 * f, 100 + f, 20, 40)], f, { width: W, height: H, fps: 30 });
+  }
+  const t = tracker.tracks[0];
+  assert.ok(Math.abs(t.velocity.x - 2) < 0.05, `vx=${t.velocity.x}`);
+  assert.ok(Math.abs(t.velocity.y - 1) < 0.05, `vy=${t.velocity.y}`);
 });
 
 test('ground 模式使用相机高度估距，bbox 模式保持框高估距', () => {
