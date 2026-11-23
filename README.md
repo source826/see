@@ -180,7 +180,7 @@ f = W / (2 * tan(HFOV / 2))
 | level 2→语音 | 4 | 0.22 s | 6.03 s |
 
 - 最长段是 **确认→level 2**。逐帧阻塞统计显示，人群场景的 `far5m`（距离>5 m）和 `notApproaching`（面积/框高增长未达标）几乎覆盖全部等待帧；narrow gt2 的 3.30 s 里 31 帧受阻于距离、31 帧受阻于逼近判定。
-- 逐事件表、完整阻塞计数和复现命令见 [dev-package-20261122/eval/five_stage_20261123.md](dev-package-20261122/eval/five_stage_20261123.md)。
+- 逐事件表、完整阻塞计数和 A/B 明细见 [eval/five_stage_dev_20261123.json](eval/five_stage_dev_20261123.json)；可读版见 `dev-package-20261122/eval/five_stage_20261123.md`（本地证据包，不入代码库）。
 
 **针对最长段的单变量 A/B（开发集）**
 
