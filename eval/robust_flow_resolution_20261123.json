@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-23T09:30:00.000Z",
-  "note": "三项试验都在开发集 9 条实时记录的离线回放上做；最终检验集没有参与任何调参。任务 1/2 均未保留，任务 3 只做检测层对照。",
-  "task1_robust_slope": {
-    "what": "用每条轨迹最近 1.5 s 的对数框高做 Theil-Sen 中位数斜率，替代逐帧帧差回归；使用记录里的真实 dt 累加时间戳。",
+  "generatedAt": "2026-11-23T10:25:00.000Z",
+  "note": "所有试验都在开发集 9 条实时记录的离线回放或实时页上做；最终检验集没有参与任何调参。任务 1 两版均未保留；任务 2 按决定暂不做；任务 3 的 480 未保留，640 是冻结基线本身。原始浏览器记录和逐条报告在本地 tmp/（未入库），本文件是汇总证据。",
+  "task1a_robust_heightRate": {
+    "what": "用每条轨迹最近 1.5 s 的对数框高做 Theil-Sen 中位数斜率，替代逐帧帧差回归得到 heightRate；approaching 判定仍用 areaRate。",
     "baseline": {
       "targetRecall": "1/22",
       "groupRecall": "1/22",
@@ -27,7 +27,29 @@
       "robust": 0.547
     },
     "conclusion": "召回、FP、语音、提前量完全不变，覆盖少 1 条，三态一致率 0.562→0.547。按“召回或提前量无提升就回退”的规则，已回退，未保留。",
-    "risk": "本次只替换了 heightRate；当前 approaching 判定仍用 areaRate。若本意是让 approaching 改用稳健框高斜率，需要另做一次改动并重新标定阈值，属于另一项试验。"
+    "risk": "这一版只替换了 heightRate；approaching 判定仍用 areaRate。"
+  },
+  "task1b_approach_by_heightSlope": {
+    "what": "把 approaching 判定改用最近 1.5 s 对数框高的 Theil-Sen 稳健斜率（真实时间戳），条件为 heightRateRobust >= minHeightGrowth && areaUpRatio >= 0.55 && centerRate <= 0.05；扫 5 档 minHeightGrowth。",
+    "baseline": {
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "speech": 50,
+      "leadMedian": 1.43,
+      "leadP10": 1.43
+    },
+    "sweep": [
+      { "threshold": 0.03, "targetRecall": "1/22", "groupRecall": "1/22", "coverage": "13/21", "fpEpisodes": 3, "speech": 57, "leadMedian": 1.8667, "leadP10": 1.8667 },
+      { "threshold": 0.05, "targetRecall": "1/22", "groupRecall": "1/22", "coverage": "13/21", "fpEpisodes": 3, "speech": 57, "leadMedian": 1.8667, "leadP10": 1.8667 },
+      { "threshold": 0.08, "targetRecall": "1/22", "groupRecall": "1/22", "coverage": "13/21", "fpEpisodes": 3, "speech": 55, "leadMedian": 1.8667, "leadP10": 1.8667 },
+      { "threshold": 0.12, "targetRecall": "1/22", "groupRecall": "1/22", "coverage": "13/21", "fpEpisodes": 3, "speech": 55, "leadMedian": 1.8667, "leadP10": 1.8667 },
+      { "threshold": 0.18, "targetRecall": "1/22", "groupRecall": "1/22", "coverage": "13/21", "fpEpisodes": 3, "speech": 55, "leadMedian": 1.8667, "leadP10": 1.8667 }
+    ],
+    "evidence": "eval/height_slope_sweep_20261123.json",
+    "conclusion": "5 档阈值结果完全相同：召回 1/22 不升，FP 3 不变，语音 57/55（基线 50），覆盖 13/21（基线 9/21），唯一 TP 提前量 1.43→1.87 s。覆盖增加来自进通道后的语音，没有转化为新 TP；语音增加多为冗余。按“没有提升就回退”，未保留，默认仍为 approachMetric:'area'。",
+    "risk": "唯一 TP 的提前量 +0.44 s 是单样本，不能当稳定收益；阈值扫到 0.18 仍不变，说明稳健斜率分布远高于阈值，调阈值无法改变判定。"
   },
   "task2_flow_radial": {
     "what": "对框内光流点计算相对框中心的半径增长率 (r_dst-r_src)/(r_src*dt)，记录均值与中位数，不接入报警。",
@@ -43,24 +65,120 @@
       "narrow_hutong": { "samples": 50, "diff": 0.54, "robust": 0.52, "flowMedian": 0.66, "flowMean": 0.66 },
       "tunnel": { "samples": 264, "diff": 0.583, "robust": 0.557, "flowMedian": 0.303, "flowMean": 0.273 }
     },
-    "conclusion": "光流径向膨胀整体一致率 0.365/0.342，低于现有框高差分的 0.562；只有 hutong 小样本（50）较高。没有“明显更高”，不接入判定。",
+    "conclusion": "按用户决定暂不做；光流径向膨胀仍只记录，不接入报警。",
     "risk": "光流在 320×180 上点少、遮挡和背景运动混入；GT 三态来自脚点轨迹斜率，不是真实 3D 速度，标签本身有噪声。"
   },
-  "task3_detection_resolution": {
-    "what": "用 Python ultralytics YOLOv8n 在原视频上按 10 fps 抽帧，imgsz=320/480/640，统计事件目标首次连续两帧稳定检出、平均单帧延迟、帧率。",
-    "evidence": "eval/detect_resolution_20261123.json",
-    "summary": {
-      "320": { "meanLatencyMs": "9.0–10.2", "fps": "98–111", "firstStableGainVs320": "基线" },
-      "480": { "meanLatencyMs": "15.7–17.7", "fps": "57–64", "firstStableGainVs320": "0.1–1.4 s 更早" },
-      "640": { "meanLatencyMs": "26.5–29.8", "fps": "34–38", "firstStableGainVs320": "0–1.9 s 更早" }
+  "task3_realtime_resolution": {
+    "definition": "实时页 YOLO 输入 640，分析画布固定 320×180。冻结基线就是“YOLO 640 输入 → 320 分析”，不是 320 检测模型；本轮新增 480 检测模型并接入 ?det=480。",
+    "browser_480_wasm": {
+      "run": "headless Edge，WASM",
+      "durationSec": 20.16,
+      "frames": 187,
+      "fps": 9.3,
+      "below8fps": false,
+      "detectP50Ms": 88.1,
+      "detectP95Ms": 105.2,
+      "procP50Ms": 105.3,
+      "procP95Ms": 120.3,
+      "e2eP50Ms": 223.5,
+      "e2eP95Ms": 232.0,
+      "speech": 7,
+      "evidence": "tmp/bench_480_wasm_narrow.json"
     },
-    "matchedDetections": {
-      "narrow_street": { "320": 60, "480": 71, "640": 79 },
-      "narrow_hutong": { "320": 79, "480": 95, "640": 97 },
-      "tunnel": { "320": 147, "480": 172, "640": 190 }
+    "browser_480_webgpu_requested": {
+      "run": "headless Edge，请求 ?webgpu=1",
+      "status": "YOLOv8n · WASM（WebGPU 初始化失败，自动回退）",
+      "fps": 9.5,
+      "detectP50Ms": 87.8,
+      "detectP95Ms": 99.8,
+      "procP50Ms": 105.3,
+      "procP95Ms": 118.8,
+      "e2eP50Ms": 213.7,
+      "e2eP95Ms": 318.9,
+      "speech": 6,
+      "evidence": "tmp/bench_480_gpu_narrow.json",
+      "validWebGPU": false
     },
-    "conclusion": "640 宽对远处目标最早稳定检出最多提前约 1.9 s，但单帧延迟约 27–30 ms（34–38 fps）；480 取得大部分收益，延迟约 16–18 ms（57–64 fps）。这是检测层试验，尚未接入报警，因此没有召回/FP 变化。",
-    "risk": "这是 Python 检测层耗时，不等同于浏览器 WASM 实时页的端到端帧率；采样为 10 fps，首次稳定检出精度 0.3 s；9 条记录对同一视频的检测结果相同，实际是 3 个视频 × 3 种分辨率。中心通道裁剪未做。"
+    "browser_640_wasm": {
+      "run": "headless Edge，WASM",
+      "durationSec": 20.16,
+      "frames": 120,
+      "fps": 6.0,
+      "below8fps": true,
+      "detectP50Ms": 152.3,
+      "detectP95Ms": 171.4,
+      "procP50Ms": 169.5,
+      "procP95Ms": 191.1,
+      "e2eP50Ms": 341.5,
+      "e2eP95Ms": 362.8,
+      "speech": 4,
+      "evidence": "tmp/bench_640_wasm_narrow.json"
+    },
+    "browser_640_webgpu_requested": {
+      "run": "headless Edge，请求 ?webgpu=1",
+      "status": "YOLOv8n · WASM（WebGPU 初始化失败，自动回退）",
+      "fps": 6.3,
+      "detectP50Ms": 144.8,
+      "detectP95Ms": 160.8,
+      "e2eP50Ms": 331.7,
+      "e2eP95Ms": 340.0,
+      "speech": 5,
+      "evidence": "tmp/bench_640_gpu_narrow.json",
+      "validWebGPU": false
+    },
+    "browser_640_webgpu_headful": {
+      "run": "headful Edge，请求 ?webgpu=1",
+      "status": "YOLOv8n · WASM（WebGPU 初始化失败，自动回退）",
+      "fps": 5.9,
+      "detectP50Ms": 153.9,
+      "detectP95Ms": 181.0,
+      "e2eP50Ms": 359.9,
+      "e2eP95Ms": 420.8,
+      "speech": 5,
+      "evidence": "tmp/bench_640_gpu_headful_narrow.json",
+      "validWebGPU": false
+    },
+    "webgpuBlocker": "headful Edge 中 navigator.gpu === false；headless/headful 请求 WebGPU 均回退 WASM。本机没有可用 WebGPU 适配器，因此没有有效的 WebGPU 数据。诊断脚本 tmp/gpu_probe.mjs。",
+    "ab_9records": {
+      "baseline_640det_320analysis": {
+        "targetRecall": "1/22",
+        "groupRecall": "1/22",
+        "coverage": "10/21",
+        "fpEpisodes": 3,
+        "speech": 57,
+        "leadMedian": 1.4,
+        "leadP10": 1.4,
+        "fpsMedian": 7.0,
+        "detectP50MedianMs": 129.3,
+        "procP50MedianMs": 143.8,
+        "e2eP50MedianMs": 289.3
+      },
+      "480": {
+        "targetRecall": "0/21",
+        "groupRecall": "0/21",
+        "coverage": "11/21",
+        "fpEpisodes": 3,
+        "speech": 59,
+        "leadMedian": null,
+        "leadP10": null,
+        "fpsMedian": 8.6,
+        "detectP50MedianMs": 93.6,
+        "procP50MedianMs": 111.0,
+        "e2eP50MedianMs": 228.0
+      },
+      "note": "640 就是冻结基线模型，所以 640 的 A/B 即上表 baseline，没有另跑一套重复记录；480 是唯一新增的检测分辨率。480 跑 hutong1 时事件数从 3 降到 2，分母变 21（走廊几何由当次检测决定，有一个 GT 目标没进入事件集合），且丢掉基线唯一 TP（1.43 s）。FP 总数同为 3，但 tunnel2 新增 2 次、hutong3/tunnel3 各清掉 1 次，属于位置变化不是净改善。任务 1 的基线来自离线回放（语音 50），本表来自实时页实际播出（语音 57），两套基线不要混用。"
+    },
+    "conclusion": "480 浏览器更快（9.3 fps，detect p50 88 ms，e2e p50 224 ms），但报警 A/B 丢掉唯一 TP、召回 0/21，语音 +2，不保留。640 保留为默认，但浏览器只有约 6 fps，低于 8 fps 门槛。"
+  },
+  "gtThreeStateAudit": {
+    "evidence": "eval/gt_motion_audit_20261123.json",
+    "samples": 20,
+    "correct": 15,
+    "wrong": 4,
+    "unreliable": 1,
+    "agreement": 0.75,
+    "finding": "4 个错标全是远处慢速迎面被标 static；1 个样本 GT 轨迹横跳、框高抖动，不可核对。GT 三态是脚点 ±12 帧斜率规则自动生成的代理标签，不是独立人工真值。",
+    "whyCeiling056": "框高差分 0.562、稳健斜率 0.547 已经是各信号中最高；光流 0.365/0.342 更低。上限主要来自标签定义差异（脚点 y vs 框高）和约 20% 的标签错误/抖动，不是某个信号完全无效。"
   },
   "finalTest": {
     "usedForTuning": false,

@@ -1,0 +1,87 @@
+{
+  "generatedAt": "2026-11-23T09:51:04.307Z",
+  "thresholds": [
+    0.03,
+    0.05,
+    0.08,
+    0.12,
+    0.18
+  ],
+  "points": [
+    {
+      "threshold": 0.03,
+      "targetRecall": "1/22",
+      "recall": 0.045454545454545456,
+      "groupRecall": "1/22",
+      "coverage": "13/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 57,
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leads": [
+        1.8666666666666667
+      ]
+    },
+    {
+      "threshold": 0.05,
+      "targetRecall": "1/22",
+      "recall": 0.045454545454545456,
+      "groupRecall": "1/22",
+      "coverage": "13/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 57,
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leads": [
+        1.8666666666666667
+      ]
+    },
+    {
+      "threshold": 0.08,
+      "targetRecall": "1/22",
+      "recall": 0.045454545454545456,
+      "groupRecall": "1/22",
+      "coverage": "13/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leads": [
+        1.8666666666666667
+      ]
+    },
+    {
+      "threshold": 0.12,
+      "targetRecall": "1/22",
+      "recall": 0.045454545454545456,
+      "groupRecall": "1/22",
+      "coverage": "13/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leads": [
+        1.8666666666666667
+      ]
+    },
+    {
+      "threshold": 0.18,
+      "targetRecall": "1/22",
+      "recall": 0.045454545454545456,
+      "groupRecall": "1/22",
+      "coverage": "13/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leads": [
+        1.8666666666666667
+      ]
+    }
+  ]
+}

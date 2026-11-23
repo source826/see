@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-11-23T10:20:00.000Z",
+  "what": "从开发集 3 段 GT 随机抽 20 个非背景框，按每个框画红框和脚点轨迹（±12 帧），人工核对 approaching/receding/static 是否与画面运动一致。",
+  "labelSource": "tools/label_gt_motion.py：脚点纵坐标 ±12 帧线性回归，阈值 0.0008/帧（归一化到 GT 高 720 px，约 0.58 px/帧）。标签是规则自动生成，不是独立人工语义标注。",
+  "sheet": "eval/gt_motion_audit_20261123/audit_motion.jpg",
+  "zoomSheets": [
+    "eval/gt_motion_audit_20261123/audit_zoom_1.jpg",
+    "eval/gt_motion_audit_20261123/audit_zoom_2.jpg",
+    "eval/gt_motion_audit_20261123/audit_zoom_3.jpg",
+    "eval/gt_motion_audit_20261123/audit_zoom_4.jpg",
+    "eval/gt_motion_audit_20261123/audit_zoom_5.jpg"
+  ],
+  "samples": [
+    { "i": 1, "video": "narrow_street", "frame": 325, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 47→59，脚点下移 14 px，画面里迎面走来。" },
+    { "i": 2, "video": "narrow_street", "frame": 450, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 108→118，脚点下移 9 px，迎面。" },
+    { "i": 3, "video": "narrow_street", "frame": 300, "id": 2, "gt": "approaching", "verdict": "correct", "why": "框高 43→86，脚点下移 56 px，快速迎面。" },
+    { "i": 4, "video": "narrow_street", "frame": 315, "id": 2, "gt": "approaching", "verdict": "correct", "why": "框高 79→147，脚点下移 62 px，迎面。" },
+    { "i": 5, "video": "narrow_street", "frame": 290, "id": 1, "gt": "static", "verdict": "correct", "why": "±30 帧脚点斜率 -0.00007，框高 1.09，基本静止；属边界样本。" },
+    { "i": 6, "video": "narrow_street", "frame": 350, "id": 1, "gt": "static", "verdict": "wrong", "why": "框高 47→80（+70%）持续 2.5 s，画面里迎面走来；只因脚点 24 帧斜率 0.00017 低于 0.0008 被标 static。" },
+    { "i": 7, "video": "narrow_hutong", "frame": 248, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 103→103、脚点下移 5.7 px，脚点斜率 +0.00167；轨迹 80 帧内框高翻倍，迎面。" },
+    { "i": 8, "video": "narrow_hutong", "frame": 269, "id": 1, "gt": "approaching", "verdict": "correct", "why": "脚点斜率 +0.00169，绿色未来点向左下，迎面。" },
+    { "i": 9, "video": "narrow_hutong", "frame": 290, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 167→207，脚点下移 41 px，迎面。" },
+    { "i": 10, "video": "narrow_hutong", "frame": 311, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 233→282，脚点下移 50 px，迎面贴近。" },
+    { "i": 11, "video": "narrow_hutong", "frame": 164, "id": 1, "gt": "static", "verdict": "wrong", "why": "同一轨迹框高 60→83（+38%）并向左移动 64 px，人工看是持续迎面；脚点斜率 0.00065 略低于阈值被标 static。" },
+    { "i": 12, "video": "narrow_hutong", "frame": 185, "id": 1, "gt": "static", "verdict": "wrong", "why": "同轨迹继续到框高 90（较 f165 +50%），仍标 static；脚点斜率 0.00040。" },
+    { "i": 13, "video": "tunnel", "frame": 160, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 70→106，脚点下移 7 px，白上衣行人迎面。" },
+    { "i": 14, "video": "tunnel", "frame": 205, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 137→154，脚点下移 15 px，迎面。" },
+    { "i": 15, "video": "tunnel", "frame": 250, "id": 1, "gt": "approaching", "verdict": "correct", "why": "框高 151→336，脚点下移 173 px，近距离迎面。" },
+    { "i": 16, "video": "tunnel", "frame": 150, "id": 2, "gt": "approaching", "verdict": "correct", "why": "框高 47→79，脚点下移 33 px，远处迎面。" },
+    { "i": 17, "video": "tunnel", "frame": 300, "id": 1, "gt": "receding", "verdict": "correct", "why": "框高 324→165，脚点上移 149 px，画面里背向走远。" },
+    { "i": 18, "video": "tunnel", "frame": 135, "id": 2, "gt": "receding", "verdict": "unreliable", "why": "GT 轨迹在 f125→130 横跳 x408→533，框高在 47–104 间抖动，像 ID 切换/错框；该帧 receding 无法可靠核对。" },
+    { "i": 19, "video": "tunnel", "frame": 25, "id": 1, "gt": "static", "verdict": "wrong", "why": "框高 32→82（2.6 倍）、脚点下移 38 px，人工看是迎面；该轨迹标签在 approaching/static 间反复翻 5 次，f25 恰好落在 static。" },
+    { "i": 20, "video": "tunnel", "frame": 70, "id": 1, "gt": "static", "verdict": "correct", "why": "±30 帧脚点斜率 0.00023，框高 0.95，基本静止。" }
+  ],
+  "summary": {
+    "samples": 20,
+    "correct": 15,
+    "wrong": 4,
+    "unreliable": 1,
+    "agreement": 0.75,
+    "wrongIds": [6, 11, 12, 19],
+    "pattern": "4 个错标全是“远处慢速迎面”被标成 static：脚点 24 帧斜率略低于 0.0008，但框高在 1–2.5 s 内增长 38–160%。另有 1 个样本 GT 轨迹横跳、框高抖动，标签不可核对。",
+    "implication": "GT 三态是脚点斜率规则生成的代理标签，不是 3D 速度或人工语义真值；短窗口+硬阈值对远处慢接近不敏感，且存在 ID 跳变。任何信号与它的逐样本一致率都会被这层标签噪声限制，约 0.56 的上限主要来自标签定义差异和标签错误，不是信号本身完全无效。"
+  }
+}

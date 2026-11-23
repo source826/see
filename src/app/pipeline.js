@@ -44,6 +44,8 @@ export const PIPELINE_DEFAULTS = {
   approachMinHeight: 18,
   approachMinScore: 0.15,
   approachMinFrames: 4,
+  approachMetric: 'area',
+  minHeightGrowth: 0.05,
   alertPath: 'wide',
   // 已确认目标只要落在宽走廊内、且预测仍会留在走廊里，就先给 level 2 提醒
   // （不等面积增长），用于兜住 id4 这类刚进入走廊、增长信号还不稳定的贴边目标。
@@ -137,6 +139,8 @@ export class GuidePipeline {
       minBoxHeight: this.options.approachMinHeight,
       minScore: this.options.approachMinScore,
       approachMinFrames: this.options.approachMinFrames,
+      approachMetric: this.options.approachMetric,
+      minHeightGrowth: this.options.minHeightGrowth,
       mergeIou: this.options.approachMergeIou ?? 0.2,
     };
   }
