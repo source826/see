@@ -119,6 +119,27 @@
         <div class="metric"><span>RANSAC 迭代</span><strong id="stRansac">–</strong></div>
       </div>
 
+      <details class="section nav-section" id="navSection" open>
+        <summary>地图导航（实验）</summary>
+        <canvas id="navMap" class="nav-map" aria-label="目的地地图"></canvas>
+        <div class="nav-grid">
+          <label>纬度 <input id="navLat" type="number" step="0.000001" placeholder="39.900000" /></label>
+          <label>经度 <input id="navLon" type="number" step="0.000001" placeholder="116.400000" /></label>
+        </div>
+        <div class="nav-actions">
+          <button class="btn small" id="navLocate" type="button">定位</button>
+          <button class="btn small" id="navSet" type="button">设置目的地</button>
+          <button class="btn small primary" id="navStart" type="button">开始导航</button>
+          <button class="btn small" id="navStop" type="button">停止</button>
+          <button class="btn small" id="navQuery" type="button">还有多远</button>
+          <button class="btn small" id="navVoice" type="button">语音命令</button>
+          <button class="btn small" id="navCache" type="button">缓存地图</button>
+          <button class="btn small" id="navDownload" type="button">下载地图</button>
+        </div>
+        <div class="nav-status" id="navStatus">未设置目的地。可输入经纬度，或定位后点地图设目的地。</div>
+        <p class="hint">只做直线方向/距离提示，不是转弯级路线；地图 © OpenStreetMap contributors。需 GPS 和网络，实验功能，不能替代盲杖。</p>
+      </details>
+
       <div class="section">
         <h3>阶段耗时</h3>
         <div class="bars">

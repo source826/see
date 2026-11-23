@@ -3,6 +3,8 @@ import { GuidePipeline } from './pipeline.js';
 import { FrameRecorder } from './recorder.js';
 import { classifyAnnouncement, SpeechAnnouncer, environmentCandidate } from './announce.js';
 import { classifyPitchChange } from '../vision/terrain.js';
+import { TileMap } from '../nav/tilemap.js';
+import { NavigationController } from '../nav/navigation.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -42,6 +44,11 @@ const state = {
   pitchSince: 0,
   calibrateStart: 0,
   lastTargetSpeechAt: 0,
+  // 路面危险语音的最近时间；导航语音必须让路 2 秒。
+  lastHazardSpeechAt: 0,
+  navigation: null,
+  tileMap: null,
+  navRecognition: null,
   frameIndex: 0,
   debug: new URLSearchParams(location.search).get('debug') === '1',
   debugAlerts: [],
@@ -601,6 +608,9 @@ function recordSpeech(cand, queuedAt, startedAt) {
 
 function speakAnnouncement(cand) {
   const queuedAt = performance.now();
+  // 路面/环境危险优先：记录时间并打断正在播的导航语音。
+  state.lastHazardSpeechAt = queuedAt;
+  if (state.navigation) state.navigation.cancelSpeech();
   const pre = voiceAudio[cand.kind];
   if (pre) {
     // 预录音频：先停掉正在播的语音，再从头播；rush 优先级最高。
@@ -855,6 +865,132 @@ document.addEventListener('visibilitychange', () => {
   state.running = !document.hidden;
 });
 
+function setupNavigation() {
+  const canvas = $('navMap');
+  if (!canvas) return;
+  const statusEl = $('navStatus');
+  const setStatus = (text) => {
+    if (statusEl) statusEl.textContent = text;
+  };
+  const canSpeak = () =>
+    state.speech &&
+    performance.now() - (state.lastHazardSpeechAt || 0) > 2000 &&
+    !(window.speechSynthesis && window.speechSynthesis.speaking);
+  const speak = (text) => {
+    if (!state.speech || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN';
+    u.rate = 1.05;
+    window.speechSynthesis.speak(u);
+  };
+  const map = new TileMap(canvas, {
+    onDestination: (lat, lon) => {
+      $('navLat').value = lat.toFixed(6);
+      $('navLon').value = lon.toFixed(6);
+      map.setDestination(lat, lon);
+      state.navigation.setDestination(lat, lon);
+      setStatus('已在地图上设置目的地。点“开始导航”后播报方向和距离。');
+    },
+  });
+  const nav = new NavigationController({
+    canSpeak,
+    speak,
+    onStatus: (s) => {
+      setStatus(s.text);
+      if (s.position) map.setPosition(s.position.lat, s.position.lon);
+      if (s.destination) map.setDestination(s.destination.lat, s.destination.lon);
+    },
+    onPosition: (p) => {
+      map.setPosition(p.lat, p.lon);
+    },
+    onHeading: (h) => map.setHeading(h),
+  });
+  state.navigation = nav;
+  state.tileMap = map;
+  window.addEventListener('resize', () => map.draw());
+
+  const setFromInputs = () => {
+    const lat = Number($('navLat').value);
+    const lon = Number($('navLon').value);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      setStatus('请输入有效的纬度和经度。');
+      return false;
+    }
+    map.setDestination(lat, lon);
+    nav.setDestination(lat, lon);
+    return true;
+  };
+
+  $('navLocate').addEventListener('click', () => {
+    setStatus('正在定位…');
+    nav.locateOnce();
+  });
+  $('navSet').addEventListener('click', () => {
+    if (setFromInputs()) setStatus('目的地已设置。点“开始导航”开始播报。');
+  });
+  $('navStart').addEventListener('click', () => {
+    if (!nav.destination && !setFromInputs()) return;
+    nav.start();
+  });
+  $('navStop').addEventListener('click', () => {
+    nav.stop();
+    nav.cancelSpeech();
+  });
+  $('navQuery').addEventListener('click', () => nav.query());
+  $('navCache').addEventListener('click', async () => {
+    setStatus('正在缓存当前区域地图…');
+    const r = await map.cacheArea(1);
+    setStatus(
+      r.ok
+        ? `已缓存 ${r.saved}/${r.tiles} 个地图瓦片${r.failed ? `，${r.failed} 个失败` : ''}。`
+        : '请先“定位”或设置目的地，再缓存地图。'
+    );
+  });
+  $('navDownload').addEventListener('click', async () => {
+    try {
+      await map.downloadPng(`guidao-map-${Date.now()}.png`);
+      setStatus('当前地图已下载为 PNG。');
+    } catch {
+      setStatus('地图下载失败：瓦片未加载完或跨域限制。');
+    }
+  });
+  $('navVoice').addEventListener('click', () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setStatus('当前浏览器不支持语音识别，请用按钮操作。');
+      return;
+    }
+    if (state.navRecognition) {
+      try { state.navRecognition.stop(); } catch {}
+      state.navRecognition = null;
+      return;
+    }
+    const rec = new SR();
+    rec.lang = 'zh-CN';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const text = e.results && e.results[0] && e.results[0][0] ? e.results[0][0].transcript : '';
+      setStatus(`听到：${text || '（空）'}`);
+      if (text && !nav.handleCommand(text)) {
+        setStatus(`没有识别到导航指令：${text}`);
+      }
+    };
+    rec.onerror = (e) => setStatus(`语音识别失败：${e.error || '未知错误'}`);
+    rec.onend = () => {
+      state.navRecognition = null;
+    };
+    state.navRecognition = rec;
+    try {
+      rec.start();
+      setStatus('请说“开始导航 / 停止 / 还有多远 / 是不是前方”。');
+    } catch {
+      state.navRecognition = null;
+      setStatus('语音识别启动失败，请用按钮操作。');
+    }
+  });
+}
+
 async function initYolo() {
   const params = new URLSearchParams(location.search);
   if (params.get('yolo') === '0') {
@@ -985,6 +1121,7 @@ function initTerrainSensor() {
 
 initDistanceOptions();
 initTerrainSensor();
+setupNavigation();
 initYolo();
 requestAnimationFrame(tick);
 

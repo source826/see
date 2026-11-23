@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-11-23T23:30:00+08:00",
+  "what": "地图导航面板的浏览器冒烟测试：CDP 模拟 GPS，检查定位、目的地、播报文本、地图、瓦片缓存、PNG 下载和页面错误；另跑一次 YOLO 实时页确认导航面板不影响检测。",
+  "method": {
+    "browser": "Edge headless",
+    "origin": "http://127.0.0.1:8080/index.html?yolo=0",
+    "gps": { "latitude": 39.9, "longitude": 116.4, "accuracy": 10 },
+    "destination": { "latitude": 39.9009, "longitude": 116.4, "distanceM": 100 }
+  },
+  "results": {
+    "statusText": "目的地在北方向，约 100 米。",
+    "mapCanvasCss": [295, 220],
+    "mapPngDataUrlLength": 114610,
+    "cache": "已缓存 9/9 个地图瓦片。",
+    "download": "当前地图已下载为 PNG。",
+    "pageErrors": [],
+    "yoloCoexistence": {
+      "video": "assets/videos/narrow_street_approach.mp4",
+      "status": "YOLOv8n · WASM",
+      "alerts": 5
+    }
+  },
+  "limitations": [
+    "模拟 GPS，不是真实步行/手机 GPS；没有测罗盘朝向，因此播报退为八方向“北方向”。",
+    "只验证直线方向/距离，不是转弯级路线规划。",
+    "地图瓦片来自 OpenStreetMap，需要网络；缓存 3×3 只支持短时离线查看。",
+    "未测手机浏览器、HTTPS、定位权限拒绝、隧道/室内无 GPS 场景。"
+  ]
+}
