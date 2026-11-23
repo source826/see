@@ -118,10 +118,11 @@ async function main() {
   await sleep(1500);
   const alerts = await ev('window.__guidaoAlerts || []');
   const frames = await ev('window.__guidaoFrames || []');
+  const speech = await ev('window.__guidaoSpeech || []');
   const analysis = await ev('window.__guidaoAnalysis || null');
   const status = await ev("document.getElementById('enginePill').textContent");
   mkdirSync(out.replace(/[^/]+$/, ''), { recursive: true });
-  writeFileSync(out, JSON.stringify({ videoUrl, duration, status, analysis, alerts, frames }, null, 2), 'utf8');
+  writeFileSync(out, JSON.stringify({ videoUrl, duration, status, analysis, alerts, frames, speech }, null, 2), 'utf8');
   console.log(JSON.stringify({
     videoUrl,
     duration,

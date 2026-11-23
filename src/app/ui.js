@@ -46,6 +46,7 @@ const state = {
   debug: new URLSearchParams(location.search).get('debug') === '1',
   debugAlerts: [],
   debugFrames: [],
+  debugSpeech: [],
   lastVideoTime: -1,
   lastProcessAt: 0,
   lastPanelAt: 0,
@@ -77,6 +78,7 @@ const state = {
 if (state.debug) {
   window.__guidaoAlerts = state.debugAlerts;
   window.__guidaoFrames = state.debugFrames;
+  window.__guidaoSpeech = state.debugSpeech;
 }
 
 function updateDisplayRect() {
@@ -137,6 +139,7 @@ function setupAnalysis() {
 async function processFrame(ts) {
   if (state.busy || !video.videoWidth || !analysis.width) return;
   state.busy = true;
+  const procStart = performance.now();
   try {
     if (frameCanvas.width !== video.videoWidth || frameCanvas.height !== video.videoHeight) {
       frameCanvas.width = video.videoWidth;
@@ -186,6 +189,8 @@ async function processFrame(ts) {
         frame: res.frame.index,
         t: Math.round(performance.now() * 10) / 10,
         dt: Math.round(dt * 10000) / 10000,
+        procMs: Math.round((performance.now() - procStart) * 10) / 10,
+        detectMs: Math.round(detectMs * 10) / 10,
         detections: detections.map((d) => ({
           cls: d.cls,
           score: Math.round(d.score * 1000) / 1000,
@@ -200,6 +205,10 @@ async function processFrame(ts) {
         perTrack: risk
           ? risk.perTrack.map((p) => ({
               id: p.id,
+              cls: p.cls,
+              className: p.className,
+              score: p.score,
+              hits: p.hits,
               level: p.level,
               confirmed: p.confirmed,
               inPath: p.inPath,
@@ -558,10 +567,24 @@ function handleAlert(res) {
 function speakAnnouncement(cand) {
   if ('speechSynthesis' in window) {
     if (cand.kind === 'rush') window.speechSynthesis.cancel();
+    const queuedAt = performance.now();
     const u = new SpeechSynthesisUtterance(cand.text);
     u.lang = 'zh-CN';
     u.rate = cand.kind === 'rush' ? 1.18 : 1.05;
     u.pitch = cand.kind === 'rush' ? 1.05 : 1;
+    if (state.debug) {
+      u.onstart = () => {
+        const startedAt = performance.now();
+        state.debugSpeech.push({
+          kind: cand.kind,
+          text: cand.text,
+          frame: state.lastResult && state.lastResult.frame ? state.lastResult.frame.index : null,
+          queuedAt: Math.round(queuedAt * 10) / 10,
+          startedAt: Math.round(startedAt * 10) / 10,
+          queueMs: Math.round((startedAt - queuedAt) * 10) / 10,
+        });
+      };
+    }
     window.speechSynthesis.speak(u);
   }
   if (navigator.vibrate) navigator.vibrate(cand.kind === 'rush' ? [120, 60, 120] : 70);

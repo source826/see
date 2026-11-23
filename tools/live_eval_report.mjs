@@ -129,6 +129,51 @@ const events = evaluateAlarmEvents({
   durationSec: live.duration,
 });
 const fpIds = [...new Set((events.fpAlerts || []).map((a) => a.trackId))];
+// 三态：事件目标 / 背景目标 / 未匹配。未匹配才是真正的“来源不明”误报。
+const eventIds = new Set();
+const bgIds = new Set();
+for (const boxes of Object.values(gt.frames || {})) {
+  for (const b of boxes) (b.bg ? bgIds : eventIds).add(b.id);
+}
+const bgStates = { event: 0, bg: 0, unmatched: 0 };
+const unmatched = new Map();
+for (const rec of frames) {
+  for (const a of rec.alerts || []) {
+    if (a.level < 2) continue;
+    const mapped = matchByFrame[rec.frame] ? matchByFrame[rec.frame].get(a.trackId) : undefined;
+    if (mapped === undefined) {
+      bgStates.unmatched++;
+      if (!unmatched.has(a.trackId)) {
+        const p = (rec.perTrack || []).find((x) => x.id === a.trackId);
+        unmatched.set(a.trackId, {
+          trackId: a.trackId,
+          firstFrame: rec.frame,
+          level: a.level,
+          cls: p ? p.cls : null,
+          className: p ? p.className : null,
+          bbox: p ? p.bbox : null,
+        });
+      }
+    } else if (eventIds.has(mapped)) {
+      bgStates.event++;
+    } else {
+      bgStates.bg++;
+    }
+  }
+}
+const pct = (arr, q) => {
+  const a = arr.filter((v) => Number.isFinite(v)).sort((x, y) => x - y);
+  if (!a.length) return null;
+  return Math.round(a[Math.min(a.length - 1, Math.floor((a.length - 1) * q))] * 10) / 10;
+};
+const proc = frames.map((f) => f.procMs);
+const detect = frames.map((f) => f.detectMs);
+const speech = live.speech || [];
+const queue = speech.map((s) => s.queueMs);
+const e2e = speech.map((s) => {
+  const f = frames.find((x) => x.frame === s.frame);
+  return (f ? f.procMs || 0 : 0) + s.queueMs;
+});
 console.log(JSON.stringify({
   live: livePath,
   backend: live.status,
@@ -147,5 +192,18 @@ console.log(JSON.stringify({
     fpEpisodes: events.fpEpisodes,
     fpPerMin: events.fpPerMin,
     fpTrackIds: fpIds,
+  },
+  bgStates,
+  unmatchedTracks: [...unmatched.values()],
+  latencyMs: {
+    pipelineP50: pct(proc, 0.5),
+    pipelineP95: pct(proc, 0.95),
+    detectP50: pct(detect, 0.5),
+    detectP95: pct(detect, 0.95),
+    speechQueueP50: pct(queue, 0.5),
+    speechQueueP95: pct(queue, 0.95),
+    e2eP50: pct(e2e, 0.5),
+    e2eP95: pct(e2e, 0.95),
+    speechCount: speech.length,
   },
 }, null, 2));
