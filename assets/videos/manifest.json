@@ -38,6 +38,42 @@
   },
   "final_test_next": [
     {
+      "file": "selfshot/selfshot_frontal_01.mp4",
+      "source": "用户自拍正面来人（2026-11-23 新素材）",
+      "bv": null,
+      "sourceNote": "用户自拍，已获出镜人员知情同意；仅本地使用，不对外分发",
+      "durationSec": 112.97,
+      "size": "1920x1080",
+      "fps": 60,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "未标 GT/事件时间点。已做技术冒烟（eval/smoke_new_videos_20261123.json），不能当最终检验；60 fps 需转 30 fps 并裁 15–30 s 窗口"
+    },
+    {
+      "file": "selfshot/selfshot_frontal_02.mp4",
+      "source": "用户自拍正面来人/街景（2026-11-23 新素材）",
+      "bv": null,
+      "sourceNote": "用户自拍，已获出镜人员知情同意；仅本地使用，不对外分发",
+      "durationSec": 361.39,
+      "size": "1920x1080",
+      "fps": 60,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "未标 GT/事件时间点。已做技术冒烟，6 分钟 54 条语音，不能当最终检验；60 fps 需转 30 fps 并裁窗口"
+    },
+    {
+      "file": "selfshot/selfshot_pass_02.mp4",
+      "source": "用户自拍沿街通过（2026-11-23 新素材）",
+      "bv": null,
+      "sourceNote": "用户自拍；仅本地使用，不对外分发",
+      "durationSec": 30.07,
+      "size": "1920x1080",
+      "fps": 30,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "未标 GT/事件时间点。技术冒烟 2 条汽车静止障碍语音；需人工确认是负样本还是含事件"
+    },
+    {
       "file": "zebra_b.mp4",
       "source": "人行横道密集过街（全新场景）",
       "bv": null,

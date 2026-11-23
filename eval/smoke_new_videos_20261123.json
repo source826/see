@@ -1,0 +1,652 @@
+{
+  "generatedAt": "2026-11-23T22:30:00+08:00",
+  "status": "technical-smoke-only",
+  "note": "新自拍视频未标 GT/事件时间点，本文件只记录实时页技术冒烟结果，不能计算召回/FP/提前量，也不能当最终检验。",
+  "videos": [
+    {
+      "name": "pass_02",
+      "file": "assets/videos/selfshot/selfshot_pass_02.mp4",
+      "sourceSize": [
+        1920,
+        1080
+      ],
+      "sourceFps": 30,
+      "durationSec": 30.067,
+      "sizeBytes": 57648772,
+      "metrics": {
+        "label": "pass_02",
+        "status": "YOLOv8n · WASM",
+        "duration": 30.066667,
+        "processedFrames": 225,
+        "fps": 7.5,
+        "detectP50": 107.3,
+        "detectP95": 152.4,
+        "procP50": 130.4,
+        "procP95": 173,
+        "speechCount": 2,
+        "e2eP50": 133.2,
+        "e2eP95": 133.2,
+        "below8fps": true
+      },
+      "alerts": [
+        {
+          "sec": 12.53,
+          "level": 2,
+          "kind": "static",
+          "trackId": 21,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 21.13,
+          "level": 2,
+          "kind": "static",
+          "trackId": 3,
+          "class": "汽车",
+          "distanceM": 7.6,
+          "text": "正前方近处有静止障碍，请绕行"
+        }
+      ],
+      "alertsPerMin": 3.99
+    },
+    {
+      "name": "frontal_01",
+      "file": "assets/videos/selfshot/selfshot_frontal_01.mp4",
+      "sourceSize": [
+        1920,
+        1080
+      ],
+      "sourceFps": 60,
+      "durationSec": 112.972,
+      "sizeBytes": 311758984,
+      "metrics": {
+        "label": "frontal_01",
+        "status": "YOLOv8n · WASM",
+        "duration": 112.972011,
+        "processedFrames": 666,
+        "fps": 5.9,
+        "detectP50": 127.8,
+        "detectP95": 195.7,
+        "procP50": 153,
+        "procP95": 226.5,
+        "speechCount": 6,
+        "e2eP50": 415.2,
+        "e2eP95": 781.1,
+        "below8fps": true
+      },
+      "alerts": [
+        {
+          "sec": 2.27,
+          "level": 2,
+          "kind": "static",
+          "trackId": 1,
+          "class": "卡车",
+          "distanceM": 4.4,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 38.17,
+          "level": 2,
+          "kind": "static",
+          "trackId": 21,
+          "class": "汽车",
+          "distanceM": 5.6,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 70.5,
+          "level": 2,
+          "kind": "static",
+          "trackId": 50,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 84.0,
+          "level": 2,
+          "kind": "static",
+          "trackId": 69,
+          "class": "汽车",
+          "distanceM": 5.7,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 110.27,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 174,
+          "class": "摩托车",
+          "distanceM": 9,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 111.97,
+          "level": 2,
+          "kind": "static",
+          "trackId": 174,
+          "class": "摩托车",
+          "distanceM": 4.3,
+          "text": "左前方近处有静止障碍，请绕行"
+        }
+      ],
+      "alertsPerMin": 3.19
+    },
+    {
+      "name": "frontal_02",
+      "file": "assets/videos/selfshot/selfshot_frontal_02.mp4",
+      "sourceSize": [
+        1920,
+        1080
+      ],
+      "sourceFps": 60,
+      "durationSec": 361.39,
+      "sizeBytes": 1037581059,
+      "metrics": {
+        "label": "frontal_02",
+        "status": "YOLOv8n · WASM",
+        "duration": 361.389833,
+        "processedFrames": 2096,
+        "fps": 5.8,
+        "detectP50": 142.1,
+        "detectP95": 178.3,
+        "procP50": 169.5,
+        "procP95": 209.3,
+        "speechCount": 54,
+        "e2eP50": 400.9,
+        "e2eP95": 930.9,
+        "below8fps": true
+      },
+      "alerts": [
+        {
+          "sec": 20.0,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 11,
+          "class": "汽车",
+          "distanceM": 111.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 21.2,
+          "level": 2,
+          "kind": "static",
+          "trackId": 11,
+          "class": "汽车",
+          "distanceM": 7.5,
+          "text": "正前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 32.03,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 50,
+          "class": "行人",
+          "distanceM": 23.1,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 43.87,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 71,
+          "class": "行人",
+          "distanceM": 15.9,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 45.73,
+          "level": 2,
+          "kind": "static",
+          "trackId": 71,
+          "class": "行人",
+          "distanceM": 7.1,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 55.23,
+          "level": 2,
+          "kind": "static",
+          "trackId": 108,
+          "class": "卡车",
+          "distanceM": 7.9,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 72.5,
+          "level": 2,
+          "kind": "static",
+          "trackId": 120,
+          "class": "汽车",
+          "distanceM": 5.1,
+          "text": "左前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 86.27,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 164,
+          "class": "卡车",
+          "distanceM": 10.3,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 88.57,
+          "level": 2,
+          "kind": "static",
+          "trackId": 164,
+          "class": "卡车",
+          "distanceM": 7.8,
+          "text": "正前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 89.5,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 164,
+          "class": "卡车",
+          "distanceM": 22.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 123.7,
+          "level": 2,
+          "kind": "static",
+          "trackId": 222,
+          "class": "卡车",
+          "distanceM": 4.4,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 135.43,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 214,
+          "class": "行人",
+          "distanceM": 13.2,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 137.07,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 242,
+          "class": "自行车",
+          "distanceM": 14.4,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 137.97,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 238,
+          "class": "行人",
+          "distanceM": 23.3,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 140.6,
+          "level": 2,
+          "kind": "static",
+          "trackId": 234,
+          "class": "汽车",
+          "distanceM": 5.6,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 142.63,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 214,
+          "class": "自行车",
+          "distanceM": 17.3,
+          "text": "左前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 144.8,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 214,
+          "class": "自行车",
+          "distanceM": 20.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 145.9,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 253,
+          "class": "摩托车",
+          "distanceM": 12.1,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 147.37,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 236,
+          "class": "行人",
+          "distanceM": 12,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 149.97,
+          "level": 2,
+          "kind": "static",
+          "trackId": 214,
+          "class": "自行车",
+          "distanceM": 8,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 151.2,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 214,
+          "class": "自行车",
+          "distanceM": 9.2,
+          "text": "右前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 153.77,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 214,
+          "class": "自行车",
+          "distanceM": 6.8,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 157.17,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 247,
+          "class": "行人",
+          "distanceM": 21.9,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 158.1,
+          "level": 2,
+          "kind": "static",
+          "trackId": 236,
+          "class": "行人",
+          "distanceM": 4.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 160.23,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 277,
+          "class": "卡车",
+          "distanceM": 5.1,
+          "text": "左前方近处有车横穿，请停下"
+        },
+        {
+          "sec": 163.43,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 266,
+          "class": "汽车",
+          "distanceM": 42.5,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 165.37,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 266,
+          "class": "汽车",
+          "distanceM": 15.9,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 166.27,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 282,
+          "class": "摩托车",
+          "distanceM": 4.4,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 167.77,
+          "level": 2,
+          "kind": "static",
+          "trackId": 266,
+          "class": "汽车",
+          "distanceM": 4.8,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 171.2,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 294,
+          "class": "汽车",
+          "distanceM": 9.1,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 176.57,
+          "level": 2,
+          "kind": "static",
+          "trackId": 305,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 191.7,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 329,
+          "class": "汽车",
+          "distanceM": 11.9,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 193.73,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 329,
+          "class": "汽车",
+          "distanceM": 5.8,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 195.17,
+          "level": 2,
+          "kind": "static",
+          "trackId": 329,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "正前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 196.7,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 344,
+          "class": "卡车",
+          "distanceM": 4.3,
+          "text": "左前方近处有车冲过来，请停下"
+        },
+        {
+          "sec": 199.37,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 351,
+          "class": "摩托车",
+          "distanceM": 9.4,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 201.9,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 352,
+          "class": "公交车",
+          "distanceM": 7.8,
+          "text": "正前方近处有车横穿，请停下"
+        },
+        {
+          "sec": 204.13,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 368,
+          "class": "公交车",
+          "distanceM": 4.3,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 204.97,
+          "level": 2,
+          "kind": "static",
+          "trackId": 368,
+          "class": "公交车",
+          "distanceM": 4.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 250.87,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 412,
+          "class": "汽车",
+          "distanceM": 13.1,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 270.93,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 428,
+          "class": "汽车",
+          "distanceM": 54.2,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 272.8,
+          "level": 2,
+          "kind": "static",
+          "trackId": 428,
+          "class": "汽车",
+          "distanceM": 6.2,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 285.23,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 464,
+          "class": "汽车",
+          "distanceM": 21.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 292.8,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 473,
+          "class": "卡车",
+          "distanceM": 13.9,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 294.9,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 473,
+          "class": "卡车",
+          "distanceM": 62.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 299.37,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 473,
+          "class": "卡车",
+          "distanceM": 16.7,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 301.5,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 473,
+          "class": "卡车",
+          "distanceM": 6.8,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 302.97,
+          "level": 2,
+          "kind": "static",
+          "trackId": 473,
+          "class": "卡车",
+          "distanceM": 5.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 335.2,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 527,
+          "class": "汽车",
+          "distanceM": 12.7,
+          "text": "正前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 341.27,
+          "level": 4,
+          "kind": "rush",
+          "trackId": 527,
+          "class": "汽车",
+          "distanceM": 11.7,
+          "text": "右前方有点远处有车横穿，请停下"
+        },
+        {
+          "sec": 343.67,
+          "level": 2,
+          "kind": "static",
+          "trackId": 527,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        },
+        {
+          "sec": 346.83,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 545,
+          "class": "汽车",
+          "distanceM": 8.1,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 351.17,
+          "level": 2,
+          "kind": "uncertain",
+          "trackId": 552,
+          "class": "汽车",
+          "distanceM": 11.6,
+          "text": "前方有情况请确认"
+        },
+        {
+          "sec": 352.6,
+          "level": 2,
+          "kind": "static",
+          "trackId": 552,
+          "class": "汽车",
+          "distanceM": 4.3,
+          "text": "右前方近处有静止障碍，请绕行"
+        }
+      ],
+      "alertsPerMin": 8.97
+    }
+  ]
+}
