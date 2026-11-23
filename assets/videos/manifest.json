@@ -1,5 +1,5 @@
 {
-  "note": "素材按开发集 / 验证集 / 最终检验集划分。final_test 从未进入任何评测记录，GT 在参数冻结点之前完成，只跑一次。bv 为空表示未能追溯 BV 号，按 sourceNote 处理。",
+  "note": "素材按开发集 / 验证集 / 最终检验集划分。final_test 从未进入任何评测记录，GT 在参数冻结点之前完成，只跑一次。final_test_next 是下一批候选，GT 尚未完成，不能提前看结果。bv 为空表示未能追溯 BV 号，按 sourceNote 处理。",
   "fps": 30,
   "dev": [
     { "file": "tune/nanjing_00.mp4", "source": "上海南京西路傍晚步行 POV", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "854x480" },
@@ -23,6 +23,44 @@
     { "file": "narrow_hutong_01.mp4", "source": "北京胡同迎面行人", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40.4, "size": "1280x720", "gt": "gt/final_narrow_hutong_full.json" },
     { "file": "handheld_night_run.mp4", "source": "夜间手持小跑（负样本）", "bv": "BV1mD4y1F74V", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "640x360", "gt": "gt/final_handheld_night_run_full.json" },
     { "file": "ebike_pov_traffic.mp4", "source": "电动车第一视角车流（负样本）", "bv": "BV1Mepoe4EbN", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720", "gt": "gt/final_ebike_pov_traffic_full.json" }
+  ],
+  "final_test_next": [
+    {
+      "file": "zebra_b.mp4",
+      "source": "人行横道密集过街（全新场景）",
+      "bv": null,
+      "sourceNote": "来源未记录，仅本地使用，不对外分发",
+      "durationSec": 20.1,
+      "size": "1280x720",
+      "fps": 25,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "从未进入任何评测。25 fps；GT 辅助轨迹切分过碎（100+ 段），事件目标与背景需人工标注后才能跑最终检验"
+    },
+    {
+      "file": "hongkong_walk_02.webm",
+      "source": "香港夜间小巷步行（低照度/低分辨率）",
+      "bv": null,
+      "sourceNote": "来源未记录，仅本地使用，不对外分发",
+      "durationSec": 10.6,
+      "size": "270x480",
+      "fps": 29.97,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "从未进入任何评测。可变帧率，标注前需转成固定帧率；分辨率低，只适合做硬负样本"
+    },
+    {
+      "file": "narrow_hutong_25fps.mp4",
+      "source": "北京胡同短片段（与开发集胡同同场景、不同片段）",
+      "bv": null,
+      "sourceNote": "来源未记录，仅本地使用，不对外分发",
+      "durationSec": 8.1,
+      "size": "1280x720",
+      "fps": 25,
+      "gt": null,
+      "status": "gt_pending",
+      "note": "从未进入任何评测。与开发集胡同同场景，只能算片段级全新，不能算场景级全新"
+    }
   ],
   "excluded": [
     { "file": "puddle_reflection.mp4", "reason": "GT 仅覆盖 26/600 帧（4.3%），无事件目标，误报不可评估，按规则剔除" }

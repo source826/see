@@ -1,0 +1,433 @@
+{
+  "generatedAt": "2026-11-23T07:07:16.049Z",
+  "note": "开发集五段拆解与单变量 A/B。所有改动均已回退，源码哈希与 frozen_params_final_20261123.json 一致。",
+  "definitions": {
+    "entry": "GT 首次进入宽走廊（事件 entryFrame）",
+    "firstDetect": "原始检测首次命中所属 GT（IoU 0.2/0.3，类别兼容）",
+    "firstConfirmed": "匹配轨迹首次 confirmed=true",
+    "firstLevel2": "匹配轨迹首次 level>=2",
+    "firstSpoken": "首次实际播出并映射到该 GT 的语音"
+  },
+  "events": [
+    {
+      "video": "narrow_street",
+      "gtId": 2,
+      "frames": {
+        "entry": 280,
+        "firstDetect": 225,
+        "firstConfirmed": 228,
+        "firstLevel2": 327,
+        "firstSpoken": 327
+      },
+      "seconds": {
+        "entryToDetect": -1.83,
+        "detectToConfirm": 0.1,
+        "confirmToLevel2": 3.3,
+        "level2ToSpeech": 0,
+        "entryToSpeech": 1.57
+      },
+      "blockers": {
+        "crowdScene": 24,
+        "notStrict": 15,
+        "notWide": 11,
+        "far5m": 31,
+        "notApproaching": 31,
+        "flatHeight": 3,
+        "lowHits": 5
+      },
+      "predIds": [
+        17,
+        11
+      ],
+      "idSwitches": 1
+    },
+    {
+      "video": "narrow_street",
+      "gtId": 1,
+      "frames": {
+        "entry": 331,
+        "firstDetect": 225,
+        "firstConfirmed": 254,
+        "firstLevel2": 544,
+        "firstSpoken": 544
+      },
+      "seconds": {
+        "entryToDetect": -3.53,
+        "detectToConfirm": 0.97,
+        "confirmToLevel2": 9.67,
+        "level2ToSpeech": 0,
+        "entryToSpeech": 7.1
+      },
+      "blockers": {
+        "crowdScene": 49,
+        "notStrict": 18,
+        "notWide": 3,
+        "far5m": 57,
+        "notApproaching": 57,
+        "flatHeight": 22,
+        "lowHits": 7
+      },
+      "predIds": [
+        32,
+        36,
+        37,
+        48
+      ],
+      "idSwitches": 5
+    },
+    {
+      "video": "narrow_hutong",
+      "gtId": 1,
+      "frames": {
+        "entry": 164,
+        "firstDetect": 160,
+        "firstConfirmed": 173,
+        "firstLevel2": 233,
+        "firstSpoken": 246
+      },
+      "seconds": {
+        "entryToDetect": -0.13,
+        "detectToConfirm": 0.43,
+        "confirmToLevel2": 2,
+        "level2ToSpeech": 0.43,
+        "entryToSpeech": 2.73
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 0,
+        "notWide": 0,
+        "far5m": 8,
+        "notApproaching": 8,
+        "flatHeight": 4,
+        "lowHits": 1
+      },
+      "predIds": [
+        36,
+        52
+      ],
+      "idSwitches": 1
+    },
+    {
+      "video": "narrow_hutong",
+      "gtId": 2,
+      "frames": {
+        "entry": 223,
+        "firstDetect": 15,
+        "firstConfirmed": 15,
+        "firstLevel2": 164,
+        "firstSpoken": 345
+      },
+      "seconds": {
+        "entryToDetect": -6.93,
+        "detectToConfirm": 0,
+        "confirmToLevel2": 4.97,
+        "level2ToSpeech": 6.03,
+        "entryToSpeech": 4.07
+      },
+      "blockers": {
+        "crowdScene": 9,
+        "notStrict": 13,
+        "notWide": 11,
+        "far5m": 16,
+        "notApproaching": 20,
+        "flatHeight": 15,
+        "lowHits": 4
+      },
+      "predIds": [
+        54,
+        57
+      ],
+      "idSwitches": 3
+    },
+    {
+      "video": "tunnel",
+      "gtId": 2,
+      "frames": {
+        "entry": 129,
+        "firstDetect": 121,
+        "firstConfirmed": 150,
+        "firstLevel2": 159,
+        "firstSpoken": null
+      },
+      "seconds": {
+        "entryToDetect": -0.27,
+        "detectToConfirm": 0.97,
+        "confirmToLevel2": 0.3,
+        "level2ToSpeech": null,
+        "entryToSpeech": null
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 2,
+        "notWide": 0,
+        "far5m": 2,
+        "notApproaching": 2,
+        "flatHeight": 2,
+        "lowHits": 2
+      },
+      "predIds": [
+        27
+      ],
+      "idSwitches": 0
+    },
+    {
+      "video": "tunnel",
+      "gtId": 1,
+      "frames": {
+        "entry": 254,
+        "firstDetect": 3,
+        "firstConfirmed": 8,
+        "firstLevel2": null,
+        "firstSpoken": null
+      },
+      "seconds": {
+        "entryToDetect": -8.37,
+        "detectToConfirm": 0.17,
+        "confirmToLevel2": null,
+        "level2ToSpeech": null,
+        "entryToSpeech": null
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 0,
+        "notWide": 0,
+        "far5m": 0,
+        "notApproaching": 0,
+        "flatHeight": 0,
+        "lowHits": 0
+      },
+      "predIds": [
+        15,
+        6,
+        18,
+        9,
+        33,
+        44,
+        10,
+        58,
+        4
+      ],
+      "idSwitches": 12
+    },
+    {
+      "video": "tunnel",
+      "gtId": 3,
+      "frames": {
+        "entry": 513,
+        "firstDetect": 513,
+        "firstConfirmed": 513,
+        "firstLevel2": 534,
+        "firstSpoken": null
+      },
+      "seconds": {
+        "entryToDetect": 0,
+        "detectToConfirm": 0,
+        "confirmToLevel2": 0.7,
+        "level2ToSpeech": null,
+        "entryToSpeech": null
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 6,
+        "notWide": 0,
+        "far5m": 6,
+        "notApproaching": 6,
+        "flatHeight": 6,
+        "lowHits": 6
+      },
+      "predIds": [
+        99
+      ],
+      "idSwitches": 0
+    },
+    {
+      "video": "final_street_crowd",
+      "gtId": 1,
+      "frames": {
+        "entry": 185,
+        "firstDetect": 192,
+        "firstConfirmed": 195,
+        "firstLevel2": null,
+        "firstSpoken": null
+      },
+      "seconds": {
+        "entryToDetect": 0.23,
+        "detectToConfirm": 0.1,
+        "confirmToLevel2": null,
+        "level2ToSpeech": null,
+        "entryToSpeech": null
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 0,
+        "notWide": 0,
+        "far5m": 0,
+        "notApproaching": 0,
+        "flatHeight": 0,
+        "lowHits": 0
+      },
+      "predIds": [
+        31,
+        100,
+        95
+      ],
+      "idSwitches": 2
+    },
+    {
+      "video": "final_hutong",
+      "gtId": 1,
+      "frames": {
+        "entry": 663,
+        "firstDetect": 663,
+        "firstConfirmed": 639,
+        "firstLevel2": 682,
+        "firstSpoken": null
+      },
+      "seconds": {
+        "entryToDetect": 0,
+        "detectToConfirm": -0.8,
+        "confirmToLevel2": 1.43,
+        "level2ToSpeech": null,
+        "entryToSpeech": null
+      },
+      "blockers": {
+        "crowdScene": 0,
+        "notStrict": 0,
+        "notWide": 0,
+        "far5m": 11,
+        "notApproaching": 11,
+        "flatHeight": 9,
+        "lowHits": 7
+      },
+      "predIds": [
+        229,
+        236
+      ],
+      "idSwitches": 2
+    }
+  ],
+  "summary": {
+    "entryToDetect": {
+      "n": 9,
+      "medianSec": -0.27,
+      "minSec": -8.37,
+      "maxSec": 0.23
+    },
+    "detectToConfirm": {
+      "n": 9,
+      "medianSec": 0.1,
+      "minSec": -0.8,
+      "maxSec": 0.97
+    },
+    "confirmToLevel2": {
+      "n": 7,
+      "medianSec": 2,
+      "minSec": 0.3,
+      "maxSec": 9.67
+    },
+    "level2ToSpeech": {
+      "n": 4,
+      "medianSec": 0.22,
+      "minSec": 0,
+      "maxSec": 6.03
+    }
+  },
+  "experiments": {
+    "baseline": {
+      "narrow_street": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "2/2",
+        "fpPerMin": 0,
+        "speech": 5
+      },
+      "narrow_hutong": {
+        "events": 3,
+        "tp": 1,
+        "group": "1/3",
+        "coverage": "2/2",
+        "fpPerMin": 0,
+        "speech": 7
+      },
+      "tunnel": {
+        "events": 3,
+        "tp": 0,
+        "group": "0/3",
+        "coverage": "0/3",
+        "fpPerMin": 2.980033773716102,
+        "speech": 10
+      }
+    },
+    "crowdApproachMaxDist8": {
+      "narrow_street": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "1/2",
+        "fpPerMin": 0,
+        "speech": 7
+      },
+      "narrow_hutong": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "1/2",
+        "fpPerMin": 0,
+        "speech": 8
+      },
+      "tunnel": {
+        "events": 3,
+        "tp": 0,
+        "group": "0/3",
+        "coverage": "0/3",
+        "fpPerMin": 2.980033773716102,
+        "speech": 7
+      }
+    },
+    "crowdLooming": {
+      "narrow_street": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "1/2",
+        "fpPerMin": 0,
+        "speech": 5
+      },
+      "narrow_hutong": {
+        "events": 3,
+        "tp": 0,
+        "group": "0/3",
+        "coverage": "1/2",
+        "fpPerMin": 0,
+        "speech": 7
+      },
+      "tunnel": {
+        "events": 3,
+        "tp": 0,
+        "group": "0/3",
+        "coverage": "0/3",
+        "fpPerMin": 0,
+        "speech": 8
+      }
+    },
+    "baselineHutongRepeats": {
+      "run1": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "1/2",
+        "fpPerMin": 0,
+        "speech": 5
+      },
+      "run2": {
+        "events": 2,
+        "tp": 0,
+        "group": "0/2",
+        "coverage": "1/2",
+        "fpPerMin": 5.128205128205129,
+        "speech": 5
+      }
+    }
+  }
+}

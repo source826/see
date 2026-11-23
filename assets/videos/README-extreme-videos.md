@@ -36,6 +36,20 @@
 - 对应 GT：`gt/narrow_street_approach_full.json`、`gt/narrow_hutong_approach_full.json`、`gt/tunnel_backlight_full.json`、`gt/puddle_reflection_full.json`。
 - `stairs_pov`（整段手抖模糊）、`handheld_night_run`、`ebike_pov_traffic`、`crowd_dense` 未纳入本轮按目标召回；`stairs_pov` 只作环境层/稳定性参考。
 
+## 下一批最终检验候选（2026-11-23，GT 未完成）
+
+本地未参与过任何评测的片段只剩 3 段，已登记到 `manifest.json` 的 `final_test_next`：
+
+| 文件 | 帧率/时长 | 用途 | GT 状态 |
+|---|---|---|---|
+| `zebra_b.mp4` | 25 fps / 20.1 s | 人行横道密集过街，全新场景，事件丰富 | **未完成**：辅助轨迹切出 100+ 段，事件目标与背景需人工标注 |
+| `hongkong_walk_02.webm` | 29.97 VFR / 10.6 s | 夜间小巷，低照度、低分辨率，硬负样本 | **未完成**：先转固定帧率，再标注 |
+| `narrow_hutong_25fps.mp4` | 25 fps / 8.1 s | 胡同短片段，与开发集同场景不同片段 | **未完成**：只能算片段级全新 |
+
+- 这 3 段只作为候选，**在 GT 完成并冻结参数之前不得运行最终检验，也不得看结果调参**。
+- 本地素材池已经接近枯竭；要满足“场景级全新”，下一批需要重新下载未使用过的 B 站街景片段。
+- `pedestrian_avoidance.ogv` 是俯视监控视角，与第一人称导盲场景差异过大，不纳入。
+
 ## 素材使用限制
 - 以上素材版权归原作者/平台所有；仓库仅记录来源与用途，不对外分发视频文件。
 - 未能追溯 BV 号的素材统一按“来源未记录，仅本地使用，不对外分发”处理。

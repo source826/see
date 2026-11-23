@@ -70,9 +70,7 @@ const hasSpoken = spokenByFrame.size > 0;
 const matchByFrame = {};
 const eventFrames = [];
 const idVotes = new Map();
-for (const rec of frames) {
-  const gtBoxes = gtAt(rec.frame);
-  const pred = (rec.perTrack || []).filter((p) => p.confirmed).map((p) => ({ id: p.id, bbox: p.bbox }));
+function matchFrame(gtBoxes, pred) {
   const pairs = [];
   for (let a = 0; a < gtBoxes.length; a++) {
     for (let b = 0; b < pred.length; b++) {
@@ -97,10 +95,18 @@ for (const rec of frames) {
       ? Number(gt.bgMap[String(rawId)])
       : rawId;
     map.set(pred[p.b].id, mappedId);
-    let votes = idVotes.get(pred[p.b].id);
+  }
+  return map;
+}
+for (const rec of frames) {
+  const gtBoxes = gtAt(rec.frame);
+  const pred = (rec.perTrack || []).filter((p) => p.confirmed).map((p) => ({ id: p.id, bbox: p.bbox }));
+  const map = matchFrame(gtBoxes, pred);
+  for (const [predId, mappedId] of map) {
+    let votes = idVotes.get(predId);
     if (!votes) {
       votes = new Map();
-      idVotes.set(pred[p.b].id, votes);
+      idVotes.set(predId, votes);
     }
     votes.set(mappedId, (votes.get(mappedId) || 0) + 1);
   }
@@ -114,6 +120,32 @@ for (const rec of frames) {
     corridor: rec.corridor && rec.corridor.wide ? { poly: rec.corridor.wide } : null,
   });
 }
+// 五段延迟的第一段：GT 目标首次被“原始检测”命中（此时轨迹通常还未确认）。
+// perTrack 只导出已确认轨迹，所以首匹配必须从 detections 算，不能用 matchByFrame。
+const vehicleCls = new Set([1, 2, 3, 5, 7]);
+const clsCompatible = (gtCls, detCls) =>
+  gtCls === 'veh' ? vehicleCls.has(detCls) : detCls === 0;
+const firstDetFrameByGt = new Map();
+for (const rec of frames) {
+  const gtBoxes = gtAt(rec.frame).filter((g) => !firstDetFrameByGt.has(g.id));
+  if (!gtBoxes.length) continue;
+  const dets = (rec.detections || []).filter((d) => d && d.bbox);
+  for (const g of gtBoxes) {
+    const small = g.bbox.w * g.bbox.h < 0.01 * analysis.width * analysis.height;
+    const th = small ? 0.2 : 0.3;
+    const hit = dets.find((d) => clsCompatible(g.cls, d.cls) && iou(g.bbox, d.bbox) >= th);
+    if (hit) firstDetFrameByGt.set(g.id, rec.frame);
+  }
+}
+const firstDetFrameForEvent = (gtId) => {
+  let best = null;
+  for (const [rawId, frame] of firstDetFrameByGt) {
+    const mapped = gt.bgMap && gt.bgMap[String(rawId)] ? Number(gt.bgMap[String(rawId)]) : rawId;
+    if (mapped !== gtId) continue;
+    if (best === null || frame < best) best = frame;
+  }
+  return best;
+};
 // GT 起点之前的帧没有 GT，用全局 ID 多数票映射（和评测台 warmup 口径一致），
 // 这样“事件发生前的报警”才能算提前量，而不是一律 0。
 const idMap = new Map();
@@ -187,10 +219,21 @@ for (const gtId of eventGtIdsForCoverage) {
     strictFrames: 0,
     approachingFrames: 0,
     firstMatchedFrame: null,
+    firstDetectedFrame: firstDetFrameForEvent(gtId),
+    firstConfirmedFrame: null,
     firstLevel2Frame: null,
     firstStrictFrame: null,
     firstSpokenFrame: null,
     firstSpokenLeadSec: null,
+    blockers: {
+      crowdScene: 0,
+      notStrict: 0,
+      notWide: 0,
+      far5m: 0,
+      notApproaching: 0,
+      flatHeight: 0,
+      lowHits: 0,
+    },
     predIds: [],
     idSwitches: 0,
     matchedBeforeEntry: 0,
@@ -207,7 +250,6 @@ for (const gtId of eventGtIdsForCoverage) {
     const predId = [...(matchByFrame[rec.frame] || new Map())].find(([, gid]) => gid === gtId)?.[0];
     if (predId === undefined) continue;
     d.matched++;
-    if (d.firstMatchedFrame === null) d.firstMatchedFrame = rec.frame;
     if (prevPredId !== null && predId !== prevPredId) d.idSwitches++;
     prevPredId = predId;
     if (!d.predIds.includes(predId)) d.predIds.push(predId);
@@ -220,14 +262,41 @@ for (const gtId of eventGtIdsForCoverage) {
     if (p.level >= 2) {
       d.level2Frames++;
       if (beforeEntry) d.level2BeforeEntry++;
-      if (d.firstLevel2Frame === null) d.firstLevel2Frame = rec.frame;
     }
     if (p.inStrict) {
       d.strictFrames++;
       if (beforeEntry) d.strictBeforeEntry++;
-      if (d.firstStrictFrame === null) d.firstStrictFrame = rec.frame;
     }
     if (p.approaching) d.approachingFrames++;
+  }
+  // 系统侧阶段用全帧扫描：GT 每 5 帧一个样本，若只在样本帧记录，
+  // 确认/level2 会被量化到 5 帧网格，阶段耗时失真。
+  for (const rec of frames) {
+    const predId = [...(matchByFrame[rec.frame] || new Map())].find(([, gid]) => gid === gtId)?.[0];
+    if (predId === undefined) continue;
+    const p = (rec.perTrack || []).find((x) => x.id === predId);
+    if (!p) continue;
+    if (p.confirmed && d.firstMatchedFrame === null) d.firstMatchedFrame = rec.frame;
+    if (p.confirmed && d.firstConfirmedFrame === null) d.firstConfirmedFrame = rec.frame;
+    if (p.level >= 2 && d.firstLevel2Frame === null) d.firstLevel2Frame = rec.frame;
+    if (p.inStrict && d.firstStrictFrame === null) d.firstStrictFrame = rec.frame;
+  }
+  // 确认后到首个 level2 之间，逐帧统计“被哪条闸挡住”，用于定位最长阶段。
+  if (d.firstConfirmedFrame !== null && d.firstLevel2Frame !== null) {
+    for (const rec of frames) {
+      if (rec.frame < d.firstConfirmedFrame || rec.frame >= d.firstLevel2Frame) continue;
+      const predId = [...(matchByFrame[rec.frame] || new Map())].find(([, gid]) => gid === gtId)?.[0];
+      if (predId === undefined) continue;
+      const p = (rec.perTrack || []).find((x) => x.id === predId);
+      if (!p || p.level >= 2) continue;
+      if (rec.sceneMode === 'crowd') d.blockers.crowdScene++;
+      if (!p.inStrict) d.blockers.notStrict++;
+      if (!p.inPath) d.blockers.notWide++;
+      if (p.distance !== null && p.distance > 5) d.blockers.far5m++;
+      if (!p.approaching) d.blockers.notApproaching++;
+      if (!(typeof p.heightRate === 'number' && p.heightRate > 0.03)) d.blockers.flatHeight++;
+      if (p.hits < 8) d.blockers.lowHits++;
+    }
   }
   for (const rec of frames) {
     const spoken = hasSpoken ? spokenByFrame.get(rec.frame) || [] : rec.alerts || [];
