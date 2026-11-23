@@ -3,168 +3,244 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>导盲视觉 · YOLO 逼近判定与语音提示</title>
+  <title>导盲视觉 · 实时辅助提醒</title>
+  <link rel="icon" href="data:," />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-mode="simple">
   <header class="topbar">
     <div class="brand">
       <span class="logo" aria-hidden="true"></span>
       <div>
         <h1>导盲视觉</h1>
-        <p>YOLO 检测 → 跟踪 ID → 面积/中心逼近判定 → 分级语音提示</p>
       </div>
     </div>
     <div class="topbar-right">
-      <span class="pill" id="status">等待真实视频源</span>
+      <span class="pill ghost" id="status">等待视频源</span>
       <span class="pill ghost" id="enginePill">YOLOv8n · 加载中…</span>
+      <div class="mode-switch" role="group" aria-label="界面模式">
+        <button class="mode-btn is-active" id="modeSimpleBtn" type="button" aria-pressed="true">简洁</button>
+        <button class="mode-btn" id="modeDebugBtn" type="button" aria-pressed="false">调试</button>
+      </div>
     </div>
   </header>
 
-  <main class="layout">
-    <section class="stage-card">
+  <main class="layout" id="layout">
+    <section class="stage-card" aria-label="实时画面与核心操作">
+      <div class="status-banner safe" id="alert" role="status" aria-live="polite">
+        <span class="status-icon" aria-hidden="true"></span>
+        <div class="status-copy">
+          <span class="status-level" id="alertLevel">安全</span>
+          <strong class="status-text" id="alertText">前方通畅，可以直行</strong>
+        </div>
+      </div>
+      <div id="dangerLive" class="sr-only" aria-live="assertive"></div>
+
       <div class="video-wrap" id="videoWrap">
-        <video id="video" playsinline muted></video>
-        <canvas id="overlay"></canvas>
+        <video id="video" playsinline muted aria-label="实时视频画面"></video>
+        <canvas id="overlay" aria-hidden="true"></canvas>
         <div class="empty" id="empty">
-          <strong>选择真实视频或开启摄像头</strong>
-          <span>只接受真实拍摄素材，不使用任何合成数据</span>
-          <button class="btn primary" id="demoBtn" type="button">载入内置真实街景素材</button>
+          <strong>开始使用导盲视觉</strong>
+          <span>先载入示例视频，或使用摄像头</span>
+          <button class="btn primary large" id="demoBtn" type="button">用示例视频体验</button>
+          <div class="empty-actions">
+            <label class="btn large" for="fileInput">打开视频</label>
+            <button class="btn large" id="cameraBtn" type="button">开启摄像头</button>
+          </div>
+          <p class="empty-note">实验性辅助提醒，不能替代盲杖等其他导盲方式。</p>
         </div>
-        <div class="alert-banner" id="alert" hidden>
-          <span class="alert-level" id="alertLevel">危险</span>
-          <strong class="alert-text" id="alertText"></strong>
+        <div class="source-error" id="sourceError" hidden>
+          <div>
+            <strong id="sourceErrorText">摄像头不可用</strong>
+            <p class="hint">请允许摄像头权限，或先用示例视频体验。</p>
+          </div>
+          <button class="btn primary" id="sourceErrorSample" type="button">用示例视频体验</button>
         </div>
       </div>
 
-      <div class="controls">
-        <label class="btn primary" for="fileInput">打开真实视频</label>
-        <input id="fileInput" type="file" accept="video/*" hidden />
-        <button class="btn" id="cameraBtn" type="button">开启摄像头</button>
-        <button class="btn" id="playBtn" type="button">暂停</button>
-        <button class="btn small" id="prevBtn" type="button" title="上一帧">◀ 帧</button>
-        <button class="btn small" id="nextBtn" type="button" title="下一帧">帧 ▶</button>
-        <span class="divider"></span>
-        <label class="toggle"><input type="checkbox" id="precisionToggle" checked /> 高精度双向光流</label>
-        <label class="toggle"><input type="checkbox" id="speechToggle" checked /> 语音提示</label>
-        <label class="select">
-          分析分辨率
-          <select id="resSelect">
-            <option value="256">256</option>
-            <option value="320" selected>320</option>
-            <option value="400">400</option>
-            <option value="480">480</option>
-            <option value="640">640</option>
-          </select>
-        </label>
-        <label class="select" title="相机离地高度（米），用于地面几何估距">
-          相机高度
-          <input id="cameraHeight" type="number" min="0.3" max="2.5" step="0.05" value="1.5" style="width:70px" /> m
-        </label>
-        <label class="select" title="相机光轴向下偏离水平面的角度，0=水平">
-          俯角
-          <input id="cameraPitch" type="number" min="-10" max="45" step="1" value="10" style="width:62px" /> °
-        </label>
-        <label class="select" title="轨迹预判时长（秒），只做短时外推">
-          预判
-          <input id="predictSec" type="number" min="0.8" max="2.5" step="0.1" value="1.4" style="width:62px" /> s
-        </label>
-        <label class="select">
-          源帧率
-          <select id="fpsSelect">
-            <option value="24">24</option>
-            <option value="25">25</option>
-            <option value="30" selected>30</option>
-            <option value="60">60</option>
-          </select>
-        </label>
+      <div class="primary-actions" aria-label="核心操作">
+        <button class="action-btn action-primary" id="playBtn" type="button" aria-pressed="false" aria-label="开始或停止">开始</button>
+        <button class="action-btn" id="muteBtn" type="button" aria-pressed="false" aria-label="静音或开启声音">静音</button>
+        <button class="action-btn" id="sourceBtn" type="button" aria-label="切换视频或摄像头">视频 / 摄像头</button>
       </div>
 
-      <div class="controls sub">
-        <span class="hint">叠加层：</span>
-        <label class="toggle"><input type="checkbox" id="showFlow" checked /> 光流分层</label>
-        <label class="toggle"><input type="checkbox" id="showTracks" checked /> 轨迹框</label>
-        <label class="toggle"><input type="checkbox" id="showPredict" checked /> 轨迹预测</label>
-        <label class="toggle"><input type="checkbox" id="showCorridor" checked /> 通行走廊</label>
-        <span class="divider"></span>
+      <div class="debug-bar" id="debugBar" hidden>
+        <button class="btn" id="debugPanelToggle" type="button" aria-expanded="false" aria-controls="debugPanel">调试面板</button>
         <span class="hint" id="sourceName">未加载素材</span>
-        <span class="divider"></span>
-        <button class="btn" id="recBtn" type="button">● 记录中间结果</button>
-        <span class="hint" id="recStatus">未记录</span>
-        <span class="divider"></span>
-        <button class="btn small" id="terrainBtn" type="button">校准姿态/坡道</button>
-        <span class="hint" id="terrainStatus">地形传感器未启用</span>
-        <a class="btn ghost right" href="eval.html">量化评测台 →</a>
       </div>
+
+      <input id="fileInput" type="file" accept="video/*" hidden />
     </section>
 
-    <aside class="panel">
-      <div class="instruction" id="instruction">前方通畅，可以直行</div>
-
-      <div class="metrics">
-        <div class="metric"><span>处理帧率</span><strong id="stFps">–</strong></div>
-        <div class="metric"><span>单帧耗时</span><strong id="stMs">–</strong></div>
-        <div class="metric"><span>YOLO 推理</span><strong id="stDetect">–</strong></div>
-        <div class="metric"><span>判定模式</span><strong id="stMode">–</strong></div>
-        <div class="metric"><span>风险目标</span><strong id="stRisk">–</strong></div>
-        <div class="metric"><span>估距方式</span><strong id="stDistance">–</strong></div>
-        <div class="metric"><span>地形</span><strong id="stTerrain">–</strong></div>
-        <div class="metric"><span>红绿灯</span><strong id="stTraffic">–</strong></div>
-        <div class="metric"><span>斑马线</span><strong id="stCrosswalk">–</strong></div>
-        <div class="metric"><span>valid 光流点</span><strong id="stPoints">–</strong></div>
-        <div class="metric"><span>背景内点率</span><strong id="stBg">–</strong></div>
-        <div class="metric"><span>运动层数</span><strong id="stLayers">–</strong></div>
-        <div class="metric"><span>运动目标</span><strong id="stObjects">–</strong></div>
-        <div class="metric"><span>确认轨迹</span><strong id="stTracks">–</strong></div>
-        <div class="metric"><span>RANSAC 迭代</span><strong id="stRansac">–</strong></div>
+    <aside class="debug-panel" id="debugPanel" hidden aria-label="调试与演示面板">
+      <div class="debug-panel-head">
+        <div>
+          <h2>调试 / 演示</h2>
+          <p class="hint">仅本次生效，刷新恢复冻结默认</p>
+        </div>
+        <button class="btn small" id="debugPanelClose" type="button" aria-label="收起调试面板">收起</button>
       </div>
 
-      <details class="section nav-section" id="navSection" open>
-        <summary>地图导航（实验）</summary>
-        <canvas id="navMap" class="nav-map" aria-label="目的地地图"></canvas>
-        <div class="nav-grid">
-          <label>纬度 <input id="navLat" type="number" step="0.000001" placeholder="39.900000" /></label>
-          <label>经度 <input id="navLon" type="number" step="0.000001" placeholder="116.400000" /></label>
-        </div>
-        <div class="nav-actions">
-          <button class="btn small" id="navLocate" type="button">定位</button>
-          <button class="btn small" id="navSet" type="button">设置目的地</button>
-          <button class="btn small primary" id="navStart" type="button">开始导航</button>
-          <button class="btn small" id="navStop" type="button">停止</button>
-          <button class="btn small" id="navQuery" type="button">还有多远</button>
-          <button class="btn small" id="navVoice" type="button">语音命令</button>
-          <button class="btn small" id="navCache" type="button">缓存地图</button>
-          <button class="btn small" id="navDownload" type="button">下载地图</button>
-        </div>
-        <div class="nav-status" id="navStatus">未设置目的地。可输入经纬度，或定位后点地图设目的地。</div>
-        <p class="hint">只做直线方向/距离提示，不是转弯级路线；地图 © OpenStreetMap contributors。需 GPS 和网络，实验功能，不能替代盲杖。</p>
-      </details>
+      <div class="debug-scroll">
+        <details class="section" open>
+          <summary>状态指标</summary>
+          <div class="metrics">
+            <div class="metric"><span>处理帧率</span><strong id="stFps">–</strong></div>
+            <div class="metric"><span>单帧耗时</span><strong id="stMs">–</strong></div>
+            <div class="metric"><span>YOLO 推理</span><strong id="stDetect">–</strong></div>
+            <div class="metric"><span>判定模式</span><strong id="stMode">–</strong></div>
+            <div class="metric"><span>风险目标</span><strong id="stRisk">–</strong></div>
+            <div class="metric"><span>估距方式</span><strong id="stDistance">–</strong></div>
+            <div class="metric"><span>地形</span><strong id="stTerrain">–</strong></div>
+            <div class="metric"><span>红绿灯</span><strong id="stTraffic">–</strong></div>
+            <div class="metric"><span>斑马线</span><strong id="stCrosswalk">–</strong></div>
+            <div class="metric"><span>valid 光流点</span><strong id="stPoints">–</strong></div>
+            <div class="metric"><span>背景内点率</span><strong id="stBg">–</strong></div>
+            <div class="metric"><span>运动层数</span><strong id="stLayers">–</strong></div>
+            <div class="metric"><span>运动目标</span><strong id="stObjects">–</strong></div>
+            <div class="metric"><span>确认轨迹</span><strong id="stTracks">–</strong></div>
+            <div class="metric"><span>RANSAC 迭代</span><strong id="stRansac">–</strong></div>
+          </div>
+          <div id="instruction" class="sr-only" aria-hidden="true"></div>
+        </details>
 
-      <div class="section">
-        <h3>阶段耗时</h3>
-        <div class="bars">
-          <div class="bar-row"><span>YOLO</span><div class="bar"><i id="tDetect"></i></div><em id="vDetect">–</em></div>
-          <div class="bar-row"><span>灰度</span><div class="bar"><i id="tGray"></i></div><em id="vGray">–</em></div>
-          <div class="bar-row"><span>金字塔</span><div class="bar"><i id="tPyr"></i></div><em id="vPyr">–</em></div>
-          <div class="bar-row"><span>光流</span><div class="bar"><i id="tFlow"></i></div><em id="vFlow">–</em></div>
-          <div class="bar-row"><span>RANSAC 分层</span><div class="bar"><i id="tSeg"></i></div><em id="vSeg">–</em></div>
-          <div class="bar-row"><span>跟踪/预测</span><div class="bar"><i id="tTrack"></i></div><em id="vTrack">–</em></div>
-        </div>
-      </div>
+        <details class="section">
+          <summary>叠加层</summary>
+          <div class="controls compact">
+            <label class="toggle"><input type="checkbox" id="showFlow" checked /> 光流分层</label>
+            <label class="toggle"><input type="checkbox" id="showTracks" checked /> 轨迹框</label>
+            <label class="toggle"><input type="checkbox" id="showPredict" checked /> 轨迹预测</label>
+            <label class="toggle"><input type="checkbox" id="showCorridor" checked /> 通行走廊</label>
+            <label class="toggle"><input type="checkbox" id="vibrationToggle" checked /> 震动反馈</label>
+          </div>
+        </details>
 
-      <div class="section">
-        <h3>风险事件</h3>
-        <ol class="log" id="log">
-          <li class="muted">暂无风险事件</li>
-        </ol>
-      </div>
+        <details class="section" open>
+          <summary>事件日志</summary>
+          <ol class="log" id="log">
+            <li class="muted">暂无风险事件</li>
+          </ol>
+        </details>
 
-      <div class="section note">
-        <p><strong>检测层：</strong>YOLOv8n（ONNX，浏览器本地推理）；跟踪、面积/中心逼近判定和语音策略为自写逻辑。</p>
-        <p><strong>语音分级：</strong>明确快速逼近才说“有人冲过来”；静止目标说“前方静止障碍”；拿不准时说“前方有情况请确认”。</p>
+        <details class="section" id="navDetails">
+          <summary>导航（实验）</summary>
+          <canvas id="navMap" class="nav-map" aria-label="目的地地图"></canvas>
+          <div class="nav-grid">
+            <label>纬度 <input id="navLat" type="number" step="0.000001" placeholder="39.900000" /></label>
+            <label>经度 <input id="navLon" type="number" step="0.000001" placeholder="116.400000" /></label>
+          </div>
+          <div class="nav-actions">
+            <button class="btn small" id="navLocate" type="button">定位</button>
+            <button class="btn small" id="navSet" type="button">设置目的地</button>
+            <button class="btn small primary" id="navStart" type="button">开始导航</button>
+            <button class="btn small" id="navStop" type="button">停止</button>
+            <button class="btn small" id="navQuery" type="button">还有多远</button>
+            <button class="btn small" id="navVoice" type="button">语音命令</button>
+            <button class="btn small" id="navCache" type="button">缓存地图</button>
+            <button class="btn small" id="navDownload" type="button">下载地图</button>
+          </div>
+          <div class="nav-status" id="navStatus">未设置目的地。可输入经纬度，或定位后点地图设目的地。</div>
+          <p class="hint">只做直线方向/距离提示，不是转弯级路线；地图 © OpenStreetMap contributors。需 GPS 和网络，实验功能。</p>
+        </details>
+
+        <details class="section" id="advancedParams">
+          <summary>高级参数</summary>
+          <p class="hint">仅本次生效，刷新恢复冻结默认。</p>
+          <div class="controls compact">
+            <label class="select">
+              分析分辨率
+              <select id="resSelect">
+                <option value="256">256</option>
+                <option value="320" selected>320</option>
+                <option value="400">400</option>
+                <option value="480">480</option>
+                <option value="640">640</option>
+              </select>
+            </label>
+            <label class="select" title="相机离地高度（米），用于地面几何估距">
+              相机高度
+              <input id="cameraHeight" type="number" min="0.3" max="2.5" step="0.05" value="1.5" style="width:70px" /> m
+            </label>
+            <label class="select" title="相机光轴向下偏离水平面的角度，0=水平">
+              俯角
+              <input id="cameraPitch" type="number" min="-10" max="45" step="1" value="10" style="width:62px" /> °
+            </label>
+            <label class="select" title="轨迹预判时长（秒），只做短时外推">
+              预判
+              <input id="predictSec" type="number" min="0.8" max="2.5" step="0.1" value="1.4" style="width:62px" /> s
+            </label>
+            <label class="select">
+              源帧率
+              <select id="fpsSelect">
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="30" selected>30</option>
+                <option value="60">60</option>
+              </select>
+            </label>
+            <label class="toggle"><input type="checkbox" id="precisionToggle" checked /> 高精度双向光流</label>
+            <label class="toggle"><input type="checkbox" id="speechToggle" checked /> 语音提示</label>
+          </div>
+          <div class="controls compact">
+            <button class="btn small" id="prevBtn" type="button" title="上一帧">◀ 帧</button>
+            <button class="btn small" id="nextBtn" type="button" title="下一帧">帧 ▶</button>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>记录与工具</summary>
+          <div class="controls compact">
+            <button class="btn small" id="recBtn" type="button">● 记录中间结果</button>
+            <span class="hint" id="recStatus">未记录</span>
+          </div>
+          <div class="controls compact">
+            <button class="btn small" id="terrainBtn" type="button">校准姿态/坡道</button>
+            <span class="hint" id="terrainStatus">地形传感器未启用</span>
+          </div>
+          <p class="hint"><a href="eval.html">量化评测台 →</a></p>
+          <div class="note">
+            <p><strong>检测层：</strong>YOLOv8n（ONNX，浏览器本地推理）；跟踪、面积/中心逼近判定和语音策略为自写逻辑。</p>
+            <p><strong>语音分级：</strong>明确快速逼近才说“有人冲过来”；静止目标说“前方静止障碍”；拿不准时说“前方有情况请确认”。</p>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>阶段耗时</summary>
+          <div class="bars">
+            <div class="bar-row"><span>YOLO</span><div class="bar"><i id="tDetect"></i></div><em id="vDetect">–</em></div>
+            <div class="bar-row"><span>灰度</span><div class="bar"><i id="tGray"></i></div><em id="vGray">–</em></div>
+            <div class="bar-row"><span>金字塔</span><div class="bar"><i id="tPyr"></i></div><em id="vPyr">–</em></div>
+            <div class="bar-row"><span>光流</span><div class="bar"><i id="tFlow"></i></div><em id="vFlow">–</em></div>
+            <div class="bar-row"><span>RANSAC 分层</span><div class="bar"><i id="tSeg"></i></div><em id="vSeg">–</em></div>
+            <div class="bar-row"><span>跟踪/预测</span><div class="bar"><i id="tTrack"></i></div><em id="vTrack">–</em></div>
+          </div>
+        </details>
       </div>
     </aside>
   </main>
+
+  <dialog class="source-sheet" id="sourceSheet" aria-label="选择视频来源">
+    <h2>选择视频来源</h2>
+    <p class="hint">没有视频源时，建议先用示例视频体验。</p>
+    <button class="btn primary large" id="sheetDemo" type="button">用示例视频体验</button>
+    <button class="btn large" id="sheetFile" type="button">打开视频</button>
+    <button class="btn large" id="sheetCamera" type="button">开启摄像头</button>
+    <button class="btn ghost" id="sheetClose" type="button">取消</button>
+  </dialog>
+
+  <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+    <div class="loading-card">
+      <h2 id="loadingTitle">正在准备视觉模型</h2>
+      <p id="loadingText">加载模型文件…</p>
+      <div class="loading-bar" aria-hidden="true"><i></i></div>
+      <div class="loading-actions">
+        <button class="btn primary" id="loadingSampleBtn" type="button" hidden>用示例视频体验</button>
+        <button class="btn" id="loadingContinueBtn" type="button" hidden>继续使用（运动分层）</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="disclaimer">实验性辅助提醒，不能替代盲杖等其他导盲方式。</footer>
 
   <script type="module" src="src/app/ui.js"></script>
 </body>

@@ -7,6 +7,7 @@ import { TileMap } from '../nav/tilemap.js';
 import { NavigationController } from '../nav/navigation.js';
 
 const $ = (id) => document.getElementById(id);
+const DEMO_VIDEO = 'assets/videos/narrow_street_approach.mp4';
 
 const video = $('video');
 const overlay = $('overlay');
@@ -60,6 +61,10 @@ const state = {
   disp: { x: 0, y: 0, w: 0, h: 0, dpr: 1 },
   show: { flow: true, tracks: true, predict: true, corridor: true },
   speech: true,
+  vibration: true,
+  uiMode: 'simple',
+  lastStatusLevel: 'safe',
+  loadingTimers: [],
   seeking: false,
   lastResult: null,
   startAt: 0,
@@ -307,6 +312,8 @@ function drawOverlay(res) {
   const ctx = overlayCtx;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, overlay.width, overlay.height);
+  // 简洁模式不绘制任何叠加层；检测框、标签、走廊虚线只在调试模式显示。
+  if (state.uiMode !== 'debug') return;
   if (!res || !res.frame || overlay.width < 2) return;
   const dpr = state.disp.dpr;
   const sx = overlay.width / res.frame.width;
@@ -508,26 +515,52 @@ function updatePanel(res) {
   }
 
   const instruction = $('instruction');
-  const top = res.risk && res.risk.topAlert;
   instruction.textContent = res.risk ? res.risk.instruction : '前方通畅，可以直行';
-  instruction.className = 'instruction';
-  if (top) {
-    if (top.level >= 4) instruction.classList.add('danger');
-    else if (top.level >= 3) instruction.classList.add('warn');
+}
+
+function announceDanger(text) {
+  const live = $('dangerLive');
+  if (!live) return;
+  // 同一句话重复时读屏可能不播；先清空再写入。
+  live.textContent = '';
+  window.setTimeout(() => {
+    live.textContent = text;
+  }, 30);
+}
+
+function vibrate(pattern) {
+  if (!state.vibration || !navigator.vibrate) return;
+  // 浏览器要求页面先有用户交互才允许震动；未交互时直接跳过，避免控制台报错。
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  navigator.vibrate(pattern);
+}
+
+function setStatusBanner(level, text) {
+  const banner = $('alert');
+  if (!banner) return;
+  const safe = level !== 'attention' && level !== 'danger';
+  const next = safe ? 'safe' : level;
+  banner.className = `status-banner ${next}`;
+  $('alertLevel').textContent = next === 'danger' ? '危险' : next === 'attention' ? '注意' : '安全';
+  $('alertText').textContent = text || (next === 'safe' ? '前方通畅，可以直行' : '');
+  $('videoWrap').classList.toggle('danger-frame', next === 'danger');
+  if (next === 'danger' && state.lastStatusLevel !== 'danger') {
+    announceDanger(text || '危险，请停下');
+    vibrate([120, 60, 120]);
+  } else if (next === 'attention' && state.lastStatusLevel === 'safe') {
+    vibrate(80);
   }
+  state.lastStatusLevel = next;
 }
 
 function handleAlert(res) {
-  const banner = $('alert');
   const now = performance.now();
   const cand = classifyAnnouncement(res.risk);
   let targetVisible = false;
   if (cand) {
     targetVisible = true;
-    banner.hidden = false;
-    banner.className = `alert-banner${cand.kind === 'rush' ? '' : cand.kind === 'static' ? ' high' : ' medium'}`;
-    $('alertLevel').textContent = cand.kind === 'rush' ? '危险' : cand.kind === 'static' ? '障碍' : '留意';
-    $('alertText').textContent = cand.text;
+    const level = cand.kind === 'rush' || cand.level >= 4 ? 'danger' : 'attention';
+    setStatusBanner(level, cand.text);
     const speak = state.announcer.shouldSpeak(cand, now);
     if (speak) {
       addLog(cand.text, cand.level);
@@ -551,20 +584,7 @@ function handleAlert(res) {
   // 环境提醒：地形/红绿灯/斑马线/地面异物；目标语音刚播完时先让路 2 秒。
   const envCand = environmentCandidate(res, state.slope);
   if (envCand && now - state.lastTargetSpeechAt > 2000) {
-    banner.hidden = false;
-    const urgent = envCand.kind === 'crosswalk' || envCand.kind === 'ground' || envCand.kind === 'red';
-    banner.className = `alert-banner${urgent || envCand.kind === 'stairs' ? ' high' : ' medium'}`;
-    $('alertLevel').textContent =
-      envCand.kind === 'crosswalk'
-        ? '斑马线'
-        : envCand.kind === 'ground'
-          ? '地面'
-          : envCand.kind === 'stairs'
-            ? '台阶'
-            : envCand.kind === 'red' || envCand.kind === 'green' || envCand.kind === 'yellow'
-              ? '信号'
-              : '地形';
-    $('alertText').textContent = envCand.text;
+    setStatusBanner('attention', envCand.text);
     if (state.terrainAnnouncer.shouldSpeak(envCand, now)) {
       addLog(envCand.text, envCand.level);
       if (state.debug) {
@@ -573,7 +593,7 @@ function handleAlert(res) {
           trackId: -1,
           level: envCand.level,
           frame: res.frame ? res.frame.index : state.frameIndex,
-          bbox: res.crosswalk && res.crosswalk.off ? null : null,
+          bbox: null,
           text: envCand.text,
         });
       }
@@ -585,12 +605,11 @@ function handleAlert(res) {
 
   const top = res.risk && res.risk.topAlert;
   if (top && top.level >= 2) {
-    banner.hidden = false;
-    banner.className = `alert-banner${top.level >= 4 ? '' : top.level === 3 ? ' high' : ' medium'}`;
-    $('alertLevel').textContent = top.level >= 4 ? '危险' : top.level === 3 ? '注意' : '留意';
-    $('alertText').textContent = top.text;
+    const level = top.level >= 4 ? 'danger' : 'attention';
+    setStatusBanner(level, top.text);
   } else {
-    banner.hidden = true;
+    const text = res.risk && res.risk.instruction ? res.risk.instruction : '前方通畅，可以直行';
+    setStatusBanner('safe', text);
   }
 }
 
@@ -631,7 +650,7 @@ function speakAnnouncement(cand) {
     u.onstart = () => recordSpeech(cand, queuedAt, performance.now());
     window.speechSynthesis.speak(u);
   }
-  if (navigator.vibrate) navigator.vibrate(cand.kind === 'rush' ? [120, 60, 120] : 70);
+  vibrate(cand.kind === 'rush' ? [120, 60, 120] : 70);
 }
 
 function addLog(text, level) {
@@ -649,7 +668,58 @@ function addLog(text, level) {
 }
 
 function updatePlayLabel() {
-  $('playBtn').textContent = video.paused ? '播放' : '暂停';
+  const btn = $('playBtn');
+  if (!btn) return;
+  const playing = !video.paused;
+  btn.textContent = playing ? '停止' : '开始';
+  btn.setAttribute('aria-pressed', String(playing));
+}
+
+function updateMuteButton() {
+  const btn = $('muteBtn');
+  const toggle = $('speechToggle');
+  if (toggle) toggle.checked = state.speech;
+  if (!btn) return;
+  btn.textContent = state.speech ? '静音' : '开启声音';
+  btn.setAttribute('aria-pressed', String(!state.speech));
+  btn.setAttribute('aria-label', state.speech ? '静音' : '开启声音');
+}
+
+function setSpeechEnabled(enabled) {
+  state.speech = Boolean(enabled);
+  if (!state.speech && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  updateMuteButton();
+}
+
+function loadDemo() {
+  hideSourceError();
+  loadUrl(DEMO_VIDEO);
+}
+
+function showSourceError(text) {
+  const box = $('sourceError');
+  if (!box) return;
+  $('sourceErrorText').textContent = text;
+  box.hidden = false;
+}
+
+function hideSourceError() {
+  const box = $('sourceError');
+  if (box) box.hidden = true;
+}
+
+function openSourceSheet() {
+  const sheet = $('sourceSheet');
+  if (!sheet) return;
+  if (typeof sheet.showModal === 'function') sheet.showModal();
+  else sheet.setAttribute('open', '');
+}
+
+function closeSourceSheet() {
+  const sheet = $('sourceSheet');
+  if (!sheet) return;
+  if (typeof sheet.close === 'function') sheet.close();
+  else sheet.removeAttribute('open');
 }
 
 function stopCamera() {
@@ -668,6 +738,7 @@ function loadFile(file) {
 
 function loadUrl(url) {
   stopCamera();
+  hideSourceError();
   state.source = 'file';
   const params = new URLSearchParams(location.search);
   const t = Number(params.get('t'));
@@ -678,17 +749,22 @@ function loadUrl(url) {
   video.loop = true;
   video.muted = true;
   $('empty').hidden = true;
+  $('status').textContent = '视频已载入 · 准备检测';
   if (state.startAt > 0) {
     // 指定起始时间时先暂停，等 YOLO 就绪后再从该时间播放，保证演示段被完整判定。
     video.pause();
   } else {
     video.play().catch(() => {});
   }
+  updatePlayLabel();
 }
 
 async function startCamera() {
   try {
     stopCamera();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('浏览器不支持摄像头');
+    }
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
@@ -703,9 +779,13 @@ async function startCamera() {
     video.srcObject = stream;
     video.loop = false;
     $('empty').hidden = true;
+    hideSourceError();
     await video.play();
+    $('status').textContent = '摄像头已开启';
+    updatePlayLabel();
   } catch (err) {
     $('status').textContent = `摄像头不可用：${err.message}`;
+    showSourceError('摄像头未授权或没有可用设备。可以先用示例视频体验。');
   }
 }
 
@@ -718,6 +798,9 @@ function stepFrame(dir) {
   state.seeking = true;
   video.currentTime = target;
 }
+
+video.addEventListener('play', updatePlayLabel);
+video.addEventListener('pause', updatePlayLabel);
 
 video.addEventListener('loadedmetadata', () => {
   updatePlayLabel();
@@ -743,9 +826,7 @@ $('fileInput').addEventListener('change', (e) => {
 
 $('cameraBtn').addEventListener('click', startCamera);
 
-$('demoBtn').addEventListener('click', () => {
-  loadUrl('assets/videos/hongkong_walk_02.webm');
-});
+$('demoBtn').addEventListener('click', loadDemo);
 
 $('recBtn').addEventListener('click', () => {
   const rec = state.recorder;
@@ -774,9 +855,33 @@ $('recBtn').addEventListener('click', () => {
 });
 
 $('playBtn').addEventListener('click', () => {
+  if (!video.src && !video.srcObject) {
+    openSourceSheet();
+    return;
+  }
   if (video.paused) video.play().catch(() => {});
   else video.pause();
   updatePlayLabel();
+});
+
+$('muteBtn').addEventListener('click', () => setSpeechEnabled(!state.speech));
+$('sourceBtn').addEventListener('click', openSourceSheet);
+$('sheetDemo').addEventListener('click', () => {
+  closeSourceSheet();
+  loadDemo();
+});
+$('sheetFile').addEventListener('click', () => {
+  closeSourceSheet();
+  $('fileInput').click();
+});
+$('sheetCamera').addEventListener('click', () => {
+  closeSourceSheet();
+  startCamera();
+});
+$('sheetClose').addEventListener('click', closeSourceSheet);
+$('sourceErrorSample').addEventListener('click', loadDemo);
+$('vibrationToggle').addEventListener('change', (e) => {
+  state.vibration = e.target.checked;
 });
 
 $('prevBtn').addEventListener('click', () => stepFrame(-1));
@@ -788,10 +893,7 @@ $('precisionToggle').addEventListener('change', (e) => {
   state.frameIndex = 0;
 });
 
-$('speechToggle').addEventListener('change', (e) => {
-  state.speech = e.target.checked;
-  if (!state.speech && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-});
+$('speechToggle').addEventListener('change', (e) => setSpeechEnabled(e.target.checked));
 
 $('resSelect').addEventListener('change', (e) => {
   state.analysisWidth = Number(e.target.value);
@@ -908,6 +1010,12 @@ function setupNavigation() {
   state.navigation = nav;
   state.tileMap = map;
   window.addEventListener('resize', () => map.draw());
+  const navDetails = $('navDetails');
+  if (navDetails) {
+    navDetails.addEventListener('toggle', () => {
+      if (navDetails.open) requestAnimationFrame(() => map.draw());
+    });
+  }
 
   const setFromInputs = () => {
     const lat = Number($('navLat').value);
@@ -991,12 +1099,129 @@ function setupNavigation() {
   });
 }
 
+function setLoadingStatus(text) {
+  const el = $('loadingText');
+  if (el) el.textContent = text;
+}
+
+function clearLoadingTimers() {
+  for (const t of state.loadingTimers) clearTimeout(t);
+  state.loadingTimers = [];
+}
+
+function hideLoading() {
+  clearLoadingTimers();
+  const overlay = $('loadingOverlay');
+  if (overlay) overlay.hidden = true;
+}
+
+function showLoadingError(message) {
+  clearLoadingTimers();
+  const title = $('loadingTitle');
+  const overlay = $('loadingOverlay');
+  if (title) title.textContent = '视觉模型未就绪';
+  setLoadingStatus(message || '加载失败，已回退运动分层');
+  if (overlay) overlay.hidden = false;
+  const bar = overlay && overlay.querySelector('.loading-bar');
+  if (bar) bar.hidden = true;
+  const sample = $('loadingSampleBtn');
+  const cont = $('loadingContinueBtn');
+  if (sample) sample.hidden = false;
+  if (cont) cont.hidden = false;
+}
+
+function setupShell() {
+  const simple = $('modeSimpleBtn');
+  const debug = $('modeDebugBtn');
+  const panel = $('debugPanel');
+  const debugBar = $('debugBar');
+  const panelToggle = $('debugPanelToggle');
+  const panelClose = $('debugPanelClose');
+  const layout = $('layout');
+
+  const closePanel = (focusToggle = false) => {
+    if (panel) panel.hidden = true;
+    if (layout) layout.classList.remove('panel-open');
+    if (panelToggle) panelToggle.setAttribute('aria-expanded', 'false');
+    if (focusToggle && panelToggle) panelToggle.focus();
+  };
+  const openPanel = () => {
+    if (panel) panel.hidden = false;
+    if (layout) layout.classList.add('panel-open');
+    if (panelToggle) panelToggle.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => {
+      if (state.tileMap) state.tileMap.draw();
+      if (panelClose) panelClose.focus();
+    });
+  };
+  const setMode = (mode) => {
+    const next = mode === 'debug' ? 'debug' : 'simple';
+    state.uiMode = next;
+    document.body.dataset.mode = next;
+    if (simple) {
+      simple.classList.toggle('is-active', next === 'simple');
+      simple.setAttribute('aria-pressed', String(next === 'simple'));
+    }
+    if (debug) {
+      debug.classList.toggle('is-active', next === 'debug');
+      debug.setAttribute('aria-pressed', String(next === 'debug'));
+    }
+    if (debugBar) debugBar.hidden = next === 'simple';
+    if (overlay) {
+      overlay.hidden = next === 'simple';
+      if (next === 'simple') overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    }
+    if (next === 'simple') closePanel();
+    else requestAnimationFrame(() => state.tileMap && state.tileMap.draw());
+  };
+
+  if (simple) simple.addEventListener('click', () => setMode('simple'));
+  if (debug) debug.addEventListener('click', () => setMode('debug'));
+  if (panelToggle) {
+    panelToggle.addEventListener('click', () => {
+      if (panel && panel.hidden) openPanel();
+      else closePanel();
+    });
+  }
+  if (panelClose) panelClose.addEventListener('click', () => closePanel(true));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (panel && !panel.hidden) closePanel(true);
+    const sheet = $('sourceSheet');
+    if (sheet && sheet.open) sheet.close();
+  });
+
+  const sampleBtn = $('loadingSampleBtn');
+  if (sampleBtn) {
+    sampleBtn.addEventListener('click', () => {
+      hideLoading();
+      loadDemo();
+    });
+  }
+  const continueBtn = $('loadingContinueBtn');
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => hideLoading());
+  }
+
+  setMode('simple');
+  updatePlayLabel();
+  updateMuteButton();
+}
+
 async function initYolo() {
   const params = new URLSearchParams(location.search);
   if (params.get('yolo') === '0') {
+    hideLoading();
     $('enginePill').textContent = 'YOLO 已关闭 · 运动分层';
+    $('status').textContent = 'YOLO 已关闭 · 运动分层';
     return;
   }
+  $('loadingTitle').textContent = '正在准备视觉模型';
+  setLoadingStatus('加载模型文件…');
+  const bar = $('loadingOverlay').querySelector('.loading-bar');
+  if (bar) bar.hidden = false;
+  state.loadingTimers.push(setTimeout(() => setLoadingStatus('初始化推理后端…'), 500));
+  state.loadingTimers.push(setTimeout(() => setLoadingStatus('预热模型…'), 1600));
   try {
     const { YoloDetector } = await import('../detection/yolo.js');
     // 实时循环默认 WASM；需要 WebGPU 时加 ?webgpu=1。
@@ -1004,13 +1229,16 @@ async function initYolo() {
     const detector = new YoloDetector({ preferWebGPU: params.get('webgpu') === '1' });
     state.detector = detector;
     await detector.load();
+    clearLoadingTimers();
     while (state.busy) await new Promise((r) => setTimeout(r, 50));
     state.yoloReady = true;
     state.pipeline.setOptions({ yoloDetect: true });
     state.pipeline.reset();
     state.frameIndex = 0;
+    setLoadingStatus(`模型就绪 · ${detector.backend}`);
     $('enginePill').textContent = `YOLOv8n · ${detector.backend}`;
     if (state.source !== 'camera') $('status').textContent = `YOLO ${detector.backend} · 逼近判定就绪`;
+    setTimeout(hideLoading, 300);
     if (state.startAt > 0 && state.source === 'file' && video.readyState >= 1) {
       state.lastProcessedFrame = null;
       video.currentTime = state.startAt;
@@ -1021,6 +1249,7 @@ async function initYolo() {
     console.warn(err);
     $('enginePill').textContent = 'YOLO 不可用 · 运动分层';
     $('status').textContent = `YOLO 加载失败：${err.message}`;
+    showLoadingError(`模型加载失败：${err.message}`);
   }
 }
 
@@ -1121,6 +1350,7 @@ function initTerrainSensor() {
 
 initDistanceOptions();
 initTerrainSensor();
+setupShell();
 setupNavigation();
 initYolo();
 requestAnimationFrame(tick);
