@@ -231,6 +231,11 @@ async function processFrame(ts) {
               crossing: Boolean(p.crossing),
               motionState: p.motionState,
               heightRate: typeof p.heightRate === 'number' ? Math.round(p.heightRate * 1000) / 1000 : null,
+              flowRadialRate:
+                typeof p.flowRadialRate === 'number' ? Math.round(p.flowRadialRate * 1000) / 1000 : null,
+              flowRadialMean:
+                typeof p.flowRadialMean === 'number' ? Math.round(p.flowRadialMean * 1000) / 1000 : null,
+              flowRadialPoints: p.flowRadialPoints ?? 0,
               ttc: p.ttc === null ? null : Math.round(p.ttc * 100) / 100,
               distance: p.distance === null ? null : Math.round(p.distance * 10) / 10,
               bbox: {

@@ -24,7 +24,9 @@ for (const a of process.argv.slice(2).filter((x) => x.startsWith('--opt='))) {
   if (idx < 0) continue;
   const k = pair.slice(0, idx);
   const raw = pair.slice(idx + 1);
-  overrides[k] = raw === 'true' ? true : raw === 'false' ? false : Number(raw);
+  const num = Number(raw);
+  overrides[k] =
+    raw === 'true' ? true : raw === 'false' ? false : Number.isFinite(num) && raw.trim() !== '' ? num : raw;
 }
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8').replace(/^\uFEFF/, ''));
 const live = readJson(args.live);
@@ -45,13 +47,12 @@ const pipeline = new GuidePipeline({
   ...overrides,
 });
 const announcer = new SpeechAnnouncer();
-// 管线在 YOLO 模式下只用像素做光流布点；规则与走廊都不依赖画面内容。
-const blank = { width, height, data: new Uint8ClampedArray(width * height * 4) };
 const alerts = [];
 const outFrames = [];
-for (const rec of frames) {
+
+function processFrame(rec, imageData) {
   const dt = rec.dt || 1 / fps;
-  const res = pipeline.process(blank, rec.frame, { detections: rec.detections || [], dt });
+  const res = pipeline.process(imageData, rec.frame, { detections: rec.detections || [], dt });
   const risk = res.risk;
   const cand = classifyAnnouncement(risk);
   if (cand && announcer.shouldSpeak(cand, (rec.frame / fps) * 1000)) {
@@ -92,6 +93,11 @@ for (const rec of frames) {
           crossing: Boolean(p.crossing),
           motionState: p.motionState,
           heightRate: typeof p.heightRate === 'number' ? Math.round(p.heightRate * 1000) / 1000 : null,
+          flowRadialRate:
+            typeof p.flowRadialRate === 'number' ? Math.round(p.flowRadialRate * 1000) / 1000 : null,
+          flowRadialMean:
+            typeof p.flowRadialMean === 'number' ? Math.round(p.flowRadialMean * 1000) / 1000 : null,
+          flowRadialPoints: p.flowRadialPoints ?? 0,
           ttc: p.ttc === null ? null : Math.round(p.ttc * 100) / 100,
           distance: p.distance === null ? null : Math.round(p.distance * 10) / 10,
           bbox: {
@@ -107,6 +113,36 @@ for (const rec of frames) {
         ? { apex: risk.corridor.apex, halfWidth: risk.corridor.halfWidth, wide: risk.corridor.wide, poly: risk.corridor.poly }
         : null,
   });
+}
+
+if (args.video) {
+  // 有视频时用真实像素重放，光流点才有内容；没有视频时用空白帧，只复现规则。
+  const { spawn } = await import('node:child_process');
+  const byFrame = new Map(frames.map((f) => [f.frame, f]));
+  const ff = spawn(
+    'ffmpeg',
+    ['-v', 'error', '-i', args.video, '-vf', `scale=${width}:${height}`, '-f', 'rawvideo', '-pix_fmt', 'rgba', '-'],
+    { stdio: ['ignore', 'pipe', 'inherit'] }
+  );
+  const frameBytes = width * height * 4;
+  let buf = Buffer.alloc(0);
+  let frameIndex = 0;
+  for await (const chunk of ff.stdout) {
+    buf = buf.length ? Buffer.concat([buf, chunk]) : chunk;
+    while (buf.length >= frameBytes) {
+      const rec = byFrame.get(frameIndex);
+      if (rec) {
+        const data = new Uint8ClampedArray(buf.subarray(0, frameBytes));
+        processFrame(rec, { width, height, data });
+      }
+      buf = buf.subarray(frameBytes);
+      frameIndex++;
+    }
+  }
+} else {
+  // 管线在 YOLO 模式下只用像素做光流布点；规则与走廊都不依赖画面内容。
+  const blank = { width, height, data: new Uint8ClampedArray(width * height * 4) };
+  for (const rec of frames) processFrame(rec, blank);
 }
 writeFileSync(
   args.out,

@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-11-23T09:30:00.000Z",
+  "note": "三项试验都在开发集 9 条实时记录的离线回放上做；最终检验集没有参与任何调参。任务 1/2 均未保留，任务 3 只做检测层对照。",
+  "task1_robust_slope": {
+    "what": "用每条轨迹最近 1.5 s 的对数框高做 Theil-Sen 中位数斜率，替代逐帧帧差回归；使用记录里的真实 dt 累加时间戳。",
+    "baseline": {
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "speech": 50,
+      "leadMedian": 1.43,
+      "leadP10": 1.43
+    },
+    "robust": {
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "8/21",
+      "fpEpisodes": 3,
+      "speech": 50,
+      "leadMedian": 1.43,
+      "leadP10": 1.43
+    },
+    "threeStateAgreementAt003": {
+      "samples": 532,
+      "diff": 0.562,
+      "robust": 0.547
+    },
+    "conclusion": "召回、FP、语音、提前量完全不变，覆盖少 1 条，三态一致率 0.562→0.547。按“召回或提前量无提升就回退”的规则，已回退，未保留。",
+    "risk": "本次只替换了 heightRate；当前 approaching 判定仍用 areaRate。若本意是让 approaching 改用稳健框高斜率，需要另做一次改动并重新标定阈值，属于另一项试验。"
+  },
+  "task2_flow_radial": {
+    "what": "对框内光流点计算相对框中心的半径增长率 (r_dst-r_src)/(r_src*dt)，记录均值与中位数，不接入报警。",
+    "samples": 532,
+    "threeStateAgreementAt003": {
+      "diffHeightRate": 0.562,
+      "robustSlope": 0.547,
+      "flowMedian": 0.365,
+      "flowMean": 0.342
+    },
+    "perVideoAt003": {
+      "narrow_street": { "samples": 218, "diff": 0.541, "robust": 0.541, "flowMedian": 0.372, "flowMean": 0.353 },
+      "narrow_hutong": { "samples": 50, "diff": 0.54, "robust": 0.52, "flowMedian": 0.66, "flowMean": 0.66 },
+      "tunnel": { "samples": 264, "diff": 0.583, "robust": 0.557, "flowMedian": 0.303, "flowMean": 0.273 }
+    },
+    "conclusion": "光流径向膨胀整体一致率 0.365/0.342，低于现有框高差分的 0.562；只有 hutong 小样本（50）较高。没有“明显更高”，不接入判定。",
+    "risk": "光流在 320×180 上点少、遮挡和背景运动混入；GT 三态来自脚点轨迹斜率，不是真实 3D 速度，标签本身有噪声。"
+  },
+  "task3_detection_resolution": {
+    "what": "用 Python ultralytics YOLOv8n 在原视频上按 10 fps 抽帧，imgsz=320/480/640，统计事件目标首次连续两帧稳定检出、平均单帧延迟、帧率。",
+    "evidence": "eval/detect_resolution_20261123.json",
+    "summary": {
+      "320": { "meanLatencyMs": "9.0–10.2", "fps": "98–111", "firstStableGainVs320": "基线" },
+      "480": { "meanLatencyMs": "15.7–17.7", "fps": "57–64", "firstStableGainVs320": "0.1–1.4 s 更早" },
+      "640": { "meanLatencyMs": "26.5–29.8", "fps": "34–38", "firstStableGainVs320": "0–1.9 s 更早" }
+    },
+    "matchedDetections": {
+      "narrow_street": { "320": 60, "480": 71, "640": 79 },
+      "narrow_hutong": { "320": 79, "480": 95, "640": 97 },
+      "tunnel": { "320": 147, "480": 172, "640": 190 }
+    },
+    "conclusion": "640 宽对远处目标最早稳定检出最多提前约 1.9 s，但单帧延迟约 27–30 ms（34–38 fps）；480 取得大部分收益，延迟约 16–18 ms（57–64 fps）。这是检测层试验，尚未接入报警，因此没有召回/FP 变化。",
+    "risk": "这是 Python 检测层耗时，不等同于浏览器 WASM 实时页的端到端帧率；采样为 10 fps，首次稳定检出精度 0.3 s；9 条记录对同一视频的检测结果相同，实际是 3 个视频 × 3 种分辨率。中心通道裁剪未做。"
+  },
+  "finalTest": {
+    "usedForTuning": false,
+    "note": "本轮没有保留任何规则改动，因此没有重跑最终检验。旧最终检验结果仍是 0/3；自拍负样本批次仍是 0 FP/min、无事件、不能计算召回。"
+  }
+}

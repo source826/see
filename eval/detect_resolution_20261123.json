@@ -1,0 +1,200 @@
+{
+  "sampleFps": 10,
+  "results": [
+    {
+      "video": "narrow_street",
+      "size": 320,
+      "frames": 202,
+      "meanLatencyMs": 10.2,
+      "fps": 98.3,
+      "matchedDetections": 60,
+      "firstStable": {
+        "1": {
+          "sample": 121,
+          "frame30": 363,
+          "sec": 12.1
+        },
+        "2": {
+          "sample": 104,
+          "frame30": 312,
+          "sec": 10.4
+        }
+      }
+    },
+    {
+      "video": "narrow_street",
+      "size": 480,
+      "frames": 202,
+      "meanLatencyMs": 17.7,
+      "fps": 56.6,
+      "matchedDetections": 71,
+      "firstStable": {
+        "1": {
+          "sample": 113,
+          "frame30": 339,
+          "sec": 11.3
+        },
+        "2": {
+          "sample": 105,
+          "frame30": 315,
+          "sec": 10.5
+        }
+      }
+    },
+    {
+      "video": "narrow_street",
+      "size": 640,
+      "frames": 202,
+      "meanLatencyMs": 29.8,
+      "fps": 33.5,
+      "matchedDetections": 79,
+      "firstStable": {
+        "1": {
+          "sample": 107,
+          "frame30": 321,
+          "sec": 10.7
+        },
+        "2": {
+          "sample": 105,
+          "frame30": 315,
+          "sec": 10.5
+        }
+      }
+    },
+    {
+      "video": "narrow_hutong",
+      "size": 320,
+      "frames": 117,
+      "meanLatencyMs": 9.8,
+      "fps": 101.6,
+      "matchedDetections": 79,
+      "firstStable": {
+        "1": {
+          "sample": 70,
+          "frame30": 210,
+          "sec": 7.0
+        },
+        "2": {
+          "sample": 83,
+          "frame30": 249,
+          "sec": 8.3
+        }
+      }
+    },
+    {
+      "video": "narrow_hutong",
+      "size": 480,
+      "frames": 117,
+      "meanLatencyMs": 15.7,
+      "fps": 63.7,
+      "matchedDetections": 95,
+      "firstStable": {
+        "1": {
+          "sample": 56,
+          "frame30": 168,
+          "sec": 5.6
+        },
+        "2": {
+          "sample": 75,
+          "frame30": 225,
+          "sec": 7.5
+        }
+      }
+    },
+    {
+      "video": "narrow_hutong",
+      "size": 640,
+      "frames": 117,
+      "meanLatencyMs": 26.5,
+      "fps": 37.7,
+      "matchedDetections": 97,
+      "firstStable": {
+        "1": {
+          "sample": 55,
+          "frame30": 165,
+          "sec": 5.5
+        },
+        "2": {
+          "sample": 75,
+          "frame30": 225,
+          "sec": 7.5
+        }
+      }
+    },
+    {
+      "video": "tunnel",
+      "size": 320,
+      "frames": 206,
+      "meanLatencyMs": 9.0,
+      "fps": 110.9,
+      "matchedDetections": 147,
+      "firstStable": {
+        "1": {
+          "sample": 25,
+          "frame30": 75,
+          "sec": 2.5
+        },
+        "2": {
+          "sample": 42,
+          "frame30": 126,
+          "sec": 4.2
+        },
+        "3": {
+          "sample": 171,
+          "frame30": 513,
+          "sec": 17.1
+        }
+      }
+    },
+    {
+      "video": "tunnel",
+      "size": 480,
+      "frames": 206,
+      "meanLatencyMs": 16.0,
+      "fps": 62.6,
+      "matchedDetections": 172,
+      "firstStable": {
+        "1": {
+          "sample": 18,
+          "frame30": 54,
+          "sec": 1.8
+        },
+        "2": {
+          "sample": 41,
+          "frame30": 123,
+          "sec": 4.1
+        },
+        "3": {
+          "sample": 173,
+          "frame30": 519,
+          "sec": 17.3
+        }
+      }
+    },
+    {
+      "video": "tunnel",
+      "size": 640,
+      "frames": 206,
+      "meanLatencyMs": 27.7,
+      "fps": 36.1,
+      "matchedDetections": 190,
+      "firstStable": {
+        "1": {
+          "sample": 6,
+          "frame30": 18,
+          "sec": 0.6
+        },
+        "2": {
+          "sample": 41,
+          "frame30": 123,
+          "sec": 4.1
+        },
+        "3": {
+          "sample": 171,
+          "frame30": 513,
+          "sec": 17.1
+        }
+      }
+    }
+  ]
+}

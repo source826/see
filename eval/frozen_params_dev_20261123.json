@@ -1,5 +1,5 @@
 {
-  "frozenAt": "2026-11-23T08:46:47.390Z",
+  "frozenAt": "2026-11-23T09:16:59.969Z",
   "note": "此文件生成后不再改规则；新素材只跑一次。",
   "pipelineDefaults": {
     "pyramidLevels": 3,
@@ -91,7 +91,7 @@
     "fpCoverageRequirement": "bg GT and >=60% clip span"
   },
   "sourceSha256": {
-    "src/tracking/approach.js": "f109732c0e7dfa0c5d85647254e9a1d771436db0c9e78374dd6782bb39610afd",
+    "src/tracking/approach.js": "b07ad1a09325d08288ba2e317a4a488385cc8feaf4abbef7952db9df6d1ff83f",
     "src/app/announce.js": "d3c74474d5de386a505bb1c8e316a026459ad433cbb2c9a1575fb0f448ef543a",
     "src/app/pipeline.js": "cc35fe7da217d6a533d550c1a6db7767ca77296a835298dcb59cdedc8f1b2906",
     "eval/events.js": "5f6f318ab026ec793a3dcd3d56ee6fdf692ba13678ad9378da5770744d5aaf4a",

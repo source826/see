@@ -189,6 +189,40 @@ export function estimateFlowScale(bbox, center, src, dst, opts = {}) {
   return { scale: median(ratios), count: ratios.length };
 }
 
+/**
+ * 框内光流径向膨胀率：每个点相对框中心的半径增长率 (r_dst - r_src)/(r_src*dt)。
+ * 只用于记录/对照 GT 三态，暂不参与报警。返回均值与中位数，避免遮挡点拉偏。
+ */
+export function estimateFlowRadialRate(prevBbox, currBbox, src, dst, dt, opts = {}) {
+  const minPoints = opts.minPoints ?? APPROACH_DEFAULTS.flowMinPoints;
+  if (!(dt > 1e-4)) return { mean: null, median: null, count: 0 };
+  const n = Math.min(src.length >> 1, dst.length >> 1);
+  const c0 = boxCenter(prevBbox);
+  const c1 = boxCenter(currBbox);
+  const mx = prevBbox.w * 0.08;
+  const my = prevBbox.h * 0.08;
+  const rates = [];
+  for (let i = 0; i < n; i++) {
+    const px = src[2 * i];
+    const py = src[2 * i + 1];
+    if (
+      px < prevBbox.x + mx || px > prevBbox.x + prevBbox.w - mx ||
+      py < prevBbox.y + my || py > prevBbox.y + prevBbox.h - my
+    ) {
+      continue;
+    }
+    const ra = Math.hypot(px - c0.x, py - c0.y);
+    if (ra < 3) continue;
+    const rb = Math.hypot(dst[2 * i] - c1.x, dst[2 * i + 1] - c1.y);
+    const rate = (rb - ra) / (ra * dt);
+    if (!Number.isFinite(rate) || rate <= -1 || rate > 10) continue;
+    rates.push(rate);
+  }
+  if (rates.length < minPoints) return { mean: null, median: null, count: rates.length };
+  const mean = rates.reduce((a, b) => a + b, 0) / rates.length;
+  return { mean, median: median(rates), count: rates.length };
+}
+
 class ApproachTrack {
   constructor(id, det, frameIndex, opts) {
     this._opts = opts;
@@ -208,6 +242,9 @@ class ApproachTrack {
     this._push(frameIndex, det.bbox);
     this.flowScale = null;
     this.flowPoints = 0;
+    this.flowRadialRate = null;
+    this.flowRadialMean = null;
+    this.flowRadialPoints = 0;
     this.ttc = null;
     this.ttcSource = null;
     this.velocity = { x: 0, y: 0 };
@@ -289,6 +326,15 @@ class ApproachTrack {
     }
     this.flowScale = flowScale;
     this.flowPoints = flowPoints;
+    let radial = { mean: null, median: null, count: 0 };
+    if (flow && this.prevBbox && flow.src && flow.dst) {
+      radial = estimateFlowRadialRate(this.prevBbox, this.bbox, flow.src, flow.dst, dt, {
+        minPoints: opts.flowMinPoints,
+      });
+    }
+    this.flowRadialRate = radial.median;
+    this.flowRadialMean = radial.mean;
+    this.flowRadialPoints = radial.count;
 
     if (flowScale !== null && flowScale > 1.002) {
       this.ttc = Math.min(opts.ttcMax, dt / (flowScale - 1));
@@ -681,6 +727,9 @@ export function assessApproachRisk(args) {
       centerRate: t.centerRate,
       flowScale: t.flowScale,
       flowPoints: t.flowPoints,
+      flowRadialRate: t.flowRadialRate,
+      flowRadialMean: t.flowRadialMean,
+      flowRadialPoints: t.flowRadialPoints,
     };
     perTrack.push(item);
 
