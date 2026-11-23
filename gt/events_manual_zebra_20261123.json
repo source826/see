@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "status": "single-video-manual",
+  "note": "zebra_b_approach 的单条人工事件。dangerSec 来自用户提供的 zebra_b_approach.json（relative_to_clip 10.5s）；wide/strict 由基线回放的走廊进入帧自动推导，仅用于旧口径对照。",
+  "evaluation": {
+    "leadSec": 5,
+    "minLeadSec": 1.5,
+    "minLevel": 2
+  },
+  "events": [
+    {
+      "video": "assets/videos/selfshot/zebra_b_approach.mp4",
+      "record": "tmp/zebra_live.json",
+      "gtFile": "gt/zebra_b_approach_full.json",
+      "targetId": 1,
+      "startSec": 0.0,
+      "wideEntrySec": 0.16,
+      "strictEntrySec": 0.36,
+      "dangerSec": 10.5,
+      "dangerDistanceM": 4.5,
+      "dangerSource": "manual-json-relative-to-clip",
+      "note": "粉色套装女子，从斑马线迎面走来；dangerSec 10.5s 来自用户 JSON；该点产品估距约 4.5m，不是真实 1.5m。"
+    }
+  ]
+}

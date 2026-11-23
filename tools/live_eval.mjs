@@ -18,6 +18,7 @@ if (!videoUrl) {
 }
 const webgpu = args.webgpu === '1';
 const headful = args.headful === '1';
+const fpsArg = args.fps ? Number(args.fps) : null;
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 if (existsSync(profile)) rmSync(profile, { recursive: true, force: true });
 const flags = [
@@ -108,6 +109,16 @@ async function main() {
   await waitFor("Number.isFinite(document.getElementById('video').duration) && document.getElementById('video').duration > 5", 30000, '视频元数据');
 
   const duration = await ev("document.getElementById('video').duration");
+  if (fpsArg) {
+    const applied = await ev(`(() => {
+      const s = document.getElementById('fpsSelect');
+      if (!s) return null;
+      s.value = '${fpsArg}';
+      s.dispatchEvent(new Event('change'));
+      return s.value;
+    })()`);
+    if (String(applied) !== String(fpsArg)) throw new Error(`设置源帧率失败: ${applied}`);
+  }
   await ev(`(() => {
     const v = document.getElementById('video');
     v.loop = false;

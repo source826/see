@@ -1,0 +1,26 @@
+{
+  "video": "D:/cf/guardian-videos/zebra_b_approach.mp4",
+  "source": "D:/DSH/guardian/_real/zebra_b.mp4",
+  "source_fps": 25,
+  "source_duration_sec": 20.12,
+  "clip_source_range_sec": [9.44, 20.12],
+  "clip_duration_sec": 10.68,
+  "scene": "正面迎面逼近（斑马线人群，surrogate 非自拍 POV）",
+  "target": {
+    "target_id": 1,
+    "desc": "粉色套装女子，从斑马线那头迎面走来，画面中最显眼的逼近目标"
+  },
+  "timestamps": {
+    "basis": "原片绝对秒数，0.5s 精度，按 video_zoom 逐帧锚定：切镜点 9.44s 目标自远处出现=start；片尾目标在画面中最近/最大=danger",
+    "startSec": 9.5,
+    "dangerSec": 20.0,
+    "relative_to_clip": {
+      "startSec": 0.0,
+      "dangerSec": 10.5
+    }
+  },
+  "caveats": [
+    "B 站现成素材 1.3m POV，未控制 10-15m→1.5m 距离。",
+    "dangerSec 无法锚定真实 1.5 米：相机高度/焦段未知，只能标到画面里目标最近的一刻；要按 1.5 米精确标定需自拍并实测相机离地高度。"
+  ]
+}

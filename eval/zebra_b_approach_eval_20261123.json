@@ -1,0 +1,65 @@
+{
+  "status": "ok",
+  "live": "tmp/zebra_live.json",
+  "gt": "gt/zebra_b_approach_full.json",
+  "eventsFile": "gt/events_manual_zebra_20261123.json",
+  "summary": {
+    "events": 1,
+    "durationSec": 10.68,
+    "leadSec": 5,
+    "minLeadSec": 1.5,
+    "old": {
+      "evaluable": 1,
+      "missingDanger": 0,
+      "duplicates": 0,
+      "tp": 0,
+      "fn": 1,
+      "late": 0,
+      "recall": 0,
+      "leadMedian": null,
+      "leadP10": null,
+      "fpEpisodes": 0,
+      "fpPerMin": 0,
+      "outsideWindowAlerts": 0,
+      "outsideWindowPerMin": 0,
+      "notTpEpisodes": 0,
+      "notTpPerMin": 0
+    },
+    "new": {
+      "evaluable": 1,
+      "missingDanger": 0,
+      "duplicates": 0,
+      "tp": 0,
+      "fn": 1,
+      "late": 0,
+      "recall": 0,
+      "leadMedian": null,
+      "leadP10": null,
+      "fpEpisodes": 0,
+      "fpPerMin": 0,
+      "outsideWindowAlerts": 0,
+      "outsideWindowPerMin": 0,
+      "notTpEpisodes": 0,
+      "notTpPerMin": 0
+    },
+    "unmatchedAlerts": 0,
+    "envAlerts": 0
+  },
+  "details": [
+    {
+      "targetId": 1,
+      "startSec": 0,
+      "wideEntrySec": 0.16,
+      "strictEntrySec": 0.36,
+      "dangerSec": 10.5,
+      "dangerDistanceM": 4.5,
+      "dangerKey": "1|10.5",
+      "old": {
+        "result": "fn"
+      },
+      "new": {
+        "result": "fn"
+      }
+    }
+  ]
+}
