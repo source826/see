@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "status": "awaiting_user_data",
+  "note": "人工事件真值。时间单位为秒，相对视频起点；targetId 必须与 gtFile 中事件目标的轨迹 ID 一致。用户提供素材和时间点后逐条填入 events。",
+  "schema": {
+    "video": "assets/videos/xxx.mp4",
+    "gtFile": "gt/xxx_full.json",
+    "targetId": 1,
+    "startSec": 0.0,
+    "wideEntrySec": 0.0,
+    "strictEntrySec": 0.0,
+    "note": "可选，记录人工判断依据"
+  },
+  "evaluation": {
+    "leadSec": 5,
+    "minLevel": 2,
+    "definition": "TP：在 wideEntrySec 前 5 s 内、且映射到 targetId 的第一条 level>=2 语音；提前量 = wideEntrySec - 语音秒。strictEntrySec 用于另报相对严格通道的提前量。"
+  },
+  "events": []
+}

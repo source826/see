@@ -23,9 +23,6 @@ export const APPROACH_DEFAULTS = {
   // 'bottom'：画面下方中央（行进方向）；'image'：几何画面中心
   centerRef: 'bottom',
   minAreaUpRatio: 0.55,
-  // approaching 的增长信号：'area' 为原面积增长率；'heightSlope' 为最近 1.5s 对数框高稳健斜率。
-  approachMetric: 'area',
-  minHeightGrowth: 0.05,
   minBoxHeight: 18,
   minScore: 0.15,
   flowMinPoints: 5,
@@ -62,18 +59,6 @@ function linreg(xs, ys) {
     num += dx * (ys[i] - my);
   }
   return den > 1e-9 ? num / den : 0;
-}
-
-/** Theil-Sen 斜率：所有点对斜率的中位数，抗单帧框抖动。 */
-function medianSlope(xs, ys) {
-  const slopes = [];
-  for (let i = 0; i < xs.length; i++) {
-    for (let j = i + 1; j < xs.length; j++) {
-      const dt = xs[j] - xs[i];
-      if (dt > 1e-4) slopes.push((ys[j] - ys[i]) / dt);
-    }
-  }
-  return median(slopes);
 }
 
 /** 用最近几帧中心做线性回归，得到更稳的每帧速度（px/帧）。 */
@@ -118,7 +103,6 @@ export function computeApproachMetrics(history, opts = {}) {
       samples: h.length,
       areaRate: 0,
       heightRate: 0,
-      heightRateRobust: null,
       centerRate: 0,
       areaUpRatio: 0,
       approaching: false,
@@ -137,21 +121,6 @@ export function computeApproachMetrics(history, opts = {}) {
   // 框高变化比面积更少受横向摆身/遮挡影响，用作三态的独立“膨胀”信号。
   const heights = h.map((v) => Math.max(1, v.h ?? v.height ?? Math.sqrt(v.area)));
   const heightRate = linreg(frames, heights.map((v) => Math.log(v))) * perSec;
-  // 稳健框高斜率只在启用 heightSlope 时计算，避免基线路径每帧多做 Theil-Sen。
-  let heightRateRobust = null;
-  if (opts.approachMetric === 'heightSlope') {
-    const timed = history.filter((v) => typeof v.t === 'number');
-    if (timed.length) {
-      const lastT = timed[timed.length - 1].t;
-      const recent = timed.filter((v) => v.t >= lastT - windowSec);
-      if (recent.length >= minSamples) {
-        heightRateRobust = medianSlope(
-          recent.map((v) => v.t),
-          recent.map((v) => Math.log(Math.max(1, v.h ?? v.height ?? Math.sqrt(v.area))))
-        );
-      }
-    }
-  }
 
   const ref =
     centerRef === 'image'
@@ -167,11 +136,7 @@ export function computeApproachMetrics(history, opts = {}) {
   const areaUpRatio = areas.length > 1 ? areaUp / (areas.length - 1) : 0;
 
   const approaching =
-    (opts.approachMetric === 'heightSlope'
-      ? heightRateRobust !== null && heightRateRobust >= (opts.minHeightGrowth ?? APPROACH_DEFAULTS.minHeightGrowth)
-      : areaRate >= minAreaGrowth) &&
-    areaUpRatio >= minAreaUpRatio &&
-    centerRate <= maxCenterRate;
+    areaRate >= minAreaGrowth && areaUpRatio >= minAreaUpRatio && centerRate <= maxCenterRate;
 
   return {
     ready: true,
@@ -179,7 +144,6 @@ export function computeApproachMetrics(history, opts = {}) {
     frameStep,
     areaRate,
     heightRate,
-    heightRateRobust,
     centerRate,
     areaUpRatio,
     approaching,
@@ -260,7 +224,7 @@ export function estimateFlowRadialRate(prevBbox, currBbox, src, dst, dt, opts = 
 }
 
 class ApproachTrack {
-  constructor(id, det, frameIndex, opts, timeSec = 0) {
+  constructor(id, det, frameIndex, opts) {
     this._opts = opts;
     this.id = id;
     this.bbox = { ...det.bbox };
@@ -272,11 +236,10 @@ class ApproachTrack {
     this.misses = 0;
     this.age = 1;
     this.lastFrame = frameIndex;
-    this.timeSec = timeSec;
     this.confirmed = opts.minHits <= 1;
     this.bornAt = frameIndex;
     this.history = [];
-    this._push(frameIndex, det.bbox, timeSec);
+    this._push(frameIndex, det.bbox);
     this.flowScale = null;
     this.flowPoints = 0;
     this.flowRadialRate = null;
@@ -294,11 +257,10 @@ class ApproachTrack {
     this.samples = 0;
   }
 
-  _push(frame, bbox, t) {
+  _push(frame, bbox) {
     const c = boxCenter(bbox);
     this.history.push({
       frame,
-      t,
       area: Math.max(1, bbox.w * bbox.h),
       cx: c.x,
       cy: c.y,
@@ -316,14 +278,13 @@ class ApproachTrack {
     this._opts = opts;
   }
 
-  update(det, frameIndex, flow, dt, fps, timeSec = 0) {
+  update(det, frameIndex, flow, dt, fps) {
     this.prevBbox = { ...this.bbox };
     this.bbox = { ...det.bbox };
     this.cls = det.cls ?? this.cls;
     this.className = det.className ?? this.className;
     this.score = det.score ?? this.score;
-    this.timeSec = timeSec;
-    this._push(frameIndex, det.bbox, timeSec);
+    this._push(frameIndex, det.bbox);
     this.velocity = estimateVelocity(this.history);
     this.lastFrame = frameIndex;
     this.hits++;
@@ -346,13 +307,10 @@ class ApproachTrack {
       maxCenterRate: opts.maxCenterRate,
       centerRef: opts.centerRef,
       minAreaUpRatio: opts.minAreaUpRatio,
-      approachMetric: opts.approachMetric,
-      minHeightGrowth: opts.minHeightGrowth,
     });
     this.samples = m.samples;
     this.areaRate = m.areaRate;
     this.heightRate = m.heightRate;
-    this.heightRateRobust = m.heightRateRobust;
     this.centerRate = m.centerRate;
     this.areaUpRatio = m.areaUpRatio;
     this.approaching = m.approaching;
@@ -401,7 +359,6 @@ export class ApproachTracker {
     this.options = { ...APPROACH_DEFAULTS, ...opts };
     this.tracks = [];
     this.nextId = 1;
-    this.clock = 0;
   }
 
   setOptions(opts = {}) {
@@ -412,7 +369,6 @@ export class ApproachTracker {
   reset() {
     this.tracks = [];
     this.nextId = 1;
-    this.clock = 0;
   }
 
   /**
@@ -426,8 +382,6 @@ export class ApproachTracker {
     const height = ctx.height ?? 180;
     const fps = ctx.fps ?? 30;
     const dt = ctx.dt ?? 1 / fps;
-    this.clock = (this.clock ?? 0) + dt;
-    const nowSec = this.clock;
     const dets = [];
     for (const d of detections || []) {
       const b = d.bbox || d;
@@ -480,7 +434,7 @@ export class ApproachTracker {
       const t = this.tracks[p.ti];
       t._w = width;
       t._h = height;
-      t.update(dets[p.di], frameIndex, ctx.flow, dt, fps, nowSec);
+      t.update(dets[p.di], frameIndex, ctx.flow, dt, fps);
     }
 
     const alive = [];
@@ -497,7 +451,7 @@ export class ApproachTracker {
 
     for (let di = 0; di < dets.length; di++) {
       if (detUsed[di]) continue;
-      const t = new ApproachTrack(this.nextId++, dets[di], frameIndex, opts, nowSec);
+      const t = new ApproachTrack(this.nextId++, dets[di], frameIndex, opts);
       t._w = width;
       t._h = height;
       t.setOptions(opts);
@@ -769,7 +723,6 @@ export function assessApproachRisk(args) {
               ? 'receding'
               : 'static',
       heightRate: t.heightRate,
-      heightRateRobust: t.heightRateRobust,
       areaRate: t.areaRate,
       centerRate: t.centerRate,
       flowScale: t.flowScale,

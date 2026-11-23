@@ -1,5 +1,5 @@
 {
-  "frozenAt": "2026-11-23T10:14:59.759Z",
+  "frozenAt": "2026-11-23T11:59:53.576Z",
   "note": "此文件生成后不再改规则；新素材只跑一次。",
   "pipelineDefaults": {
     "pyramidLevels": 3,
@@ -28,8 +28,6 @@
     "approachMinHeight": 18,
     "approachMinScore": 0.15,
     "approachMinFrames": 4,
-    "approachMetric": "area",
-    "minHeightGrowth": 0.05,
     "alertPath": "wide",
     "warnOnInPath": true,
     "primaryOnly": true,
@@ -59,8 +57,6 @@
     "maxCenterRate": 0.05,
     "centerRef": "bottom",
     "minAreaUpRatio": 0.55,
-    "approachMetric": "area",
-    "minHeightGrowth": 0.05,
     "minBoxHeight": 18,
     "minScore": 0.15,
     "flowMinPoints": 5,
@@ -95,9 +91,9 @@
     "fpCoverageRequirement": "bg GT and >=60% clip span"
   },
   "sourceSha256": {
-    "src/tracking/approach.js": "32b258b4b66d507834222f748ac64c78d948766b345bc09f584b72989b938285",
+    "src/tracking/approach.js": "b07ad1a09325d08288ba2e317a4a488385cc8feaf4abbef7952db9df6d1ff83f",
     "src/app/announce.js": "d3c74474d5de386a505bb1c8e316a026459ad433cbb2c9a1575fb0f448ef543a",
-    "src/app/pipeline.js": "ca85dc20c1c623105b106746fdf882c7b75e12f2817ab9a7e0ec5abf6095fa39",
+    "src/app/pipeline.js": "cc35fe7da217d6a533d550c1a6db7767ca77296a835298dcb59cdedc8f1b2906",
     "eval/events.js": "5f6f318ab026ec793a3dcd3d56ee6fdf692ba13678ad9378da5770744d5aaf4a",
     "tools/live_eval_report.mjs": "9ca91ca3964e716936b6b06d9e0f1675daf2f0e20244645666e9219f5f98f8ea"
   }

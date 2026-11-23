@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-11-23T12:10:00.000Z",
+  "what": "按 20 样本人工审计修正 GT 三态（#6/#11/#12/#19）并拆分隧道 id2 的 ID 切换后，在同样的 9 条记录、同样的 532 个可比样本上重算三态一致率。",
+  "corrections": {
+    "script": "tools/fix_gt_motion_audit.py",
+    "files": [
+      "gt/narrow_street_approach_full.json",
+      "gt/narrow_hutong_approach_full.json",
+      "gt/tunnel_backlight_full.json"
+    ],
+    "changes": [
+      { "file": "gt/narrow_street_approach_full.json", "trackId": 1, "from": 335, "to": 435, "old": "static", "new": "approaching", "boxes": 21 },
+      { "file": "gt/narrow_hutong_approach_full.json", "trackId": 1, "from": 161, "to": 231, "old": "static", "new": "approaching", "boxes": 71 },
+      { "file": "gt/tunnel_backlight_full.json", "trackId": 1, "from": 25, "to": 50, "old": "static", "new": "approaching", "boxes": 6 },
+      { "file": "gt/tunnel_backlight_full.json", "trackId": 2, "splitAt": 130, "newTrackId": 4, "boxes": 26 },
+      { "file": "gt/tunnel_backlight_full.json", "trackId": 1019, "splitAt": 130, "newTrackId": 1049, "boxes": 26, "note": "同源背景重复轨迹一起拆；bgMap 1023/1049 改指 id4" }
+    ]
+  },
+  "before": {
+    "samples": 532,
+    "diff": 0.562,
+    "robust": 0.547,
+    "flowMedian": 0.365,
+    "flowMean": 0.342
+  },
+  "after": {
+    "samples": 532,
+    "diff": 0.562,
+    "robust": 0.547,
+    "flowMedian": 0.365,
+    "flowMean": 0.342
+  },
+  "perRunAfter": [
+    { "run": "ns1", "samples": 86, "diff": 0.581, "robust": 0.547, "flowMedian": 0.372, "flowMean": 0.326 },
+    { "run": "ns2", "samples": 65, "diff": 0.492, "robust": 0.538, "flowMedian": 0.369, "flowMean": 0.385 },
+    { "run": "ns3", "samples": 67, "diff": 0.537, "robust": 0.537, "flowMedian": 0.373, "flowMean": 0.358 },
+    { "run": "ht1", "samples": 25, "diff": 0.520, "robust": 0.520, "flowMedian": 0.720, "flowMean": 0.720 },
+    { "run": "ht2", "samples": 14, "diff": 0.643, "robust": 0.571, "flowMedian": 0.714, "flowMean": 0.714 },
+    { "run": "ht3", "samples": 11, "diff": 0.455, "robust": 0.455, "flowMedian": 0.455, "flowMean": 0.455 },
+    { "run": "tu1", "samples": 103, "diff": 0.544, "robust": 0.563, "flowMedian": 0.301, "flowMean": 0.291 },
+    { "run": "tu2", "samples": 75, "diff": 0.587, "robust": 0.520, "flowMedian": 0.267, "flowMean": 0.227 },
+    { "run": "tu3", "samples": 86, "diff": 0.628, "robust": 0.581, "flowMedian": 0.337, "flowMean": 0.291 }
+  ],
+  "whyUnchanged": {
+    "summary": "4 个修正样本都没有进入 532 个可比样本，因为它们在 320×180 分析画布上的框高都小于 minBoxHeight=18，没有形成可比较的确认轨迹。",
+    "heightsAt320": [
+      { "sample": 6, "video": "narrow_street", "frame": 350, "gtHeightPx": 62, "analysisHeightPx": 15.5 },
+      { "sample": 11, "video": "narrow_hutong", "frame": 164, "gtHeightPx": 60, "analysisHeightPx": 15.0 },
+      { "sample": 12, "video": "narrow_hutong", "frame": 185, "gtHeightPx": 67, "analysisHeightPx": 16.75 },
+      { "sample": 19, "video": "tunnel", "frame": 25, "gtHeightPx": 67, "analysisHeightPx": 16.75 },
+      { "sample": 18, "video": "tunnel", "frame": 135, "gtHeightPx": 69, "analysisHeightPx": 17.25 }
+    ],
+    "splitTrack": "隧道 id2 拆成 id2（120–125）和 id4（130–265），同源背景轨迹 1019 拆成 1019/1049；id2 只剩轨迹首尾、id4 的 f135 仍低于 18 px，可比帧没有进入 532。"
+  },
+  "signals": {
+    "diff": "base 回放的 heightRate（逐帧帧差）",
+    "robust": "rob 回放的 heightRate（Theil-Sen，上一轮已生成，本轮未重跑信号）",
+    "flow": "vid 回放的真实像素框内光流径向膨胀"
+  },
+  "conclusion": "GT 修正让标签本身更正确，但一致率数字不变：4 个错标都在 minBoxHeight=18 以下，系统从未形成可比较轨迹。0.56 的上限不是这 4 个错标造成的，而是已跟踪目标上的标签定义差异和其他标签噪声。若要让一致率覆盖这些小目标，需要先降低 minBoxHeight 或另做小目标子集，这属于规则/阈值改动，本轮不做。"
+}

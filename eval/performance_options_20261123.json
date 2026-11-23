@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-11-23T12:50:00.000Z",
+  "what": "只列提速方案和估算，不改实时管线。基准为 640 输入 + 320×180 分析、WASM、同一 narrow 20.16 s 视频：detect p50 152.3 ms、proc p50 169.5 ms、fps 6.0；非检测开销约 17.2 ms/帧（10%）。",
+  "baseline": {
+    "fps": 6.0,
+    "detectP50Ms": 152.3,
+    "procP50Ms": 169.5,
+    "nonDetectOverheadMs": 17.2,
+    "source": "tmp/bench_640_wasm_narrow.json"
+  },
+  "options": [
+    {
+      "id": "frame_skip_2",
+      "name": "隔帧检测 + 插值",
+      "change": "每 2 个处理帧只跑 1 次 YOLO，中间帧用轨迹速度/框尺寸插值，规则与播报只在检测帧更新或按插值结果更新。",
+      "estimate": {
+        "fps": "9.5–10.7",
+        "detectAmortizedP50Ms": 76.2,
+        "procP50Ms": 93.4,
+        "speedup": "1.6–1.8x"
+      },
+      "basis": "检测占 proc 约 90%；0.5×152.3+17.2=93.4 ms，理论上限 10.7 fps。",
+      "risks": [
+        "检测间隔从约 0.17 s 增到约 0.34 s，快速横穿/远处小目标的首次检出和提前量会变差。",
+        "插值会改变 hits、dt、冷却和轨迹确认语义，必须按规则改动重新 A/B，不是纯性能优化。",
+        "ID 连续性和遮挡恢复依赖插值，可能增加漏检/误关联。"
+      ],
+      "recommendation": "不在主分支直接改；作为分支试验，先测 9 条记录召回/FP/提前量，再决定。"
+    },
+    {
+      "id": "int8",
+      "name": "INT8 量化",
+      "change": "用开发集 300–500 帧做校准，导出 YOLOv8n INT8 ONNX，WASM 后端跑。",
+      "estimate": {
+        "fps": "7.5–9.5",
+        "detectP50Ms": "76–107",
+        "procP50Ms": "93–124",
+        "speedup": "1.3–2.0x"
+      },
+      "basis": "ORT WASM 上 YOLOv8n INT8 常见 1.3–2.0×；未在本机实测，属于估算。",
+      "risks": [
+        "小目标/逆光/夜雨召回可能下降，尤其是 18–30 px 的远处行人。",
+        "需要重新标定校准集和置信度阈值；不能沿用冻结参数直接对比。",
+        "INT8 与 fp16/WebGPU 不是同一条路径，本机无 WebGPU，无法交叉验证。"
+      ],
+      "recommendation": "潜在收益最高，但必须先做精度回归；建议单独分支，不改默认。"
+    },
+    {
+      "id": "analysis_256",
+      "name": "降分析画布到 256×144",
+      "change": "YOLO 输入仍 640，只把流水线分析画布从 320×180 降到 256×144。",
+      "estimate": {
+        "fps": "6.1–6.2",
+        "detectP50Ms": 152.3,
+        "procP50Ms": "163–166",
+        "speedup": "1.02–1.03x"
+      },
+      "basis": "像素数 0.64×，只省光流/跟踪/RANSAC 的 17.2 ms 非检测开销；YOLO 检测时间不变。",
+      "risks": [
+        "收益很小（<5%），不值得单独改。",
+        "坐标缩放、GT 对齐、走廊几何和 minBoxHeight 都要重标。",
+        "小目标可用像素更少，跟踪稳定性可能下降。"
+      ],
+      "recommendation": "不采用；除非和检测输入一起降，否则对帧率帮助有限。"
+    },
+    {
+      "id": "analysis_224",
+      "name": "降分析画布到 224×126",
+      "change": "同上，分析画布再降到 224×126。",
+      "estimate": {
+        "fps": "6.2–6.3",
+        "detectP50Ms": 152.3,
+        "procP50Ms": "158–162",
+        "speedup": "1.03–1.05x"
+      },
+      "basis": "像素数 0.49×，非检测开销约 8–12 ms；检测仍占主导。",
+      "risks": [
+        "同上，且小目标损失更大。",
+        "收益仍不足以达到 8 fps。"
+      ],
+      "recommendation": "不采用。"
+    },
+    {
+      "id": "det_480_reference",
+      "name": "480 检测输入（已测，未保留）",
+      "change": "YOLO 输入 480，分析画布仍 320×180。",
+      "estimate": {
+        "fps": 9.3,
+        "detectP50Ms": 88.1,
+        "procP50Ms": 105.3,
+        "speedup": "1.55x"
+      },
+      "basis": "实测：tmp/bench_480_wasm_narrow.json。",
+      "risks": [
+        "9 条记录报警 A/B 召回 0/21，丢掉唯一 TP。",
+        "480 已归档到分支，不在主分支。"
+      ],
+      "recommendation": "不作为提速方案保留；只作为“降检测输入”的代价参考。"
+    },
+    {
+      "id": "webgpu_reference",
+      "name": "WebGPU（本机不可用）",
+      "change": "fp16 WebGPU 后端。",
+      "estimate": {
+        "fps": "历史其它机器 11.5；本机无数据",
+        "detectP50Ms": null,
+        "procP50Ms": null,
+        "speedup": "无法估算"
+      },
+      "basis": "历史调参集在其它机器上 WASM 5–8.7 fps、WebGPU 11.5 fps；本机 headful Edge navigator.gpu=false。",
+      "risks": [
+        "本机没有 WebGPU 适配器，无法验证。",
+        "换机器后需要重跑延迟/帧率，不能直接引用历史数字。"
+      ],
+      "recommendation": "先解决环境，再作为候选；不计入本轮方案。"
+    }
+  ],
+  "conclusion": "按收益/风险排序：INT8（1.3–2.0×，需精度回归）> 隔帧+插值（1.6–1.8×，但改规则语义）>> 降分析画布（<5%，不建议）。480 已证明丢召回，不作为提速方案。以上均为估算，未改实时管线。"
+}

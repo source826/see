@@ -32,6 +32,20 @@
     { "i": 19, "video": "tunnel", "frame": 25, "id": 1, "gt": "static", "verdict": "wrong", "why": "框高 32→82（2.6 倍）、脚点下移 38 px，人工看是迎面；该轨迹标签在 approaching/static 间反复翻 5 次，f25 恰好落在 static。" },
     { "i": 20, "video": "tunnel", "frame": 70, "id": 1, "gt": "static", "verdict": "correct", "why": "±30 帧脚点斜率 0.00023，框高 0.95，基本静止。" }
   ],
+  "postFix": {
+    "applied": true,
+    "script": "tools/fix_gt_motion_audit.py",
+    "corrections": [
+      "narrow_street id1 f335-435 static→approaching（21 框）",
+      "narrow_hutong id1 f161-231 static→approaching（71 框）",
+      "tunnel id1 f25-50 static→approaching（6 框）",
+      "tunnel id2 从 f130 拆成 id4（26 框），同源背景轨迹 1019 拆成 1049，bgMap 1023/1049 改指 id4；标签按各自脚点轨迹重算"
+    ],
+    "agreementBefore": { "samples": 532, "diff": 0.562, "robust": 0.547, "flowMedian": 0.365, "flowMean": 0.342 },
+    "agreementAfter": { "samples": 532, "diff": 0.562, "robust": 0.547, "flowMedian": 0.365, "flowMean": 0.342 },
+    "whyUnchanged": "4 个修正样本在 320×180 分析画布上框高 15.0–16.75 px，低于 minBoxHeight=18，没有形成可比较的确认轨迹；拆分后的 f135 也只有 17.25 px。因此它们本来就不在 532 个样本里。",
+    "evidence": "eval/gt_motion_agreement_after_20261123.json"
+  },
   "summary": {
     "samples": 20,
     "correct": 15,

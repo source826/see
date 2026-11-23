@@ -3124,7 +3124,7 @@
     "y": 323.7,
     "w": 25.2,
     "h": 65.1,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "162": [
@@ -3135,7 +3135,7 @@
     "y": 323.7,
     "w": 25.2,
     "h": 65.1,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "163": [
@@ -3146,7 +3146,7 @@
     "y": 327.7,
     "w": 22.1,
     "h": 61.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "164": [
@@ -3157,7 +3157,7 @@
     "y": 329.9,
     "w": 24.4,
     "h": 60.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "165": [
@@ -3168,7 +3168,7 @@
     "y": 329.9,
     "w": 24.4,
     "h": 60.2,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3249,7 +3249,7 @@
     "y": 326.3,
     "w": 27,
     "h": 64.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "167": [
@@ -3260,7 +3260,7 @@
     "y": 330.4,
     "w": 20.6,
     "h": 62.8,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "168": [
@@ -3271,7 +3271,7 @@
     "y": 330.4,
     "w": 20.6,
     "h": 62.8,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "169": [
@@ -3282,7 +3282,7 @@
     "y": 327.3,
     "w": 25.4,
     "h": 65.5,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "170": [
@@ -3293,7 +3293,7 @@
     "y": 327.4,
     "w": 24.8,
     "h": 67.8,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3354,7 +3354,7 @@
     "y": 327.4,
     "w": 24.8,
     "h": 67.8,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "172": [
@@ -3365,7 +3365,7 @@
     "y": 327.1,
     "w": 23.8,
     "h": 66.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "173": [
@@ -3376,7 +3376,7 @@
     "y": 326.9,
     "w": 24.8,
     "h": 66.7,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "174": [
@@ -3387,7 +3387,7 @@
     "y": 326.9,
     "w": 24.8,
     "h": 66.7,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "175": [
@@ -3398,7 +3398,7 @@
     "y": 328.9,
     "w": 29.7,
     "h": 67.7,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -3469,7 +3469,7 @@
     "y": 332.6,
     "w": 22.3,
     "h": 61.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "177": [
@@ -3480,7 +3480,7 @@
     "y": 332.6,
     "w": 22.3,
     "h": 61.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "178": [
@@ -3491,7 +3491,7 @@
     "y": 326.3,
     "w": 23.9,
     "h": 68.8,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "179": [
@@ -3502,7 +3502,7 @@
     "y": 331.1,
     "w": 23.9,
     "h": 65.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "180": [
@@ -3513,7 +3513,7 @@
     "y": 331.1,
     "w": 23.9,
     "h": 65.2,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3584,7 +3584,7 @@
     "y": 332.7,
     "w": 23.4,
     "h": 63.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "182": [
@@ -3595,7 +3595,7 @@
     "y": 332.8,
     "w": 23.6,
     "h": 64.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "183": [
@@ -3606,7 +3606,7 @@
     "y": 332.8,
     "w": 23.6,
     "h": 64.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "184": [
@@ -3617,7 +3617,7 @@
     "y": 332.6,
     "w": 24.6,
     "h": 65.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "185": [
@@ -3628,7 +3628,7 @@
     "y": 332.8,
     "w": 23.8,
     "h": 67.2,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3699,7 +3699,7 @@
     "y": 332.8,
     "w": 23.8,
     "h": 67.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "187": [
@@ -3710,7 +3710,7 @@
     "y": 333.3,
     "w": 24.9,
     "h": 67.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "188": [
@@ -3721,7 +3721,7 @@
     "y": 330.4,
     "w": 25.2,
     "h": 68.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "189": [
@@ -3732,7 +3732,7 @@
     "y": 330.4,
     "w": 25.2,
     "h": 68.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "190": [
@@ -3743,7 +3743,7 @@
     "y": 327.7,
     "w": 26,
     "h": 69.6,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3824,7 +3824,7 @@
     "y": 329.5,
     "w": 26.4,
     "h": 71,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "192": [
@@ -3835,7 +3835,7 @@
     "y": 329.5,
     "w": 26.4,
     "h": 71,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "193": [
@@ -3846,7 +3846,7 @@
     "y": 331.9,
     "w": 26.5,
     "h": 69.3,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "194": [
@@ -3857,7 +3857,7 @@
     "y": 323.2,
     "w": 28.1,
     "h": 77,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "195": [
@@ -3868,7 +3868,7 @@
     "y": 323.2,
     "w": 28.1,
     "h": 77,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1003,
@@ -3919,7 +3919,7 @@
     "y": 330.6,
     "w": 27.4,
     "h": 69.5,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "197": [
@@ -3930,7 +3930,7 @@
     "y": 330.3,
     "w": 25.9,
     "h": 69.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "198": [
@@ -3941,7 +3941,7 @@
     "y": 330.3,
     "w": 25.9,
     "h": 69.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "199": [
@@ -3952,7 +3952,7 @@
     "y": 328.5,
     "w": 29.6,
     "h": 74.5,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "200": [
@@ -3963,7 +3963,7 @@
     "y": 323.4,
     "w": 32,
     "h": 77.9,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -4004,7 +4004,7 @@
     "y": 323.4,
     "w": 32,
     "h": 77.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "202": [
@@ -4015,7 +4015,7 @@
     "y": 328.1,
     "w": 30.6,
     "h": 77.3,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "203": [
@@ -4026,7 +4026,7 @@
     "y": 322.1,
     "w": 32.4,
     "h": 82.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "204": [
@@ -4037,7 +4037,7 @@
     "y": 322.1,
     "w": 32.4,
     "h": 82.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "205": [
@@ -4048,7 +4048,7 @@
     "y": 325.3,
     "w": 33.8,
     "h": 82.8,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -4109,7 +4109,7 @@
     "y": 327.4,
     "w": 32.3,
     "h": 79.3,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "207": [
@@ -4120,7 +4120,7 @@
     "y": 327.4,
     "w": 32.3,
     "h": 79.3,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "208": [
@@ -4131,7 +4131,7 @@
     "y": 322.2,
     "w": 34.8,
     "h": 84,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "209": [
@@ -4142,7 +4142,7 @@
     "y": 325.7,
     "w": 34.7,
     "h": 83.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "210": [
@@ -4153,7 +4153,7 @@
     "y": 325.7,
     "w": 34.7,
     "h": 83.2,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -4204,7 +4204,7 @@
     "y": 332.4,
     "w": 31.5,
     "h": 75.6,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "212": [
@@ -4215,7 +4215,7 @@
     "y": 324.1,
     "w": 38.2,
     "h": 86.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "213": [
@@ -4226,7 +4226,7 @@
     "y": 324.1,
     "w": 38.2,
     "h": 86.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "214": [
@@ -4237,7 +4237,7 @@
     "y": 322.4,
     "w": 34.5,
     "h": 86.8,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "215": [
@@ -4248,7 +4248,7 @@
     "y": 322.2,
     "w": 32.6,
     "h": 86.5,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -4299,7 +4299,7 @@
     "y": 322.2,
     "w": 32.6,
     "h": 86.5,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "217": [
@@ -4310,7 +4310,7 @@
     "y": 320.9,
     "w": 36.5,
     "h": 85.9,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "218": [
@@ -4321,7 +4321,7 @@
     "y": 325,
     "w": 36.6,
     "h": 85.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "219": [
@@ -4332,7 +4332,7 @@
     "y": 325,
     "w": 36.6,
     "h": 85.2,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "220": [
@@ -4343,7 +4343,7 @@
     "y": 319.3,
     "w": 38.6,
     "h": 94.2,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1005,
@@ -4394,7 +4394,7 @@
     "y": 318.8,
     "w": 32.1,
     "h": 94.7,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4414,7 +4414,7 @@
     "y": 318.8,
     "w": 32.1,
     "h": 94.7,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4434,7 +4434,7 @@
     "y": 335.1,
     "w": 30.5,
     "h": 78.9,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4454,7 +4454,7 @@
     "y": 322.2,
     "w": 32.9,
     "h": 91.9,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4474,7 +4474,7 @@
     "y": 322.2,
     "w": 32.9,
     "h": 91.9,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4534,7 +4534,7 @@
     "y": 328,
     "w": 32.8,
     "h": 86.5,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4554,7 +4554,7 @@
     "y": 321.3,
     "w": 34.9,
     "h": 93.5,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4574,7 +4574,7 @@
     "y": 321.3,
     "w": 34.9,
     "h": 93.5,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4594,7 +4594,7 @@
     "y": 319.1,
     "w": 36.4,
     "h": 97.5,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4614,7 +4614,7 @@
     "y": 327.3,
     "w": 34.1,
     "h": 90.4,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,
@@ -4684,7 +4684,7 @@
     "y": 327.3,
     "w": 34.1,
     "h": 90.4,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 2,

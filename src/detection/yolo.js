@@ -104,14 +104,13 @@ export class YoloDetector {
     this.assetBase = base;
     this.ortScriptUrl = opts.ortScriptUrl || `${base}vendor/ort/ort.webgpu.min.js`;
     this.wasmBase = opts.wasmBase || `${base}vendor/ort/`;
-    this.inputSize = opts.inputSize || INPUT_SIZE;
-    const suffix = this.inputSize === INPUT_SIZE ? '' : `_${this.inputSize}`;
-    this.modelUrl = opts.modelUrl || `${base}models/yolov8n${suffix}.onnx`;
-    this.modelUrlFp16 = opts.modelUrlFp16 || `${base}models/yolov8n${suffix}.fp16.onnx`;
+    this.modelUrl = opts.modelUrl || `${base}models/yolov8n.onnx`;
+    this.modelUrlFp16 = opts.modelUrlFp16 || `${base}models/yolov8n.fp16.onnx`;
     this.conf = opts.conf ?? 0.15;
     this.iou = opts.iou ?? 0.45;
     this.classIds = new Set(opts.classIds || DETECT_CLASS_IDS);
     this.preferWebGPU = opts.preferWebGPU !== false;
+    this.inputSize = opts.inputSize || INPUT_SIZE;
     this.maxDetections = opts.maxDetections ?? 60;
     this.webgpuTimeoutMs = opts.webgpuTimeoutMs ?? 4000;
     this.sessionTimeoutMs = opts.sessionTimeoutMs ?? 12000;

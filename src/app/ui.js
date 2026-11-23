@@ -864,10 +864,8 @@ async function initYolo() {
   try {
     const { YoloDetector } = await import('../detection/yolo.js');
     // 实时循环默认 WASM；需要 WebGPU 时加 ?webgpu=1。
-    // ?det=480 使用 480×480 导出的 ONNX；缺省 640。
-    const det = Number(params.get('det'));
-    const inputSize = [480, 640].includes(det) ? det : 640;
-    const detector = new YoloDetector({ preferWebGPU: params.get('webgpu') === '1', inputSize });
+    // 当前 ONNX 固定 1x3x640x640，不能改 inputSize。
+    const detector = new YoloDetector({ preferWebGPU: params.get('webgpu') === '1' });
     state.detector = detector;
     await detector.load();
     while (state.busy) await new Promise((r) => setTimeout(r, 50));

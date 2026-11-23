@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-11-23T12:40:00.000Z",
+  "what": "把默认关闭的实验代码（approachMetric/minHeightGrowth/heightRateRobust/时间戳、480 模型与 ?det=480）移到分支 experiment/20261123-height-slope-480 后，对 9 条开发记录做默认路径离线回放，和移动前逐条对比。",
+  "branch": "experiment/20261123-height-slope-480",
+  "productionBaseline": "7d73981",
+  "method": "node tmp/regress_base.mjs 各跑一次，比较 live.alerts 数组、每帧 perTrack 的关键字段（confirmed/level/approaching/areaRate/heightRate/inStrict/inWide/bbox/hits/score）以及事件汇总。",
+  "perRecord": [
+    { "run": "narrow_street1", "alertsBefore": 3, "alertsAfter": 3, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "narrow_street2", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "narrow_street3", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "hutong1", "alertsBefore": 7, "alertsAfter": 7, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "hutong2", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "hutong3", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "tunnel1", "alertsBefore": 7, "alertsAfter": 7, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "tunnel2", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true, "perTrackDiffs": 0 },
+    { "run": "tunnel3", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true, "perTrackDiffs": 0 }
+  ],
+  "summaryBefore": {
+    "targetRecall": "1/22",
+    "groupRecall": "1/22",
+    "coverage": "9/21",
+    "fpEpisodes": 3,
+    "speech": 50,
+    "leadMedian": 1.4333,
+    "leadP10": 1.4333
+  },
+  "summaryAfter": {
+    "targetRecall": "1/22",
+    "groupRecall": "1/22",
+    "coverage": "9/21",
+    "fpEpisodes": 3,
+    "speech": 50,
+    "leadMedian": 1.4333,
+    "leadP10": 1.4333
+  },
+  "liveSmoke": {
+    "video": "assets/videos/narrow_street_approach.mp4",
+    "status": "YOLOv8n · WASM",
+    "alerts": 4,
+    "note": "实时页在移除实验代码后能正常加载 640 模型；实时运行有采样噪声，逐条一致性以离线回放对比为准。"
+  },
+  "conclusion": "9/9 记录逐条一致：alerts 数组完全相同，perTrack 关键字段 0 差异，事件汇总完全相同。默认行为与冻结基线一致。",
+  "risk": "分支仍保留实验代码和 480 模型，主分支不再包含；需要复现实验时切到该分支。GT 三态修正和人工事件文件不在该分支，只在主分支。"
+}

@@ -12,7 +12,7 @@
   # 等价于 YOLO("yolov8n.pt").export(format="onnx", imgsz=640, opset=12, dynamic=False)
   ```
   产物：`models/yolov8n.onnx`（输入 `1x3x640x640`，输出 `1x84x8400`）。
-  480 输入用同一权重的 `imgsz=480` 导出为 `models/yolov8n_480.onnx`（输入 `1x3x480x480`，输出 `1x84x4725`），供实时页 `?det=480` 使用；fp16 版由 `convert_fp16.py` 生成。
+  480 输入实验（`imgsz=480` 导出的 `yolov8n_480.onnx` 与 `?det=480`）已归档到分支 `experiment/20261123-height-slope-480`，主分支固定 640。
 - **许可证：YOLOv8 由 Ultralytics 以 AGPL-3.0 发布**（https://github.com/ultralytics/ultralytics/blob/main/LICENSE）。
   本目录下的网页代码同样以 AGPL-3.0 提供；如需闭源商用，请先向 Ultralytics 取得商业授权。
 - 推理运行时：`onnxruntime-web` 1.20.1（MIT），文件已放在 `vendor/ort/`，页面不依赖外部 CDN。
@@ -34,9 +34,7 @@ yolo-demo/
 ├── models/
 │   ├── yolov8n.pt      Ultralytics 官方权重
 │   ├── yolov8n.onnx    fp32 ONNX，640 输入（WASM 后端）
-│   ├── yolov8n.fp16.onnx  fp16 ONNX，640 输入（WebGPU 后端，tools/convert_fp16.py 生成）
-│   ├── yolov8n_480.onnx   fp32 ONNX，480 输入（实时页 ?det=480）
-│   └── yolov8n_480.fp16.onnx  fp16 ONNX，480 输入
+│   └── yolov8n.fp16.onnx  fp16 ONNX，640 输入（WebGPU 后端，tools/convert_fp16.py 生成）
 ├── vendor/ort/         onnxruntime-web 运行时（js + wasm）
 └── tools/              export_onnx.py（下载+导出）、convert_fp16.py（fp16 转换）
 ```

@@ -8,8 +8,9 @@
   "1008": 1,
   "1012": 1,
   "1019": 2,
-  "1023": 2,
-  "1045": 3
+  "1023": 4,
+  "1045": 3,
+  "1049": 4
  },
  "frames": {
   "0": [
@@ -497,7 +498,7 @@
     "y": 309,
     "w": 23,
     "h": 67,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1000,
@@ -588,7 +589,7 @@
     "y": 308,
     "w": 21,
     "h": 69,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1000,
@@ -709,7 +710,7 @@
     "y": 308,
     "w": 24,
     "h": 68,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1000,
@@ -830,7 +831,7 @@
     "y": 310,
     "w": 26,
     "h": 69,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1001,
@@ -951,7 +952,7 @@
     "y": 311,
     "w": 24,
     "h": 67,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1000,
@@ -1082,7 +1083,7 @@
     "y": 309,
     "w": 24,
     "h": 61,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1001,
@@ -2835,7 +2836,7 @@
     "y": 304,
     "w": 32,
     "h": 90,
-    "motion": "static"
+    "motion": "approaching"
    },
    {
     "id": 1001,
@@ -2945,7 +2946,7 @@
     "w": 32,
     "h": 90,
     "bg": true,
-    "motion": "static"
+    "motion": "approaching"
    }
   ],
   "130": [
@@ -2959,13 +2960,13 @@
     "motion": "static"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 533,
     "y": 317,
     "w": 24,
     "h": 79,
-    "motion": "static"
+    "motion": "receding"
    },
    {
     "id": 1001,
@@ -3048,14 +3049,14 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 533,
     "y": 317,
     "w": 24,
     "h": 79,
     "bg": true,
-    "motion": "static"
+    "motion": "receding"
    }
   ],
   "135": [
@@ -3069,7 +3070,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 529,
     "y": 317,
@@ -3158,7 +3159,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 529,
     "y": 317,
@@ -3179,7 +3180,7 @@
     "motion": "static"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 525,
     "y": 318,
@@ -3268,7 +3269,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 525,
     "y": 318,
@@ -3289,7 +3290,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 522,
     "y": 320,
@@ -3368,7 +3369,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 522,
     "y": 320,
@@ -3389,7 +3390,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 519,
     "y": 324,
@@ -3458,7 +3459,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 519,
     "y": 324,
@@ -3479,7 +3480,7 @@
     "motion": "static"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 515,
     "y": 321,
@@ -3558,7 +3559,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 515,
     "y": 321,
@@ -3599,7 +3600,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 513,
     "y": 325,
@@ -3668,7 +3669,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 513,
     "y": 325,
@@ -3739,7 +3740,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 509,
     "y": 325,
@@ -3818,7 +3819,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 509,
     "y": 325,
@@ -3899,7 +3900,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 504,
     "y": 323,
@@ -3968,7 +3969,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 504,
     "y": 323,
@@ -4019,7 +4020,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 498,
     "y": 320,
@@ -4088,7 +4089,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 498,
     "y": 320,
@@ -4169,7 +4170,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 493,
     "y": 318,
@@ -4228,7 +4229,7 @@
     "motion": "receding"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 493,
     "y": 318,
@@ -4289,7 +4290,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 493,
     "y": 315,
@@ -4358,7 +4359,7 @@
     "motion": "receding"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 493,
     "y": 315,
@@ -4429,7 +4430,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 492,
     "y": 318,
@@ -4488,7 +4489,7 @@
     "motion": "receding"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 492,
     "y": 318,
@@ -4559,7 +4560,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 491,
     "y": 320,
@@ -4618,7 +4619,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 491,
     "y": 320,
@@ -4679,7 +4680,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 487,
     "y": 319,
@@ -4738,7 +4739,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 487,
     "y": 319,
@@ -4799,7 +4800,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 482,
     "y": 325,
@@ -4858,7 +4859,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 482,
     "y": 325,
@@ -4929,7 +4930,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 475,
     "y": 321,
@@ -4978,7 +4979,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 475,
     "y": 321,
@@ -5039,7 +5040,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 470,
     "y": 312,
@@ -5088,7 +5089,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 470,
     "y": 312,
@@ -5159,7 +5160,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 466,
     "y": 308,
@@ -5218,7 +5219,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 466,
     "y": 308,
@@ -5309,7 +5310,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 458,
     "y": 310,
@@ -5368,7 +5369,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 458,
     "y": 310,
@@ -5449,7 +5450,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 446,
     "y": 310,
@@ -5498,7 +5499,7 @@
     "motion": "static"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 446,
     "y": 310,
@@ -5579,7 +5580,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 427,
     "y": 314,
@@ -5628,7 +5629,7 @@
     "motion": "approaching"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 427,
     "y": 314,
@@ -5709,7 +5710,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 398,
     "y": 321,
@@ -5758,7 +5759,7 @@
     "motion": "approaching"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 398,
     "y": 321,
@@ -5829,7 +5830,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 370,
     "y": 324,
@@ -5888,7 +5889,7 @@
     "motion": "approaching"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 370,
     "y": 324,
@@ -5969,7 +5970,7 @@
     "motion": "approaching"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 325,
     "y": 320,
@@ -6028,7 +6029,7 @@
     "motion": "approaching"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 325,
     "y": 320,
@@ -6381,7 +6382,7 @@
     "motion": "receding"
    },
    {
-    "id": 2,
+    "id": 4,
     "cls": "ped",
     "x": 286,
     "y": 290,
@@ -6440,7 +6441,7 @@
     "motion": "receding"
    },
    {
-    "id": 1019,
+    "id": 1049,
     "cls": "ped",
     "x": 286,
     "y": 290,
@@ -10680,5 +10681,54 @@
  },
  "scene": "street",
  "eventGroupSec": 1.5,
- "reentrySec": 4
+ "reentrySec": 4,
+ "motionAuditFix": {
+  "source": "eval/gt_motion_audit_20261123.json",
+  "note": "按 20 样本人工审计修正 4 个错标，并拆分隧道 id2 的 ID 切换；同源背景轨迹 1019 一起拆成 1049，bgMap 的 1023 改指 id4；f265 因再次跳变保持 unknown。",
+  "fixes": [
+   {
+    "file": "gt/narrow_street_approach_full.json",
+    "trackId": 1,
+    "from": 335,
+    "to": 435,
+    "old": "static",
+    "new": "approaching"
+   },
+   {
+    "file": "gt/narrow_hutong_approach_full.json",
+    "trackId": 1,
+    "from": 161,
+    "to": 231,
+    "old": "static",
+    "new": "approaching"
+   },
+   {
+    "file": "gt/tunnel_backlight_full.json",
+    "trackId": 1,
+    "from": 25,
+    "to": 50,
+    "old": "static",
+    "new": "approaching"
+   },
+   {
+    "file": "gt/tunnel_backlight_full.json",
+    "trackId": 2,
+    "splitAt": 130,
+    "newTrackId": 4
+   },
+   {
+    "file": "gt/tunnel_backlight_full.json",
+    "trackId": 1019,
+    "splitAt": 130,
+    "newTrackId": 1049
+   },
+   {
+    "file": "gt/tunnel_backlight_full.json",
+    "bgMap": {
+     "1023": 4,
+     "1049": 4
+    }
+   }
+  ]
+ }
 }
