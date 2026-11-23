@@ -27,6 +27,8 @@ export function evaluateAlarmEvents(args) {
     lateSec = 1,
     gapSec = 0.8,
     reentrySec = 0.5,
+    groupSec = 0,
+    idMap = null,
   } = args || {};
   const durationSec =
     Number.isFinite(args?.durationSec) && args.durationSec > 0
@@ -44,6 +46,13 @@ export function evaluateAlarmEvents(args) {
       eventRecall: null,
       leadMedian: null,
       leadP10: null,
+      groupCount: 0,
+      groupTp: 0,
+      groupFn: 0,
+      groupRecall: null,
+      groupLeadMedian: null,
+      groupLeadP10: null,
+      eventGroups: [],
       fpEpisodes: 0,
       fpFrames: 0,
       fpPerMin: null,
@@ -59,6 +68,7 @@ export function evaluateAlarmEvents(args) {
   const lateFrames = Math.max(1, Math.round(lateSec * fps));
   const gapFrames = Math.max(1, Math.round(gapSec * fps));
   const reentryFrames = Math.max(1, Math.round(reentrySec * fps));
+  const groupFrames = Math.max(0, Math.round((groupSec || 0) * fps));
 
   const sorted = [...frames].sort((a, b) => a.frame - b.frame);
   const firstFrame = sorted[0].frame;
@@ -124,8 +134,12 @@ export function evaluateAlarmEvents(args) {
   const usedAlerts = new Set();
   const mappedGt = (frame, trackId) => {
     const m = matchByFrame[frame];
-    if (!m) return undefined;
-    return m instanceof Map ? m.get(trackId) : m[trackId];
+    const direct = m ? (m instanceof Map ? m.get(trackId) : m[trackId]) : undefined;
+    if (direct !== undefined) return direct;
+    // 单帧 IoU 在远处小目标上会漏配；用整条轨迹的多数票兜底，
+    // 否则同一物理目标的早期报警会被当成“没对上事件”。
+    if (idMap && idMap.get(trackId) !== undefined) return idMap.get(trackId);
+    return undefined;
   };
 
   for (const ev of events) {
@@ -169,6 +183,35 @@ export function evaluateAlarmEvents(args) {
     }
   }
 
+  // 3.5) 群体事件：同一波同时进入走廊的多个目标算一个“该报”的群体。
+  // 只报警给其中最近的一个也算覆盖；用于人群/并排过街场景，避免把“只报主目标”误判成漏报。
+  const groups = [];
+  if (groupFrames > 0 && events.length) {
+    const byEntry = [...events].sort((a, b) => a.entryFrame - b.entryFrame || a.gtId - b.gtId);
+    for (const ev of byEntry) {
+      const last = groups[groups.length - 1];
+      if (last && ev.entryFrame - last.entryFrame <= groupFrames) {
+        last.members.push(ev);
+      } else {
+        groups.push({ entryFrame: ev.entryFrame, members: [ev] });
+      }
+    }
+  }
+  const groupResults = groups.map((g) => {
+    // 群体提前量取最早的一次有效预警：先喊到其中任一人，整组就已被提醒。
+    const hit = g.members
+      .filter((m) => m.alertFrame !== null)
+      .reduce((a, b) => (a === null || b.alertFrame < a.alertFrame ? b : a), null);
+    const late = !hit && g.members.some((m) => m.late);
+    return {
+      gtIds: g.members.map((m) => m.gtId),
+      entryFrame: g.entryFrame,
+      alertFrame: hit ? hit.alertFrame : null,
+      leadSec: hit ? hit.leadSec : null,
+      late,
+    };
+  });
+
   // 4) 误报：不属于任何 GT 事件目标的报警帧，按时间连续性合并为“次”
   const eventGtIds = new Set(events.map((e) => e.gtId));
   // 同一物理目标可能短暂映射错 GT 或漏配，只要它在某帧对上过事件目标，就不算误报。
@@ -208,6 +251,8 @@ export function evaluateAlarmEvents(args) {
   const tpEvents = events.filter((e) => e.alertFrame !== null);
   const fnEvents = events.length - tpEvents.length;
   const leads = tpEvents.map((e) => e.leadSec).sort((a, b) => a - b);
+  const groupTp = groupResults.filter((g) => g.alertFrame !== null);
+  const groupLeads = groupTp.map((g) => g.leadSec).sort((a, b) => a - b);
   const pick = (arr, q) => {
     if (!arr.length) return null;
     const idx = Math.min(arr.length - 1, Math.max(0, Math.round((arr.length - 1) * q)));
@@ -234,6 +279,13 @@ export function evaluateAlarmEvents(args) {
     eventRecall: events.length ? tpEvents.length / events.length : null,
     leadMedian: pick(leads, 0.5),
     leadP10: pick(leads, 0.1),
+    groupCount: groupResults.length,
+    groupTp: groupTp.length,
+    groupFn: groupResults.length - groupTp.length,
+    groupRecall: groupResults.length ? groupTp.length / groupResults.length : null,
+    groupLeadMedian: pick(groupLeads, 0.5),
+    groupLeadP10: pick(groupLeads, 0.1),
+    eventGroups: groupResults,
     fpEpisodes,
     fpFrames: fpFrameSet.size,
     fpAlerts,

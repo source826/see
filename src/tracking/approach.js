@@ -102,6 +102,7 @@ export function computeApproachMetrics(history, opts = {}) {
       ready: false,
       samples: h.length,
       areaRate: 0,
+      heightRate: 0,
       centerRate: 0,
       areaUpRatio: 0,
       approaching: false,
@@ -117,6 +118,9 @@ export function computeApproachMetrics(history, opts = {}) {
   const areas = h.map((v) => Math.max(1, v.area));
   const areaSlope = linreg(frames, areas.map((a) => Math.log(a)));
   const areaRate = areaSlope * perSec;
+  // 框高变化比面积更少受横向摆身/遮挡影响，用作三态的独立“膨胀”信号。
+  const heights = h.map((v) => Math.max(1, v.h ?? v.height ?? Math.sqrt(v.area)));
+  const heightRate = linreg(frames, heights.map((v) => Math.log(v))) * perSec;
 
   const ref =
     centerRef === 'image'
@@ -139,6 +143,7 @@ export function computeApproachMetrics(history, opts = {}) {
     samples: h.length,
     frameStep,
     areaRate,
+    heightRate,
     centerRate,
     areaUpRatio,
     approaching,
@@ -209,6 +214,7 @@ class ApproachTrack {
     this.approaching = false;
     this.approachFrames = 0;
     this.areaRate = 0;
+    this.heightRate = 0;
     this.centerRate = 0;
     this.areaUpRatio = 0;
     this.samples = 0;
@@ -267,6 +273,7 @@ class ApproachTrack {
     });
     this.samples = m.samples;
     this.areaRate = m.areaRate;
+    this.heightRate = m.heightRate;
     this.centerRate = m.centerRate;
     this.areaUpRatio = m.areaUpRatio;
     this.approaching = m.approaching;
@@ -495,6 +502,39 @@ export function predictTrackPath(track, opts = {}) {
 }
 
 /**
+ * 场景判定：画面中央附近同时有 4 个以上“近处行人”时按人群处理。
+ * 横穿场景由车辆横穿判定在 assessApproachRisk 内部补上。
+ */
+export function inferSceneMode(tracks, w, h) {
+  let nearPersons = 0;
+  for (const t of tracks) {
+    if (!t.confirmed || t.cls !== 0) continue;
+    const cx = t.bbox.x + t.bbox.w * 0.5;
+    if (Math.abs(cx - w * 0.5) > w * 0.4) continue;
+    if (t.bbox.h < h * 0.12) continue;
+    nearPersons++;
+  }
+  return nearPersons >= 4 ? 'crowd' : 'street';
+}
+
+/** 预测目标脚点首次进入走廊的时间（秒）；横穿才需要侧向速度占优。 */
+function crossingEntryTime(track, poly, w, fps, horizonSec) {
+  const v = track.velocity;
+  if (!v) return null;
+  const vx = v.x * fps;
+  const vy = v.y * fps;
+  const lateral = Math.abs(vx);
+  // 侧向速度太小的（顺行/静止）不算横穿；侧向分量还要压过纵向，排除迎面逼近。
+  if (lateral < w * 0.06 || lateral < Math.abs(vy) * 0.8) return null;
+  const gx0 = track.bbox.x + track.bbox.w * 0.5;
+  const gy0 = track.bbox.y + track.bbox.h;
+  for (let t = 0.2; t <= horizonSec + 1e-6; t += 0.2) {
+    if (pointInPolygon(poly, gx0 + vx * t, gy0 + vy * t)) return t;
+  }
+  return null;
+}
+
+/**
  * 逼近风险：面积持续增长 + 中心朝行进中心移动 + 脚下点进入通行走廊。
  * 输出结构与 risk.assessRisk 兼容（alerts/perTrack/instruction/topAlert）。
  */
@@ -503,6 +543,13 @@ export function assessApproachRisk(args) {
   const minApproachFrames = args.minApproachFrames ?? APPROACH_DEFAULTS.approachMinFrames;
   const pathMode = args.pathMode ?? 'wide';
   const warnOnInPath = Boolean(args.warnOnInPath);
+  const primaryOnly = Boolean(args.primaryOnly);
+  let sceneMode = args.sceneMode ?? 'street';
+  const crowdApproachMaxDist = args.crowdApproachMaxDist ?? 5;
+  const crowdMinApproachFrames = args.crowdMinApproachFrames ?? 6;
+  const crossingMaxDistVehicle = args.crossingMaxDistVehicle ?? 18;
+  const crossingEntrySec = args.crossingEntrySec ?? 2;
+  const crowd = sceneMode === 'crowd';
   const cameraHeight = Number(args.cameraHeight) || 0;
   const cameraPitchDeg = Number.isFinite(Number(args.cameraPitchDeg)) ? Number(args.cameraPitchDeg) : undefined;
   const horizonRatio = args.horizonRatio ?? 0.5;
@@ -517,7 +564,6 @@ export function assessApproachRisk(args) {
     const inStrict = pointInPolygon(corridor.poly, ground.x, ground.y);
     const inWide = pointInPolygon(corridor.wide, ground.x, ground.y);
     const inPath = pathMode === 'strict' ? inStrict : inWide;
-    const approaching = Boolean(t.approaching && t.approachFrames >= minApproachFrames && inPath);
     const areaRatio = (t.bbox.w * t.bbox.h) / Math.max(1, w * h);
     const groundDistance = estimateGroundDistance(t.bbox, w, h, {
       cameraHeight,
@@ -532,16 +578,58 @@ export function assessApproachRisk(args) {
     const pred = predictTrackPath(t, { w, h, fps, seconds: horizonSec });
     const path = pred.points;
     const predictedInPath = pointInPolygon(corridor.wide, pred.ground.x, pred.ground.y);
+    const vehicleLike = /汽车|公交车|卡车|火车|自行车|摩托车/.test(t.className || '') || [1, 2, 3, 5, 7].includes(t.cls);
+
+    // 人群场景收紧：必须进严格走廊、距离足够近、逼近帧数更久，才按“该报”处理。
+    const approachFramesNeed = crowd ? crowdMinApproachFrames : minApproachFrames;
+    const approachPathOk = crowd ? inStrict : inPath;
+    const approaching = Boolean(
+      t.approaching &&
+        t.approachFrames >= approachFramesNeed &&
+        approachPathOk &&
+        (!crowd || distance <= crowdApproachMaxDist),
+    );
+    // 人群场景的“该报”：人已经在你严格通道里、距离够近、框高持续膨胀（looming），
+    // 且轨迹稳定。这里不用 areaRate，人群遮挡会让面积增长忽大忽小。
+    const crowdApproach = Boolean(
+      crowd &&
+        inStrict &&
+        distance <= crowdApproachMaxDist &&
+        t.hits >= 8 &&
+        typeof t.heightRate === 'number' &&
+        t.heightRate > 0.03,
+    );
+    // 街景早期提醒：人已经进了严格通道且框高持续膨胀，就不再等面积增长。
+    // 诊断发现 dev 集的事件目标全部被面积法漏掉，但框高膨胀和检出都正常。
+    const loomingInPath = Boolean(
+      !crowd &&
+        inStrict &&
+        distance <= 12 &&
+        t.hits >= 8 &&
+        typeof t.heightRate === 'number' &&
+        t.heightRate > 0.03,
+    );
+    // 横穿规则只给车辆，且车辆必须已经进入宽通道：路边顺行车在透视下也会“看起来”
+    // 横移，若只看预测脚点会把它误报成横穿。宽通道是最后一道闸。
+    const crossT =
+      crowd || !vehicleLike || !inWide
+        ? null
+        : crossingEntryTime(t, corridor.poly, w, fps, horizonSec);
+    const crossing = Boolean(
+      crossT !== null && crossT <= crossingEntrySec && distance <= crossingMaxDistVehicle,
+    );
 
     let level = 0;
     // 已确认目标：正在逼近，或当前在宽走廊内、预测仍会留在走廊里、且框形像“立着的人”，
     // 就先给 level 2。后者兜住 id4 这类刚进走廊、面积增长还不稳定的贴边目标；
     // 路过/横躺的杂物（如矮宽框）和预测会离开走廊的背景行人不会触发。
     const personLike = t.bbox.h >= t.bbox.w * 1.1;
-    if (approaching || (warnOnInPath && inWide && predictedInPath && personLike)) level = 2;
+    if (approaching || crowdApproach || loomingInPath || (!crowd && warnOnInPath && inWide && predictedInPath && personLike)) level = 2;
     if (approaching && t.ttc !== null && t.ttc < 2) level = Math.max(level, 3);
     if (approaching && t.ttc !== null && t.ttc < 1) level = 4;
     if (approaching && areaRatio > 0.15) level = Math.max(level, 4);
+    // 横穿不要求面积增长：车辆横向穿过时面积变化很小，但仍会进入通道。
+    if (crossing) level = Math.max(level, crossT <= 1 ? 4 : 3);
 
     const item = {
       id: t.id,
@@ -571,6 +659,22 @@ export function assessApproachRisk(args) {
       age: t.age,
       flowMag: t.flowScale !== null ? t.flowScale - 1 : 0,
       approaching,
+      crowdApproach,
+      loomingInPath,
+      crossing,
+      crossingT: crossT,
+      vehicleLike,
+      // 三态用框高膨胀率，不复用告警逻辑的 approaching 布尔值；
+      // 阈值 0.03 由调参集（nj00/nj02）对照脚点标签的联合网格搜索得到。
+      motionState:
+        t.heightRate === null || t.heightRate === undefined
+          ? 'unknown'
+          : t.heightRate > 0.03
+            ? 'approaching'
+            : t.heightRate < -0.03
+              ? 'receding'
+              : 'static',
+      heightRate: t.heightRate,
       areaRate: t.areaRate,
       centerRate: t.centerRate,
       flowScale: t.flowScale,
@@ -579,32 +683,48 @@ export function assessApproachRisk(args) {
     perTrack.push(item);
 
     if (level >= 2) {
+      const text = crossing
+        ? `${dir}约 ${distance.toFixed(1)} 米${vehicleLike ? '有车' : '有人'}横穿，请立即停下`
+        : level >= 4
+          ? `${dir}约 ${distance.toFixed(1)} 米有目标快速逼近，请立即停下`
+          : level === 3
+            ? `${dir}约 ${distance.toFixed(1)} 米有目标持续逼近，请避让`
+            : `${dir}有目标正在逼近，请留意`;
       alerts.push({
         level,
         trackId: t.id,
         direction: dir,
         distance,
         ttc: t.ttc,
-        text:
-          level >= 4
-            ? `${dir}约 ${distance.toFixed(1)} 米有目标快速逼近，请立即停下`
-            : level === 3
-              ? `${dir}约 ${distance.toFixed(1)} 米有目标持续逼近，请避让`
-              : `${dir}有目标正在逼近，请留意`,
+        text,
       });
     }
   }
 
   perTrack.sort((a, b) => b.level - a.level || (a.ttc ?? 99) - (b.ttc ?? 99));
   alerts.sort((a, b) => b.level - a.level || (a.ttc ?? 99) - (b.ttc ?? 99));
+  if (sceneMode === 'street' && perTrack.some((p) => p.crossing)) sceneMode = 'crossing';
+
+  // 只报“最近且持续逼近”的那一个：先按危险等级（持续逼近/立即停下），
+  // 同级取距离最近的；其余目标的 level 归零，避免多目标同时逼近时重复播报。
+  if (primaryOnly && alerts.length > 1) {
+    alerts.sort((a, b) => b.level - a.level || a.distance - b.distance || (a.ttc ?? 99) - (b.ttc ?? 99));
+    const keep = alerts[0];
+    for (const item of perTrack) if (item.id !== keep.trackId) item.level = 0;
+    alerts.length = 0;
+    alerts.push(keep);
+  }
 
   const blocking = perTrack.filter((p) => p.level >= 3);
+  const crossingBlock = blocking.find((p) => p.crossing);
   let instruction = '前方通畅，可以直行';
-  if (blocking.length) {
+  if (crossingBlock) {
+    instruction = crossingBlock.vehicleLike ? '前方有车横穿，请立即停下等待' : '前方有人横穿，请立即停下等待';
+  } else if (blocking.length) {
     const nearest = blocking[0];
     const side = nearest.bbox.x + nearest.bbox.w * 0.5 < w * 0.5 ? '右' : '左';
     instruction = nearest.level >= 4 ? '正前方危险，请立即停下等待' : `请向${side}侧避让`;
-  } else if (perTrack.some((p) => p.level === 2)) {
+  } else if (alerts.length) {
     instruction = '前方有目标正在逼近，请减速留意';
   }
 
@@ -613,7 +733,10 @@ export function assessApproachRisk(args) {
     perTrack,
     alerts,
     instruction,
+    sceneMode,
     topAlert: alerts[0] ?? null,
+    // 主目标 id：播报层据此只对这一个目标喊“冲过来”，避免同帧多目标抢话。
+    primaryId: primaryOnly && alerts.length ? alerts[0].trackId : null,
   };
 }
 

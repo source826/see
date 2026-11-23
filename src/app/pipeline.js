@@ -9,7 +9,7 @@ import { CrosswalkTracker, detectCrosswalk } from '../vision/crosswalk.js';
 import { GroundObstacleTracker, GROUND_CLASSES } from '../vision/ground.js';
 import { TrafficLightTracker } from '../vision/traffic.js';
 import { Tracker } from '../tracking/tracker.js';
-import { ApproachTracker, assessApproachRisk } from '../tracking/approach.js';
+import { ApproachTracker, assessApproachRisk, inferSceneMode } from '../tracking/approach.js';
 import { assessRisk, buildCorridor } from '../tracking/risk.js';
 import { fixedPointOfH } from '../math/matrix.js';
 
@@ -39,6 +39,8 @@ export const PIPELINE_DEFAULTS = {
   minAreaGrowth: 0.35,
   maxCenterRate: 0.05,
   centerRef: 'bottom',
+  // 诊断过 12px：远处小目标能更早建轨迹，但 nj02 按目标召回从 1.0 掉回 0.5，
+  // 只是增加语音条数，没有稳定收益，维持 18px。
   approachMinHeight: 18,
   approachMinScore: 0.15,
   approachMinFrames: 4,
@@ -46,6 +48,14 @@ export const PIPELINE_DEFAULTS = {
   // 已确认目标只要落在宽走廊内、且预测仍会留在走廊里，就先给 level 2 提醒
   // （不等面积增长），用于兜住 id4 这类刚进入走廊、增长信号还不稳定的贴边目标。
   warnOnInPath: true,
+  // 同一帧只报最危险的一个目标，减少多目标同时逼近时的重复播报。
+  primaryOnly: true,
+  // 场景规则：'auto' 按画面里近处行人数量自动判人群，其余为街景/横穿。
+  sceneMode: 'auto',
+  crowdApproachMaxDist: 5,
+  crowdMinApproachFrames: 6,
+  crossingMaxDistVehicle: 18,
+  crossingEntrySec: 2,
   // 相机离地高度（米）与地平线位置（占图像高度比例），用于地面几何估距
   cameraHeight: 1.5,
   horizonRatio: 0.5,
@@ -273,6 +283,10 @@ export class GuidePipeline {
       const corridor = buildCorridor(null, w, h, {
         widthRatio: this.options.corridorRatio,
       });
+      const sceneMode =
+        this.options.sceneMode && this.options.sceneMode !== 'auto'
+          ? this.options.sceneMode
+          : inferSceneMode(confirmed, w, h);
       risk = assessApproachRisk({
         tracks: confirmed,
         corridor,
@@ -288,6 +302,12 @@ export class GuidePipeline {
         cameraPitchDeg: this.options.cameraPitchDeg,
         distanceMode: this.options.distanceMode,
         warnOnInPath: this.options.warnOnInPath,
+        primaryOnly: this.options.primaryOnly,
+        sceneMode,
+        crowdApproachMaxDist: this.options.crowdApproachMaxDist,
+        crowdMinApproachFrames: this.options.crowdMinApproachFrames,
+        crossingMaxDistVehicle: this.options.crossingMaxDistVehicle,
+        crossingEntrySec: this.options.crossingEntrySec,
       });
       this.lastBgH = null;
       crosswalk = this.crosswalkTracker.update(

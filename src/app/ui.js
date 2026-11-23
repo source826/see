@@ -214,6 +214,8 @@ async function processFrame(ts) {
           },
         })),
         alerts: risk ? risk.alerts.map((a) => ({ level: a.level, trackId: a.trackId })) : [],
+        primaryId: risk && risk.primaryId !== undefined ? risk.primaryId : null,
+        sceneMode: risk && risk.sceneMode ? risk.sceneMode : null,
         perTrack: risk
           ? risk.perTrack.map((p) => ({
               id: p.id,
@@ -224,7 +226,11 @@ async function processFrame(ts) {
               level: p.level,
               confirmed: p.confirmed,
               inPath: p.inPath,
+              inStrict: p.inStrict,
               approaching: p.approaching,
+              crossing: Boolean(p.crossing),
+              motionState: p.motionState,
+              heightRate: typeof p.heightRate === 'number' ? Math.round(p.heightRate * 1000) / 1000 : null,
               ttc: p.ttc === null ? null : Math.round(p.ttc * 100) / 100,
               distance: p.distance === null ? null : Math.round(p.distance * 10) / 10,
               bbox: {
@@ -887,6 +893,12 @@ function initDistanceOptions() {
   if (Number.isFinite(horizon) && horizon > 0 && horizon < 1) state.horizonRatio = horizon;
   const predict = Number(params.get('predict'));
   if (Number.isFinite(predict) && predict > 0) state.predictSec = Math.min(2.5, Math.max(0.8, predict));
+  // 调试/对照用：?primary=0 关闭“只报主目标”，?primary=1 强制开启。
+  const primary = params.get('primary');
+  if (primary === '0' || primary === '1') state.pipeline.setOptions({ primaryOnly: primary === '1' });
+  // 调试/对照用：?scene=crowd|crossing|street 固定场景规则，缺省 auto。
+  const scene = params.get('scene');
+  if (['auto', 'street', 'crowd', 'crossing'].includes(scene)) state.pipeline.setOptions({ sceneMode: scene });
   $('cameraHeight').value = String(state.cameraHeight);
   $('cameraPitch').value = String(state.cameraPitchDeg);
   $('predictSec').value = String(state.predictSec);

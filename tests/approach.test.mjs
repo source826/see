@@ -158,6 +158,207 @@ test('矮宽框（横躺杂物）在走廊内不触发 warnOnInPath', () => {
   assert.equal(risk.alerts.length, 0);
 });
 
+test('primaryOnly：同帧多个逼近目标只保留最近的主目标', () => {
+  const base = {
+    confirmed: true,
+    cls: 0,
+    className: '行人',
+    hits: 12,
+    samples: 8,
+    age: 12,
+    approaching: true,
+    approachFrames: 5,
+    areaRate: 1,
+    centerRate: -0.01,
+    ttc: 1.5,
+    ttcSource: 'area',
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 0, y: 1 },
+  };
+  const near = { ...base, id: 1, bbox: { x: 140, y: 70, w: 40, h: 90 } };
+  const far = { ...base, id: 2, bbox: { x: 110, y: 90, w: 20, h: 45 } };
+  const corridor = buildCorridor(null, W, H);
+  const risk = assessApproachRisk({
+    tracks: [far, near],
+    corridor,
+    w: W,
+    h: H,
+    fps: 30,
+    primaryOnly: true,
+  });
+  assert.equal(risk.alerts.length, 1);
+  assert.equal(risk.primaryId, 1);
+  const secondary = risk.perTrack.find((p) => p.id === 2);
+  assert.equal(secondary.level, 0);
+  const all = assessApproachRisk({ tracks: [far, near], corridor, w: W, h: H, fps: 30 });
+  assert.ok(all.alerts.length >= 2);
+});
+
+test('人群场景：宽走廊内但未进严格走廊的行人不报警', () => {
+  const track = {
+    id: 3,
+    confirmed: true,
+    cls: 0,
+    className: '行人',
+    hits: 20,
+    samples: 10,
+    age: 20,
+    approaching: true,
+    approachFrames: 8,
+    areaRate: 0.6,
+    centerRate: -0.01,
+    ttc: 2.5,
+    ttcSource: 'area',
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 0, y: 0.2 },
+    bbox: { x: 210, y: 90, w: 20, h: 45 },
+  };
+  const corridor = buildCorridor(null, W, H);
+  const street = assessApproachRisk({ tracks: [track], corridor, w: W, h: H, fps: 30, sceneMode: 'street', warnOnInPath: true });
+  assert.equal(street.perTrack[0].inStrict, false);
+  assert.ok(street.perTrack[0].level >= 2);
+  const crowd = assessApproachRisk({ tracks: [track], corridor, w: W, h: H, fps: 30, sceneMode: 'crowd', warnOnInPath: true });
+  assert.equal(crowd.perTrack[0].level, 0);
+  assert.equal(crowd.alerts.length, 0);
+});
+
+test('街景：严格通道内持续膨胀的行人不等面积增长就提醒', () => {
+  const track = {
+    id: 8,
+    confirmed: true,
+    cls: 0,
+    className: '行人',
+    hits: 12,
+    samples: 8,
+    age: 20,
+    approaching: false,
+    approachFrames: 0,
+    areaRate: -0.02,
+    heightRate: 0.1,
+    centerRate: 0,
+    ttc: null,
+    ttcSource: null,
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 0, y: 0.5 },
+    bbox: { x: 145, y: 60, w: 30, h: 100 },
+  };
+  const risk = assessApproachRisk({
+    tracks: [track],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    sceneMode: 'street',
+  });
+  assert.equal(risk.perTrack[0].loomingInPath, true);
+  assert.ok(risk.perTrack[0].level >= 2);
+});
+
+test('人群场景：严格通道内持续膨胀的行人仍要报警', () => {
+  const track = {
+    id: 6,
+    confirmed: true,
+    cls: 0,
+    className: '行人',
+    hits: 12,
+    samples: 8,
+    age: 20,
+    approaching: false,
+    approachFrames: 0,
+    areaRate: 0.05,
+    heightRate: 0.1,
+    centerRate: -0.01,
+    ttc: null,
+    ttcSource: null,
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 0, y: 1 },
+    bbox: { x: 145, y: 60, w: 30, h: 100 },
+  };
+  const risk = assessApproachRisk({
+    tracks: [track],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    sceneMode: 'crowd',
+    warnOnInPath: true,
+  });
+  assert.equal(risk.perTrack[0].crowdApproach, true);
+  assert.ok(risk.perTrack[0].level >= 2);
+  assert.ok(risk.alerts.length >= 1);
+});
+
+test('横穿车辆按侧向速度和预测进通道提前报警', () => {
+  const car = {
+    id: 4,
+    confirmed: true,
+    cls: 2,
+    className: '汽车',
+    hits: 12,
+    samples: 8,
+    age: 12,
+    approaching: false,
+    approachFrames: 0,
+    areaRate: 0,
+    centerRate: 0,
+    ttc: null,
+    ttcSource: null,
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 3, y: 0 },
+    bbox: { x: 70, y: 115, w: 20, h: 40 },
+  };
+  const risk = assessApproachRisk({
+    tracks: [car],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    horizonSec: 1.4,
+  });
+  assert.equal(risk.sceneMode, 'crossing');
+  assert.equal(risk.perTrack[0].crossing, true);
+  assert.ok(risk.perTrack[0].level >= 3);
+  assert.match(risk.alerts[0].text, /横穿/);
+});
+
+test('横穿规则只作用于车辆，行人横向走动不触发', () => {
+  const ped = {
+    id: 5,
+    confirmed: true,
+    cls: 0,
+    className: '行人',
+    hits: 12,
+    samples: 8,
+    age: 12,
+    approaching: false,
+    approachFrames: 0,
+    areaRate: 0,
+    centerRate: 0,
+    ttc: null,
+    ttcSource: null,
+    flowScale: null,
+    flowPoints: 0,
+    velocity: { x: 3, y: 0 },
+    bbox: { x: 70, y: 115, w: 20, h: 40 },
+  };
+  const risk = assessApproachRisk({
+    tracks: [ped],
+    corridor: buildCorridor(null, W, H),
+    w: W,
+    h: H,
+    fps: 30,
+    horizonSec: 1.4,
+  });
+  assert.equal(risk.perTrack[0].crossing, false);
+  assert.equal(risk.perTrack[0].level, 0);
+  assert.equal(risk.alerts.length, 0);
+});
+
 test('光流尺度估计恢复已知膨胀率', () => {
   const prevBbox = { x: 100, y: 100, w: 40, h: 40 };
   const prevCenter = { x: 120, y: 120 };

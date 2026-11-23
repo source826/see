@@ -32,6 +32,26 @@ test('快速逼近的行人说“有人冲过来”', () => {
   assert.ok(a.text.includes(ANNOUNCE_TEXTS.rushPerson));
 });
 
+test('primaryId 存在时，其他目标不参与本帧播报', () => {
+  const a = classifyAnnouncement({
+    perTrack: [
+      track({ id: 2, distance: 2, ttc: 0.8, level: 4 }),
+      track({ id: 5, distance: 7, ttc: 1.5, level: 2 }),
+    ],
+    primaryId: 5,
+  });
+  assert.equal(a.trackId, 5);
+});
+
+test('同一目标的重复提醒有单独的最小间隔', () => {
+  const announcer = new SpeechAnnouncer({ globalCooldown: 0, rushCooldown: 0, trackCooldown: 6000 });
+  const cand = { kind: 'rush', priority: 3, trackId: 7, text: 'x', level: 4, distance: 3, ttc: 1 };
+  assert.equal(announcer.shouldSpeak(cand, 0), true);
+  assert.equal(announcer.shouldSpeak(cand, 3000), false);
+  assert.equal(announcer.shouldSpeak({ ...cand, trackId: 8 }, 3100), true);
+  assert.equal(announcer.shouldSpeak(cand, 6100), true);
+});
+
 test('快速逼近的车辆说“有车冲过来”', () => {
   const a = classifyAnnouncement(risk(track({ className: '汽车', distance: 9 })));
   assert.equal(a.kind, 'rush');
@@ -42,6 +62,15 @@ test('距离很远时不喊冲过来，退为“前方有情况请确认”', ()
   const a = classifyAnnouncement(risk(track({ distance: 18, ttc: 1.5 })));
   assert.equal(a.kind, 'uncertain');
   assert.equal(a.text, ANNOUNCE_TEXTS.uncertain);
+});
+
+test('风险层给了 level 2 的通道目标，播报层不能沉默', () => {
+  const a = classifyAnnouncement(
+    risk(track({ approaching: false, ttc: null, areaRate: 0.02, centerRate: 0.001, distance: 6, samples: 8, hits: 6, level: 2 })),
+  );
+  assert.ok(a);
+  assert.equal(a.kind, 'uncertain');
+  assert.equal(a.trackId, 1);
 });
 
 test('走廊内静止目标说“前方静止障碍”', () => {
@@ -90,6 +119,16 @@ test('不同类别之间也有最短间隔，避免来回改口', () => {
   assert.equal(ann.shouldSpeak(staticCand, 0), true);
   assert.equal(ann.shouldSpeak(uncertain, 500), false);
   assert.equal(ann.shouldSpeak(uncertain, 900), true);
+});
+
+test('人群场景：通道内 level 2 的目标播“有人靠近”', () => {
+  const a = classifyAnnouncement({
+    perTrack: [track({ id: 9, level: 2, approaching: false, ttc: null, distance: 4.5, inStrict: true })],
+    sceneMode: 'crowd',
+  });
+  assert.ok(a);
+  assert.equal(a.kind, 'uncertain');
+  assert.ok(a.text.includes(ANNOUNCE_TEXTS.crowdNear));
 });
 
 test('没有风险目标时不播报', () => {

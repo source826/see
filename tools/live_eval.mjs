@@ -101,7 +101,8 @@ async function main() {
   };
 
   const gpuParam = webgpu ? '&webgpu=1' : '';
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:8080/index.html?video=${encodeURIComponent(videoUrl)}&yolo=1&debug=1${gpuParam}` });
+  const extraParam = args.extra ? `&${args.extra}` : '';
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:8080/index.html?video=${encodeURIComponent(videoUrl)}&yolo=1&debug=1${gpuParam}${extraParam}` });
   await waitFor("document.readyState==='complete' && !!document.getElementById('video')", 20000, '实时页加载');
   await waitFor("document.getElementById('enginePill').textContent.includes('YOLOv8n')", 60000, 'YOLO 就绪');
   await waitFor("Number.isFinite(document.getElementById('video').duration) && document.getElementById('video').duration > 5", 30000, '视频元数据');

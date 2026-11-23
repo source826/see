@@ -1,19 +1,30 @@
 {
-  "note": "真实素材（B 站公开视频的本地缓存），仅用于参数校准与检验，不含任何合成画面。tune 组用于调参；holdout 组在参数冻结前不参与调参。bv 为空表示未能追溯 BV 号，按 sourceNote 处理。",
+  "note": "素材按开发集 / 验证集 / 最终检验集划分。final_test 从未进入任何评测记录，GT 在参数冻结点之前完成，只跑一次。bv 为空表示未能追溯 BV 号，按 sourceNote 处理。",
   "fps": 30,
-  "tune": [
+  "dev": [
     { "file": "tune/nanjing_00.mp4", "source": "上海南京西路傍晚步行 POV", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "854x480" },
-    { "file": "tune/nanjing_01.mp4", "source": "上海南京西路傍晚步行 POV", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "854x480" },
     { "file": "tune/nanjing_02.mp4", "source": "上海南京西路傍晚步行 POV", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "854x480" },
-    { "file": "tune/walk_00.mp4", "source": "第一人称走路", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "360x640" },
-    { "file": "tune/walk_01.mp4", "source": "第一人称走路", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "360x640" },
-    { "file": "tune/walk_02.mp4", "source": "第一人称走路", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "360x640" },
-    { "file": "tune/seaside_00.mp4", "source": "海边雪景步行", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "360x640" }
+    { "file": "narrow_street_approach.mp4", "source": "日本窄商店街迎面行人", "bv": "BV14Jyiz3EUL", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.2, "size": "1280x720" },
+    { "file": "narrow_hutong_approach_01.mp4", "source": "北京胡同迎面行人/自行车", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 11.7, "size": "1280x720" },
+    { "file": "tunnel_backlight.mp4", "source": "夜间雨天路口强背光", "bv": "BV1kUpsedE4R", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720" },
+    { "file": "crowd_dense.mp4", "source": "密集人群", "bv": "BV17kVgzrEag", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.2, "size": "1280x720" },
+    { "file": "fast_crossing.mp4", "source": "快速横穿", "bv": "BV1hvY969EXZ", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720" },
+    { "file": "overcast_street_pov.mp4", "source": "阴天普通街景", "bv": "BV1JgsC6QEnj", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720" },
+    { "file": "night_rain_walk.mp4", "source": "夜间雨天步行", "bv": "BV1k6yhzHEph", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.0, "size": "1280x720" }
   ],
-  "holdout": [
+  "validation": [
     { "file": "holdout/nanjing_03.mp4", "source": "上海南京西路傍晚步行 POV", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "854x480" },
     { "file": "holdout/walk_03.mp4", "source": "第一人称走路", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40, "size": "360x640" },
     { "file": "holdout/walk_05.mp4", "source": "第一人称走路", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 33.3, "size": "360x640" },
     { "file": "holdout/seaside_01.mp4", "source": "海边雪景步行", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 39.3, "size": "360x640" }
+  ],
+  "final_test": [
+    { "file": "narrow_street_crowd_01.mp4", "source": "日本窄商店街人群迎面", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 60.4, "size": "1280x720", "gt": "gt/final_narrow_street_crowd_full.json" },
+    { "file": "narrow_hutong_01.mp4", "source": "北京胡同迎面行人", "bv": null, "sourceNote": "来源未记录，仅本地使用，不对外分发", "durationSec": 40.4, "size": "1280x720", "gt": "gt/final_narrow_hutong_full.json" },
+    { "file": "handheld_night_run.mp4", "source": "夜间手持小跑（负样本）", "bv": "BV1mD4y1F74V", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "640x360", "gt": "gt/final_handheld_night_run_full.json" },
+    { "file": "ebike_pov_traffic.mp4", "source": "电动车第一视角车流（负样本）", "bv": "BV1Mepoe4EbN", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720", "gt": "gt/final_ebike_pov_traffic_full.json" }
+  ],
+  "excluded": [
+    { "file": "puddle_reflection.mp4", "reason": "GT 仅覆盖 26/600 帧（4.3%），无事件目标，误报不可评估，按规则剔除" }
   ]
 }

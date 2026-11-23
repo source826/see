@@ -5,8 +5,11 @@ export const ANNOUNCE_TEXTS = {
   rushPerson: '有人冲过来，请停下',
   rushVehicle: '有车冲过来，请停下',
   rushObject: '有目标冲过来，请停下',
+  crossPerson: '有人横穿，请停下',
+  crossVehicle: '有车横穿，请停下',
   staticObject: '有静止障碍，请绕行',
   uncertain: '前方有情况请确认',
+  crowdNear: '有人靠近，请留意',
 };
 
 export const TERRAIN_TEXTS = {
@@ -108,24 +111,35 @@ export function classifyAnnouncement(risk, opts = {}) {
   const staticCenterRate = opts.staticCenterRate ?? 0.04;
   const staticDist = opts.staticDist ?? 8;
   const uncertainDist = opts.uncertainDist ?? 8;
+  const scene = risk.sceneMode || 'street';
+  const crowd = scene === 'crowd';
 
   let rush = null;
   let staticObs = null;
   let uncertain = null;
 
   for (const p of risk.perTrack) {
-    if (!p.confirmed || !p.inPath) continue;
+    // 横穿目标当前可能还在通道外，靠预测脚点进入通道来提前提醒。
+    if (!p.confirmed || (!p.inPath && !p.crossing)) continue;
+    // 同一帧只处理主目标：有人正在逼近时，不再让其他目标抢“静止障碍/有情况”的话。
+    if (risk.primaryId !== null && risk.primaryId !== undefined && p.id !== risk.primaryId) continue;
     const kind = classKind(p.className);
     const place = placeLabel(p);
+    // 横穿是独立规则：不要求面积增长，只要预测脚点会进通道且来得及提醒。
+    const crossing = Boolean(p.crossing) && p.level >= 3;
     const fast =
-      p.approaching &&
-      p.distance <= rushMaxDist &&
-      ((p.ttc !== null && p.ttc <= rushTtc) ||
-        (p.level >= 4 && p.areaRatio >= 0.01) ||
-        (p.areaRate >= rushAreaRate && p.areaRatio >= 0.015));
+      crossing ||
+      (p.approaching &&
+        p.distance <= rushMaxDist &&
+        ((p.ttc !== null && p.ttc <= rushTtc) ||
+          (p.level >= 4 && p.areaRatio >= 0.01) ||
+          (p.areaRate >= rushAreaRate && p.areaRatio >= 0.015)));
     if (fast) {
-      const text =
-        kind === 'person'
+      const text = crossing
+        ? p.vehicleLike
+          ? `${place}${ANNOUNCE_TEXTS.crossVehicle}`
+          : `${place}${ANNOUNCE_TEXTS.crossPerson}`
+        : kind === 'person'
           ? `${place}${ANNOUNCE_TEXTS.rushPerson}`
           : kind === 'vehicle'
             ? `${place}${ANNOUNCE_TEXTS.rushVehicle}`
@@ -149,13 +163,20 @@ export function classifyAnnouncement(risk, opts = {}) {
       continue;
     }
 
-    const isStatic =
-      p.hits >= 10 &&
-      Math.abs(p.areaRate) <= staticAreaRate &&
-      Math.abs(p.centerRate) <= staticCenterRate &&
-      (p.ttc === null || p.ttc > 4) &&
-      p.distance <= staticDist &&
-      p.areaRatio >= 0.004;
+    // 人群里站立的人很多，静止障碍只在“贴脸且稳定”时才报；横穿场景只报横穿/逼近。
+    const isStatic = crowd
+      ? p.hits >= 15 &&
+        Math.abs(p.areaRate) <= staticAreaRate &&
+        Math.abs(p.centerRate) <= staticCenterRate &&
+        (p.ttc === null || p.ttc > 4) &&
+        p.distance <= 2.5 &&
+        p.areaRatio >= 0.01
+      : p.hits >= 10 &&
+        Math.abs(p.areaRate) <= staticAreaRate &&
+        Math.abs(p.centerRate) <= staticCenterRate &&
+        (p.ttc === null || p.ttc > 4) &&
+        p.distance <= staticDist &&
+        p.areaRatio >= 0.004;
     if (isStatic) {
       const cand = {
         kind: 'static',
@@ -170,14 +191,35 @@ export function classifyAnnouncement(risk, opts = {}) {
       continue;
     }
 
+    // 人群场景只播“通道里有持续膨胀的人”，且用独立短句，不播泛化的“有情况”。
+    if (crowd) {
+      if (p.level >= 2 && (p.inStrict === undefined ? p.inPath : p.inStrict)) {
+        const cand = {
+          kind: 'uncertain',
+          text: `${place}${ANNOUNCE_TEXTS.crowdNear}`,
+          trackId: p.id,
+          level: 2,
+          priority: 2,
+          distance: p.distance,
+          ttc: p.ttc,
+        };
+        if (!uncertain || p.distance < uncertain.distance) uncertain = cand;
+      }
+      continue;
+    }
+    if (scene === 'crossing') continue;
     const near = p.distance <= uncertainDist;
     const timely = p.ttc !== null && p.ttc <= 3;
-    if (p.samples >= 4 && (near || timely)) {
-      // 近处但不像在逼近的目标先等等，确认静止后直接说“静止障碍”，不先猜“有情况”。
-      if (!p.approaching && near) continue;
+    // 风险层已经给出 level 2（目标进入通道且预测不离开）时，播报层必须跟上，
+    // 否则评测里“有等级”但用户实际听不到提醒。播报只认严格通道，避免侧边路人抢话。
+    const inPathWarn = p.level >= 2 && (p.inStrict === undefined ? p.inPath : p.inStrict);
+    if (p.samples >= 4 && (near || timely || inPathWarn)) {
+      // 近处但不像在逼近、且风险层也没给等级的目标先等等，确认静止后直接说“静止障碍”。
+      if (!p.approaching && near && !inPathWarn) continue;
       // 已经明显像静止目标但样本还不够时，先不猜“前方有情况”，等确认后直接说静止障碍。
       const staticLike =
         opts.suppressStaticLikeUncertain !== false &&
+        !inPathWarn &&
         p.hits < 10 &&
         Math.abs(p.areaRate) <= staticAreaRate &&
         Math.abs(p.centerRate) <= staticCenterRate;
@@ -204,16 +246,21 @@ export function classifyAnnouncement(risk, opts = {}) {
 export class SpeechAnnouncer {
   constructor(opts = {}) {
     this.opts = {
-      rushCooldown: 4500,
-      staticCooldown: 12000,
-      uncertainCooldown: 12000,
+      // 同类冷却只防“换目标连喊”，同一目标的重复由 trackCooldown 管；
+      // 12 秒的旧值会把 4 秒后出现的真实目标一起压掉。
+      rushCooldown: 2500,
+      staticCooldown: 8000,
+      uncertainCooldown: 2500,
       globalCooldown: 800,
-      downgradeHold: 3000,
+      downgradeHold: 2000,
+      // 同一目标（同 kind + trackId）的重复提醒最小间隔，避免跟拍一个人反复喊。
+      trackCooldown: 6000,
       ...opts,
     };
     this.lastSpoke = null;
     this.lastSpokeAt = null;
     this.byKind = {};
+    this.byTrack = {};
     this.lastSeen = null;
   }
 
@@ -244,10 +291,20 @@ export class SpeechAnnouncer {
       this.lastSeen = { ...candidate, at: now };
       return false;
     }
+    const trackKey = candidate.trackId >= 0 ? `${candidate.kind}:${candidate.trackId}` : null;
+    if (trackKey) {
+      const trackAt = this.byTrack[trackKey];
+      if (trackAt !== undefined && now - trackAt < this.opts.trackCooldown) {
+        this.lastSeen = { ...candidate, at: now };
+        return false;
+      }
+    }
     if (
       this.lastSpoke &&
       this.lastSpoke.kind === 'rush' &&
       candidate.priority < 3 &&
+      // 降级保护只针对同一个目标；别的目标刚喊过“冲过来”不能压住新的通道目标。
+      candidate.trackId === this.lastSpoke.trackId &&
       now - this.lastSpoke.at < this.opts.downgradeHold
     ) {
       this.lastSeen = { ...candidate, at: now };
@@ -256,6 +313,7 @@ export class SpeechAnnouncer {
     this.lastSpoke = { ...candidate, at: now };
     this.lastSpokeAt = now;
     this.byKind[candidate.kind] = now;
+    if (trackKey) this.byTrack[trackKey] = now;
     this.lastSeen = { ...candidate, at: now };
     return true;
   }
@@ -264,6 +322,7 @@ export class SpeechAnnouncer {
     this.lastSpoke = null;
     this.lastSpokeAt = null;
     this.byKind = {};
+    this.byTrack = {};
     this.lastSeen = null;
   }
 }

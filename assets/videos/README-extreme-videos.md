@@ -20,6 +20,22 @@
 - `hongkong_walk_02.webm`：iPhone 5 拍摄，元数据日期 2014-10-20，坐标 +22.2805,+114.1554（香港）；来源未记录，仅本地使用，不对外分发。
 - `pedestrian_avoidance.ogv`：来源未记录，仅本地使用，不对外分发。
 
+## 2026-11-23 新增素材与质量备注
+
+| 文件 | 来源 BV | 用途 | 质量备注 |
+|---|---|---|---|
+| `new/BV17kVgzrEag_300_h264.mp4` | BV17kVgzrEag | 人群场景最终检验 | 人群密集，仅作 crowd 规则一次性验证 |
+| `new/BV1hvY969EXZ_60_h264.mp4` | BV1hvY969EXZ | 快速横穿最终检验 | 事件目标多在画面边缘，未穿过走廊；只用于误报压力测试 |
+| `new/BV1JgsC6QEnj_200_h264.mp4` | BV1JgsC6QEnj | 阴天街景最终检验 | 普通街景对照 |
+| `new/BV1k6yhzHEph_120_h264.mp4` | BV1k6yhzHEph | 夜间雨天最终检验 | 24 fps；**前 4 秒为静止机位**，事件/三态统计从 4 s 后开始 |
+| `stairs_pov.mp4` | BV1sG411W7te | 仅环境层/稳定性参考 | **整段手抖+模糊**，不纳入感知指标，不作为算法效果依据 |
+
+## 2026-11-23 开发集诊断用素材
+
+- 这 4 段最初按“参数冻结后一次性”跑过，现已改称开发集，只用于诊断，不再当最终检验：`narrow_street_approach.mp4`、`narrow_hutong_approach_01.mp4`、`tunnel_backlight.mp4`、`puddle_reflection.mp4`。
+- 对应 GT：`gt/narrow_street_approach_full.json`、`gt/narrow_hutong_approach_full.json`、`gt/tunnel_backlight_full.json`、`gt/puddle_reflection_full.json`。
+- `stairs_pov`（整段手抖模糊）、`handheld_night_run`、`ebike_pov_traffic`、`crowd_dense` 未纳入本轮按目标召回；`stairs_pov` 只作环境层/稳定性参考。
+
 ## 素材使用限制
 - 以上素材版权归原作者/平台所有；仓库仅记录来源与用途，不对外分发视频文件。
 - 未能追溯 BV 号的素材统一按“来源未记录，仅本地使用，不对外分发”处理。
