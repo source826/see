@@ -22,5 +22,8 @@
   "caveats": [
     "B 站现成素材 1.3m POV，未控制 10-15m→1.5m 距离。",
     "dangerSec 无法锚定真实 1.5 米：相机高度/焦段未知，只能标到画面里目标最近的一刻；要按 1.5 米精确标定需自拍并实测相机离地高度。"
-  ]
+  ],
+  "usage": "development_observation_only",
+  "finalTest": false,
+  "usedForTuning": false
 }

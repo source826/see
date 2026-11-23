@@ -1,7 +1,10 @@
 {
   "version": 1,
   "status": "single-video-manual",
-  "note": "zebra_b_approach 的单条人工事件。dangerSec 来自用户提供的 zebra_b_approach.json（relative_to_clip 10.5s）；wide/strict 由基线回放的走廊进入帧自动推导，仅用于旧口径对照。",
+  "role": "development_observation",
+  "finalTest": false,
+  "usedForTuning": false,
+  "note": "zebra_b_approach 的单条人工事件。dangerSec 来自用户提供的 zebra_b_approach.json（relative_to_clip 10.5s）；wide/strict 由基线回放的走廊进入帧自动推导，仅用于旧口径对照。B 站 surrogate，不用于调参/最终检验。",
   "evaluation": {
     "leadSec": 5,
     "minLeadSec": 1.5,

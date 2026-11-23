@@ -1,5 +1,10 @@
 {
   "status": "ok",
+  "role": "development_observation",
+  "finalTest": false,
+  "usedForTuning": false,
+  "decision": "不改 crowdApproachHeightRate，不给 danger 口径单独开路径；0.01/0.02/0.05 已扫过且无召回收益，不为单条 4.5m 素材调参。",
+  "note": "B 站 surrogate 素材（D:/cf/guardian-videos），非自拍 POV，dangerSec 对应产品估距约 4.5m，不是真实 1.5m；仅归档为开发观察。",
   "live": "tmp/zebra_live.json",
   "gt": "gt/zebra_b_approach_full.json",
   "eventsFile": "gt/events_manual_zebra_20261123.json",

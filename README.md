@@ -499,9 +499,9 @@ GT 三态不是人工语义真值，而是 `tools/label_gt_motion.py` 用脚点�
 - 目的地目前用经纬度或地图点选，没有地名搜索/geocoding；店铺名 OCR 和“酱油在哪里”还没接入。
 - 浏览器冒烟（模拟 GPS 39.9,116.4）：目的地在北方向约 100 米、地图 295×220、缓存 9/9 瓦片、PNG 可下载、页面无错误。真实步行/手机 GPS 未测。
 
-**zebra_b_approach 单条人工事件检验（2026-11-23）**
+**zebra_b_approach 开发观察（非最终检验，不用于调参，2026-11-23）**
 
-用户提供 `D:/cf/guardian-videos/zebra_b_approach.mp4` 和同名 JSON：目标 1 是粉衣女子，`startSec=0`、`dangerSec=10.5`（相对片段）。视频已复制到 `assets/videos/selfshot/`；GT 由 `gt_tracks.py` 的 T2 轨迹映射为事件 1，背景用 `merge_bg_gt.py` 合并，共 1668 框。
+用户提供 `D:/cf/guardian-videos/zebra_b_approach.mp4` 和同名 JSON：目标 1 是粉衣女子，`startSec=0`、`dangerSec=10.5`（相对片段）。这是 B 站 surrogate 素材，不是自拍 POV，也没有真实 1.5 m 标定。视频已复制到 `assets/videos/selfshot/`；GT 由 `gt_tracks.py` 的 T2 轨迹映射为事件 1，背景用 `merge_bg_gt.py` 合并，共 1668 框。**只作为开发观察记录，不进入最终检验，不用于调参。**
 
 | 口径 | 可评事件 | TP | 召回 | FP/分 | 窗口外事件语音 |
 |---|---|---|---|---|---|
@@ -512,9 +512,9 @@ GT 三态不是人工语义真值，而是 `tools/label_gt_motion.py` 用脚点�
 - 卡点在人群规则，不是新旧 TP 口径：场景是 `crowd`，目标距离 4.5–6.4 m，框高增长率只有 0.001–0.022/秒，低于 `crowdApproachHeightRate=0.03`，所以从未到 level 2；旧/新口径都没有语音可计。
 - `dangerSec=10.5` 对应产品估距约 4.5 m，不是真实 1.5 m；用户 JSON 也注明该素材无法锚定 1.5 m。
 - 旧口径的 wide 只有 0.16 s（目标一开始就在宽走廊内），旧口径本身不适合这条片段；新口径窗口 5.5–9.0 s 才是有效对照。
-- **未改任何阈值/规则**。若要让这类“人群里慢速迎面”报出来，需要另做单变量试验（例如降低 `crowdApproachHeightRate` 或给 danger 口径单独开一条路径），这属于规则改动，等你确认。
+- **按用户决定：不改 `crowdApproachHeightRate`，不给 danger 口径单独开路径。** 之前 0.01/0.02/0.05 已扫过且没有召回收益；不能针对单条 4.5 m 素材调参或迎合评测口径。本条只作为开发观察归档，不改任何算法代码和冻结参数。
 - 证据：[zebra_b_approach_eval_20261123.json](eval/zebra_b_approach_eval_20261123.json)、[zebra_b_approach_full.json](gt/zebra_b_approach_full.json)、[events_manual_zebra_20261123.json](gt/events_manual_zebra_20261123.json)。
-- `live_eval.mjs` 增加了 `--fps=25`，否则 25 fps 素材会按 30 fps 记帧号，GT 对不上。
+- `live_eval.mjs` 增加了 `--fps=25`，否则 25 fps 素材会按 30 fps 记帧号，GT 对不上；这是工具修复，不是算法改动。
 
 **新自拍视频技术冒烟（2026-11-23，非最终检验）**
 

@@ -96,9 +96,10 @@
 - pass_02 两条都是汽车“静止障碍”；frontal_01 六条全是车辆；frontal_02 6 分钟 54 条，车辆为主，语音密度偏高。
 - 没有 GT，不能算召回/FP/提前量；结果见 `eval/smoke_new_videos_20261123.json`，联系表在 `eval/smoke_new_videos_20261123/`。下一步等人工事件时间点，冻结后只跑一次。
 
-### zebra_b_approach（用户提供 GT/时间点）
+### zebra_b_approach（开发观察，非最终检验，不用于调参）
 
-- 用户提供 `D:/cf/guardian-videos/zebra_b_approach.mp4` + JSON：目标 1 粉衣女子，`startSec=0`、`dangerSec=10.5`（相对片段）。
+- 用户提供 `D:/cf/guardian-videos/zebra_b_approach.mp4` + JSON：目标 1 粉衣女子，`startSec=0`、`dangerSec=10.5`（相对片段）。B 站 surrogate，不是自拍 POV，无法锚定真实 1.5 m。
 - 已复制到本目录，并用 `gt_tracks.py` 的 T2 轨迹生成事件 1、合并背景 GT；`events_manual_zebra_20261123.json` 记录 wide=0.16 s、strict=0.36 s、danger=10.5 s。
 - 结果：0 条语音，旧/新口径都 0/1，FP 0；目标匹配/严格通道 24/24 帧，但 `approachingFrames=0`、`level2Frames=0`。框高增长率 0.001–0.022/s，低于人群规则 0.03/s，卡点在人群逼近门槛，不是 TP 口径。
-- 证据：`eval/zebra_b_approach_eval_20261123.json`、`gt/zebra_b_approach_full.json`。未改阈值。
+- **按用户决定：不改 `crowdApproachHeightRate`，不给 danger 开单独路径。** 0.01/0.02/0.05 之前已扫过且无召回收益；不为单条 4.5 m 素材调参。只归档为开发观察，不改算法代码和冻结参数。
+- 证据：`eval/zebra_b_approach_eval_20261123.json`、`gt/zebra_b_approach_full.json`。
