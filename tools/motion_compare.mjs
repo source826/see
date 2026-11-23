@@ -9,6 +9,9 @@ const args = Object.fromEntries(
     return i > 0 ? [a.slice(2, i), a.slice(i + 1)] : [a.slice(2), 'true'];
   })
 );
+const allowMissingFlow = args.allowMissingFlow === '1';
+const robustPost = args.robustPost === '1';
+const wantDetail = args.detail === '1';
 const rd = (p) => JSON.parse(readFileSync(p, 'utf8').replace(/^\uFEFF/, ''));
 const gt = rd(args.gt);
 const base = rd(args.base);
@@ -19,6 +22,37 @@ const fmB = frameMap(base);
 const fmR = frameMap(robust);
 const fmV = frameMap(video);
 const fps = gt.fps || 30;
+const robustWindowSec = 1.5;
+const median = (values) => {
+  if (!values.length) return null;
+  const s = [...values].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+};
+// 事后计算稳健斜率：用 video 回放里同一 track 的确认框高历史，最近 1.5 s 的
+// 所有点对斜率中位数。用于含小目标时无法重跑已归档 robust 回放的情况。
+const historyByTrack = new Map();
+for (const rec of video.frames || []) {
+  for (const p of rec.perTrack || []) {
+    if (!p.confirmed) continue;
+    if (!historyByTrack.has(p.id)) historyByTrack.set(p.id, []);
+    historyByTrack.get(p.id).push({ frame: rec.frame, h: p.bbox.h });
+  }
+}
+for (const list of historyByTrack.values()) list.sort((a, b) => a.frame - b.frame);
+function robustSlopeAt(trackId, frame) {
+  const list = historyByTrack.get(trackId) || [];
+  const pts = list
+    .filter((p) => p.frame <= frame && p.frame >= frame - robustWindowSec * fps)
+    .map((p) => [p.frame / fps, Math.log(Math.max(1, p.h))]);
+  const slopes = [];
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const dt = pts[j][0] - pts[i][0];
+      if (dt > 1e-4) slopes.push((pts[j][1] - pts[i][1]) / dt);
+    }
+  }
+  return median(slopes);
+}
 const sx = (base.analysis?.width || 320) / gt.width;
 const sy = (base.analysis?.height || 180) / gt.height;
 function iou(a, b) {
@@ -85,26 +119,35 @@ for (const frame of [...fmB.keys()].sort((a, b) => a - b)) {
     const pv = best(vRec);
     if (!pb || !pr || !pv) continue;
     if (typeof pb.heightRate !== 'number' || typeof pr.heightRate !== 'number') continue;
-    if (typeof pv.flowRadialRate !== 'number' || typeof pv.flowRadialMean !== 'number') continue;
+    const flowOk =
+      typeof pv.flowRadialRate === 'number' && typeof pv.flowRadialMean === 'number';
+    if (!flowOk && !allowMissingFlow) continue;
     samples.push({
       gt: b.motion,
+      frame,
+      gtId: b.id,
+      hAt320: gbox.h,
       diff: pb.heightRate,
-      robust: pr.heightRate,
-      flowMedian: pv.flowRadialRate,
-      flowMean: pv.flowRadialMean,
+      robust: robustPost ? robustSlopeAt(pv.id, frame) : pr.heightRate,
+      flowMedian: flowOk ? pv.flowRadialRate : null,
+      flowMean: flowOk ? pv.flowRadialMean : null,
+      flowPoints: pv.flowRadialPoints ?? 0,
     });
   }
 }
 const state = (v, th) => (v > th ? 'approaching' : v < -th ? 'receding' : 'static');
 const agreement = (signal, th) => {
   let ok = 0;
+  let n = 0;
   const conf = {};
   for (const s of samples) {
+    if (typeof s[signal] !== 'number' || !Number.isFinite(s[signal])) continue;
+    n++;
     const st = state(s[signal], th);
     conf[`${s.gt}->${st}`] = (conf[`${s.gt}->${st}`] || 0) + 1;
     if (st === s.gt) ok++;
   }
-  return { agreement: samples.length ? ok / samples.length : null, confusion: conf };
+  return { agreement: n ? ok / n : null, n, confusion: conf };
 };
 const grid = [];
 for (let th = 0.01; th <= 0.2001; th += 0.01) {
@@ -117,19 +160,30 @@ for (let th = 0.01; th <= 0.2001; th += 0.01) {
   });
 }
 const best = (key) => {
-  const row = grid.reduce((a, b) => (b[key] > a[key] ? b : a), grid[0]);
+  const rows = grid.filter((g) => typeof g[key] === 'number');
+  if (!rows.length) return { threshold: null, agreement: null };
+  const row = rows.reduce((a, b) => (b[key] > a[key] ? b : a), rows[0]);
   return { threshold: row.threshold, agreement: row[key] };
 };
 const at003 = grid.find((g) => Math.abs(g.threshold - 0.03) < 1e-9) || grid[0];
+const counts = Object.fromEntries(
+  ['diff', 'robust', 'flowMedian', 'flowMean'].map((k) => [k, agreement(k, 0.03).n])
+);
 console.log(
   JSON.stringify(
     {
       gt: args.gt,
       samples: samples.length,
+      smallSamples: samples.filter((s) => s.hAt320 < 18).length,
       at003,
+      counts,
       best: Object.fromEntries(
-        ['diff', 'robust', 'flowMedian', 'flowMean'].map((k) => [k, { ...best(k), confusion: agreement(k, best(k).threshold).confusion }])
+        ['diff', 'robust', 'flowMedian', 'flowMean'].map((k) => [
+          k,
+          { ...best(k), confusion: best(k).threshold === null ? {} : agreement(k, best(k).threshold).confusion },
+        ])
       ),
+      ...(wantDetail ? { samplesDetail: samples } : {}),
     },
     null,
     2

@@ -1,6 +1,9 @@
 {
-  "frozenAt": "2026-11-23T11:59:53.576Z",
+  "frozenAt": "2026-11-23T12:31:17.567Z",
   "note": "此文件生成后不再改规则；新素材只跑一次。",
+  "unitNotes": {
+    "approachMinHeight / minBoxHeight": "720p 原始帧像素；72 = 36@640 输入 = 18@320×180 分析画布"
+  },
   "pipelineDefaults": {
     "pyramidLevels": 3,
     "fastThreshold": 18,
@@ -25,7 +28,8 @@
     "minAreaGrowth": 0.35,
     "maxCenterRate": 0.05,
     "centerRef": "bottom",
-    "approachMinHeight": 18,
+    "approachMinHeight": 72,
+    "approachMinHeightRef": 720,
     "approachMinScore": 0.15,
     "approachMinFrames": 4,
     "alertPath": "wide",
@@ -57,7 +61,8 @@
     "maxCenterRate": 0.05,
     "centerRef": "bottom",
     "minAreaUpRatio": 0.55,
-    "minBoxHeight": 18,
+    "minBoxHeight": 72,
+    "minBoxHeightRefHeight": 720,
     "minScore": 0.15,
     "flowMinPoints": 5,
     "ttcMax": 8,
@@ -91,9 +96,9 @@
     "fpCoverageRequirement": "bg GT and >=60% clip span"
   },
   "sourceSha256": {
-    "src/tracking/approach.js": "b07ad1a09325d08288ba2e317a4a488385cc8feaf4abbef7952db9df6d1ff83f",
+    "src/tracking/approach.js": "8aed0a4f306a18e5161bef7f3f57313ddf57b025d525e67098f65abb0f02a293",
     "src/app/announce.js": "d3c74474d5de386a505bb1c8e316a026459ad433cbb2c9a1575fb0f448ef543a",
-    "src/app/pipeline.js": "cc35fe7da217d6a533d550c1a6db7767ca77296a835298dcb59cdedc8f1b2906",
+    "src/app/pipeline.js": "fec179754e6d6a08e62565596c5415e88df2aba250145618c78adbe971e08232",
     "eval/events.js": "5f6f318ab026ec793a3dcd3d56ee6fdf692ba13678ad9378da5770744d5aaf4a",
     "tools/live_eval_report.mjs": "9ca91ca3964e716936b6b06d9e0f1675daf2f0e20244645666e9219f5f98f8ea"
   }

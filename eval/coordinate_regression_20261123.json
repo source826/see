@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-11-23T13:05:00.000Z",
+  "what": "把 minBoxHeight 从分析画布像素改为 720p 原始帧像素（72@720p = 36@640 输入 = 18@320×180），运行时按分析画布高度/720 换算；对 9 条开发记录做默认路径离线回放，和改动前逐条对比。",
+  "mapping": {
+    "source720": 72,
+    "input640": 36,
+    "analysis320": 18,
+    "formula": "minBoxHeight_analysis = minBoxHeight_720 * (analysisHeight / 720)"
+  },
+  "perRecord": [
+    { "run": "narrow_street1", "alertsBefore": 3, "alertsAfter": 3, "alertsExact": true },
+    { "run": "narrow_street2", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true },
+    { "run": "narrow_street3", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true },
+    { "run": "hutong1", "alertsBefore": 7, "alertsAfter": 7, "alertsExact": true },
+    { "run": "hutong2", "alertsBefore": 5, "alertsAfter": 5, "alertsExact": true },
+    { "run": "hutong3", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true },
+    { "run": "tunnel1", "alertsBefore": 7, "alertsAfter": 7, "alertsExact": true },
+    { "run": "tunnel2", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true },
+    { "run": "tunnel3", "alertsBefore": 6, "alertsAfter": 6, "alertsExact": true }
+  ],
+  "summaryBefore": {
+    "targetRecall": "1/22",
+    "groupRecall": "1/22",
+    "coverage": "9/21",
+    "fpEpisodes": 3,
+    "speech": 50,
+    "leadMedian": 1.4333,
+    "leadP10": 1.4333
+  },
+  "summaryAfter": {
+    "targetRecall": "1/22",
+    "groupRecall": "1/22",
+    "coverage": "9/21",
+    "fpEpisodes": 3,
+    "speech": 50,
+    "leadMedian": 1.4333,
+    "leadP10": 1.4333
+  },
+  "conclusion": "9/9 条记录的 alerts 数组完全一致，汇总指标完全相同；默认行为与冻结基线逐条一致。坐标换算保留。",
+  "risk": "门槛单位改为 720p 原始帧像素后，任何直接覆写 approachMinHeight 的旧脚本/文档若仍按分析像素填 18，会等价于 4.5@320，行为会变；本轮所有试验都使用新单位，README 和 freeze 已注明。"
+}

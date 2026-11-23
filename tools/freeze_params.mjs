@@ -21,6 +21,9 @@ const sha256 = Object.fromEntries(
 const frozen = {
   frozenAt: new Date().toISOString(),
   note: '此文件生成后不再改规则；新素材只跑一次。',
+  unitNotes: {
+    'approachMinHeight / minBoxHeight': '720p 原始帧像素；72 = 36@640 输入 = 18@320×180 分析画布',
+  },
   pipelineDefaults: PIPELINE_DEFAULTS,
   approachDefaults: APPROACH_DEFAULTS,
   announcerDefaults: new SpeechAnnouncer().opts,

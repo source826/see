@@ -1,0 +1,337 @@
+{
+  "generatedAt": "2026-11-23T12:27:33.608Z",
+  "note": "minBoxHeight 以 720p 原始帧像素表示；72=18@320，68=17@320，60=15@320。9 条开发记录离线回放。",
+  "thresholds": [
+    72,
+    68,
+    60
+  ],
+  "points": [
+    {
+      "thresholdSrc720": 72,
+      "thresholdAt320": 18,
+      "thresholdAtInput640": 36,
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leads": [
+        1.4333333333333333
+      ],
+      "per": [
+        {
+          "name": "narrow_street1",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 3,
+          "leads": []
+        },
+        {
+          "name": "narrow_street2",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 5,
+          "leads": []
+        },
+        {
+          "name": "narrow_street3",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 5,
+          "leads": []
+        },
+        {
+          "name": "hutong1",
+          "tp": 1,
+          "events": 3,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 7,
+          "leads": [
+            1.4333333333333333
+          ]
+        },
+        {
+          "name": "hutong2",
+          "tp": 0,
+          "events": 2,
+          "cover": 1,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 5,
+          "leads": []
+        },
+        {
+          "name": "hutong3",
+          "tp": 0,
+          "events": 2,
+          "cover": 0,
+          "coverN": 2,
+          "fp": 1,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "tunnel1",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 7,
+          "leads": []
+        },
+        {
+          "name": "tunnel2",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "tunnel3",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 6,
+          "leads": []
+        }
+      ]
+    },
+    {
+      "thresholdSrc720": 68,
+      "thresholdAt320": 17,
+      "thresholdAtInput640": 34,
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 52,
+      "leadMedian": 0.2,
+      "leadP10": 0.2,
+      "leads": [
+        0.2
+      ],
+      "per": [
+        {
+          "name": "narrow_street1",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 3,
+          "leads": []
+        },
+        {
+          "name": "narrow_street2",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 5,
+          "leads": []
+        },
+        {
+          "name": "narrow_street3",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 4,
+          "leads": []
+        },
+        {
+          "name": "hutong1",
+          "tp": 1,
+          "events": 3,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 7,
+          "leads": [
+            0.2
+          ]
+        },
+        {
+          "name": "hutong2",
+          "tp": 0,
+          "events": 2,
+          "cover": 1,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "hutong3",
+          "tp": 0,
+          "events": 2,
+          "cover": 0,
+          "coverN": 2,
+          "fp": 1,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "tunnel1",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 7,
+          "leads": []
+        },
+        {
+          "name": "tunnel2",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 8,
+          "leads": []
+        },
+        {
+          "name": "tunnel3",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        }
+      ]
+    },
+    {
+      "thresholdSrc720": 60,
+      "thresholdAt320": 15,
+      "thresholdAtInput640": 30,
+      "targetRecall": "0/22",
+      "groupRecall": "0/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 52,
+      "leadMedian": null,
+      "leadP10": null,
+      "leads": [],
+      "per": [
+        {
+          "name": "narrow_street1",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 4,
+          "leads": []
+        },
+        {
+          "name": "narrow_street2",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 5,
+          "leads": []
+        },
+        {
+          "name": "narrow_street3",
+          "tp": 0,
+          "events": 2,
+          "cover": 2,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 4,
+          "leads": []
+        },
+        {
+          "name": "hutong1",
+          "tp": 0,
+          "events": 3,
+          "cover": 1,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "hutong2",
+          "tp": 0,
+          "events": 2,
+          "cover": 1,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "hutong3",
+          "tp": 0,
+          "events": 2,
+          "cover": 1,
+          "coverN": 2,
+          "fp": 0,
+          "speech": 6,
+          "leads": []
+        },
+        {
+          "name": "tunnel1",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 7,
+          "leads": []
+        },
+        {
+          "name": "tunnel2",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 7,
+          "leads": []
+        },
+        {
+          "name": "tunnel3",
+          "tp": 0,
+          "events": 3,
+          "cover": 0,
+          "coverN": 3,
+          "fp": 1,
+          "speech": 7,
+          "leads": []
+        }
+      ]
+    }
+  ]
+}

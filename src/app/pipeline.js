@@ -39,9 +39,10 @@ export const PIPELINE_DEFAULTS = {
   minAreaGrowth: 0.35,
   maxCenterRate: 0.05,
   centerRef: 'bottom',
-  // 诊断过 12px：远处小目标能更早建轨迹，但 nj02 按目标召回从 1.0 掉回 0.5，
-  // 只是增加语音条数，没有稳定收益，维持 18px。
-  approachMinHeight: 18,
+  // 以 720p 原始帧像素表示；默认 72@720p 等价于原 18px@320×180 分析画布。
+  // 诊断过更低的 48@720p（12@320）：远处小目标更早建轨迹，但 nj02 召回下降，只增语音。
+  approachMinHeight: 72,
+  approachMinHeightRef: 720,
   approachMinScore: 0.15,
   approachMinFrames: 4,
   alertPath: 'wide',
@@ -135,6 +136,7 @@ export class GuidePipeline {
       maxCenterRate: this.options.maxCenterRate,
       centerRef: this.options.centerRef,
       minBoxHeight: this.options.approachMinHeight,
+      minBoxHeightRefHeight: this.options.approachMinHeightRef,
       minScore: this.options.approachMinScore,
       approachMinFrames: this.options.approachMinFrames,
       mergeIou: this.options.approachMergeIou ?? 0.2,

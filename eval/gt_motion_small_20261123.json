@@ -1,0 +1,133 @@
+{
+  "generatedAt": "2026-11-23T12:30:42.668Z",
+  "note": "原样本来自基线 minBoxHeight=72@720p 的 9 条回放；小目标来自 minBoxHeight=60@720p 回放中 h<18px 的样本。robust 为事后 Theil-Sen（与原稳健斜率口径一致）。小目标框内光流点通常为 0，flow 只统计有值样本。",
+  "original": {
+    "samples": 532,
+    "diff": {
+      "n": 532,
+      "agreement": 0.5620300751879699
+    },
+    "robust": {
+      "n": 532,
+      "agreement": 0.5375939849624061
+    },
+    "flowMedian": {
+      "n": 532,
+      "agreement": 0.36466165413533835
+    },
+    "flowMean": {
+      "n": 532,
+      "agreement": 0.34210526315789475
+    },
+    "gtCounts": {
+      "receding": 168,
+      "approaching": 151,
+      "static": 213
+    }
+  },
+  "small": {
+    "samples": 421,
+    "diff": {
+      "n": 421,
+      "agreement": 0.5581947743467933
+    },
+    "robust": {
+      "n": 421,
+      "agreement": 0.3990498812351544
+    },
+    "flowMedian": {
+      "n": 4,
+      "agreement": 0
+    },
+    "flowMean": {
+      "n": 4,
+      "agreement": 0
+    },
+    "gtCounts": {
+      "static": 260,
+      "receding": 82,
+      "approaching": 79
+    }
+  },
+  "union": {
+    "samples": 953,
+    "diff": {
+      "n": 953,
+      "agreement": 0.5603357817418678
+    },
+    "robust": {
+      "n": 953,
+      "agreement": 0.47639034627492133
+    },
+    "flowMedian": {
+      "n": 536,
+      "agreement": 0.3619402985074627
+    },
+    "flowMean": {
+      "n": 536,
+      "agreement": 0.33955223880597013
+    },
+    "gtCounts": {
+      "receding": 250,
+      "approaching": 230,
+      "static": 473
+    }
+  },
+  "relaxedAll": {
+    "samples": 4178,
+    "diff": {
+      "n": 4178,
+      "agreement": 0.5823360459550024
+    },
+    "robust": {
+      "n": 4178,
+      "agreement": 0.5131641933939685
+    },
+    "flowMedian": {
+      "n": 525,
+      "agreement": 0.3638095238095238
+    },
+    "flowMean": {
+      "n": 525,
+      "agreement": 0.34095238095238095
+    },
+    "gtCounts": {
+      "approaching": 1564,
+      "static": 1762,
+      "receding": 852
+    }
+  },
+  "relaxedNormal": {
+    "samples": 3757,
+    "diff": {
+      "n": 3757,
+      "agreement": 0.5850412563215331
+    },
+    "robust": {
+      "n": 3757,
+      "agreement": 0.5259515570934256
+    },
+    "flowMedian": {
+      "n": 521,
+      "agreement": 0.3666026871401152
+    },
+    "flowMean": {
+      "n": 521,
+      "agreement": 0.3435700575815739
+    },
+    "gtCounts": {
+      "approaching": 1485,
+      "static": 1502,
+      "receding": 770
+    }
+  },
+  "reference": {
+    "previousOriginal": {
+      "samples": 532,
+      "diff": 0.562,
+      "robust": 0.547,
+      "flowMedian": 0.365,
+      "flowMean": 0.342
+    }
+  }
+}

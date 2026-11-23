@@ -23,7 +23,10 @@ export const APPROACH_DEFAULTS = {
   // 'bottom'：画面下方中央（行进方向）；'image'：几何画面中心
   centerRef: 'bottom',
   minAreaUpRatio: 0.55,
-  minBoxHeight: 18,
+  // 以 720p 原始帧像素表示；运行时按分析画布高度 / 720 换算成分析像素。
+  // 默认 72@720p = 18@320×180 分析画布，等价于原阈值。
+  minBoxHeight: 72,
+  minBoxHeightRefHeight: 720,
   minScore: 0.15,
   flowMinPoints: 5,
   ttcMax: 8,
@@ -382,11 +385,13 @@ export class ApproachTracker {
     const height = ctx.height ?? 180;
     const fps = ctx.fps ?? 30;
     const dt = ctx.dt ?? 1 / fps;
+    // 门槛以 720p 原始帧像素定义，换算到当前分析画布；默认 72@720p -> 18@180。
+    const minBoxHeight = opts.minBoxHeight * (height / (opts.minBoxHeightRefHeight || 720));
     const dets = [];
     for (const d of detections || []) {
       const b = d.bbox || d;
       if (!b || !(b.w > 1) || !(b.h > 1)) continue;
-      if (b.h < opts.minBoxHeight) continue;
+      if (b.h < minBoxHeight) continue;
       if (d.score !== undefined && d.score < opts.minScore) continue;
       dets.push({
         bbox: { x: b.x, y: b.y, w: b.w, h: b.h },

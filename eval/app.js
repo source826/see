@@ -567,7 +567,7 @@ const expParam = $('expParam');
 for (const p of EXP_PARAMS) {
   const o = document.createElement('option');
   o.value = p;
-  o.textContent = p;
+  o.textContent = p === 'approachMinHeight' ? 'approachMinHeight (720p px)' : p;
   expParam.appendChild(o);
 }
 
