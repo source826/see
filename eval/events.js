@@ -49,6 +49,7 @@ export function evaluateAlarmEvents(args) {
       fpPerMin: null,
       alarmFrames: 0,
       durationSec: 0,
+      alertStates: { event: 0, bg: 0, unmatched: 0 },
       events: [],
       fnList: [],
     };
@@ -213,6 +214,18 @@ export function evaluateAlarmEvents(args) {
     return arr[idx];
   };
 
+  // 三态：每条报警按映射结果归为事件目标 / 背景目标 / 未匹配。
+  const alertStates = { event: 0, bg: 0, unmatched: 0 };
+  for (const rec of sorted) {
+    for (const a of rec.alerts || []) {
+      if (a.level < minLevel) continue;
+      const mapped = mappedGt(rec.frame, a.trackId);
+      if (mapped !== undefined && eventGtIds.has(mapped)) alertStates.event++;
+      else if (mapped !== undefined && bgGtIds.has(mapped)) alertStates.bg++;
+      else alertStates.unmatched++;
+    }
+  }
+
   return {
     eventCount: events.length,
     tpEvents: tpEvents.length,
@@ -226,6 +239,7 @@ export function evaluateAlarmEvents(args) {
     fpAlerts,
     fpPerMin: fpEpisodes / (evalDurationSec / 60),
     alarmFrames,
+    alertStates,
     durationSec: evalDurationSec,
     gtSamples,
     gtInsideSamples,

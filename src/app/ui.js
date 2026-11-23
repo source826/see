@@ -80,6 +80,18 @@ if (state.debug) {
   window.__guidaoFrames = state.debugFrames;
   window.__guidaoSpeech = state.debugSpeech;
 }
+// 三条核心语音用预录音频，绕开 speechSynthesis 的排队抖动；环境提醒仍用合成语音。
+const VOICE_FILES = {
+  rush: 'demo/audio/rush.wav',
+  static: 'demo/audio/static.wav',
+  uncertain: 'demo/audio/uncertain.wav',
+};
+const voiceAudio = {};
+for (const [kind, file] of Object.entries(VOICE_FILES)) {
+  const a = new Audio(file);
+  a.preload = 'auto';
+  voiceAudio[kind] = a;
+}
 
 function updateDisplayRect() {
   if (!video.videoWidth) return;
@@ -564,27 +576,38 @@ function handleAlert(res) {
   }
 }
 
+function recordSpeech(cand, queuedAt, startedAt) {
+  if (!state.debug) return;
+  state.debugSpeech.push({
+    kind: cand.kind,
+    text: cand.text,
+    frame: state.lastResult && state.lastResult.frame ? state.lastResult.frame.index : null,
+    queuedAt: Math.round(queuedAt * 10) / 10,
+    startedAt: Math.round(startedAt * 10) / 10,
+    queueMs: Math.round((startedAt - queuedAt) * 10) / 10,
+  });
+}
+
 function speakAnnouncement(cand) {
-  if ('speechSynthesis' in window) {
+  const queuedAt = performance.now();
+  const pre = voiceAudio[cand.kind];
+  if (pre) {
+    // 预录音频：先停掉正在播的语音，再从头播；rush 优先级最高。
+    for (const a of Object.values(voiceAudio)) {
+      if (a !== pre && !a.paused) a.pause();
+    }
+    pre.pause();
+    pre.currentTime = 0;
+    pre.onplaying = () => recordSpeech(cand, queuedAt, performance.now());
+    const p = pre.play();
+    if (p && p.catch) p.catch(() => {});
+  } else if ('speechSynthesis' in window) {
     if (cand.kind === 'rush') window.speechSynthesis.cancel();
-    const queuedAt = performance.now();
     const u = new SpeechSynthesisUtterance(cand.text);
     u.lang = 'zh-CN';
     u.rate = cand.kind === 'rush' ? 1.18 : 1.05;
     u.pitch = cand.kind === 'rush' ? 1.05 : 1;
-    if (state.debug) {
-      u.onstart = () => {
-        const startedAt = performance.now();
-        state.debugSpeech.push({
-          kind: cand.kind,
-          text: cand.text,
-          frame: state.lastResult && state.lastResult.frame ? state.lastResult.frame.index : null,
-          queuedAt: Math.round(queuedAt * 10) / 10,
-          startedAt: Math.round(startedAt * 10) / 10,
-          queueMs: Math.round((startedAt - queuedAt) * 10) / 10,
-        });
-      };
-    }
+    u.onstart = () => recordSpeech(cand, queuedAt, performance.now());
     window.speechSynthesis.speak(u);
   }
   if (navigator.vibrate) navigator.vibrate(cand.kind === 'rush' ? [120, 60, 120] : 70);

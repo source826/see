@@ -135,29 +135,23 @@ const bgIds = new Set();
 for (const boxes of Object.values(gt.frames || {})) {
   for (const b of boxes) (b.bg ? bgIds : eventIds).add(b.id);
 }
-const bgStates = { event: 0, bg: 0, unmatched: 0 };
+// 三态计数由事件评测器统一给出；这里只额外收集未匹配轨迹的明细。
+const bgStates = events.alertStates;
 const unmatched = new Map();
 for (const rec of frames) {
   for (const a of rec.alerts || []) {
     if (a.level < 2) continue;
     const mapped = matchByFrame[rec.frame] ? matchByFrame[rec.frame].get(a.trackId) : undefined;
-    if (mapped === undefined) {
-      bgStates.unmatched++;
-      if (!unmatched.has(a.trackId)) {
-        const p = (rec.perTrack || []).find((x) => x.id === a.trackId);
-        unmatched.set(a.trackId, {
-          trackId: a.trackId,
-          firstFrame: rec.frame,
-          level: a.level,
-          cls: p ? p.cls : null,
-          className: p ? p.className : null,
-          bbox: p ? p.bbox : null,
-        });
-      }
-    } else if (eventIds.has(mapped)) {
-      bgStates.event++;
-    } else {
-      bgStates.bg++;
+    if (mapped === undefined && !unmatched.has(a.trackId)) {
+      const p = (rec.perTrack || []).find((x) => x.id === a.trackId);
+      unmatched.set(a.trackId, {
+        trackId: a.trackId,
+        firstFrame: rec.frame,
+        level: a.level,
+        cls: p ? p.cls : null,
+        className: p ? p.className : null,
+        bbox: p ? p.bbox : null,
+      });
     }
   }
 }
