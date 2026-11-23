@@ -1,20 +1,25 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "awaiting_user_data",
   "note": "人工事件真值。时间单位为秒，相对视频起点；targetId 必须与 gtFile 中事件目标的轨迹 ID 一致。用户提供素材和时间点后逐条填入 events。",
   "schema": {
     "video": "assets/videos/xxx.mp4",
     "gtFile": "gt/xxx_full.json",
+    "record": "tmp/xxx_live.json（可选；同一素材多次运行时用）",
     "targetId": 1,
     "startSec": 0.0,
     "wideEntrySec": 0.0,
     "strictEntrySec": 0.0,
+    "dangerSec": 0.0,
+    "dangerDistanceM": 1.5,
     "note": "可选，记录人工判断依据"
   },
   "evaluation": {
     "leadSec": 5,
+    "minLeadSec": 1.5,
     "minLevel": 2,
-    "definition": "TP：在 wideEntrySec 前 5 s 内、且映射到 targetId 的第一条 level>=2 语音；提前量 = wideEntrySec - 语音秒。strictEntrySec 用于另报相对严格通道的提前量。"
+    "oldDefinition": "旧口径：wideEntrySec 前 5 s 内、映射到 targetId 的首条 level>=2 语音；提前量 = wideEntrySec - 语音秒。",
+    "newDefinition": "新口径：dangerSec 前 1.5–5.0 s 内、映射到 targetId 的首条 level>=2 语音；提前量 = dangerSec - 语音秒。dangerSec 是目标到达近身/危险距离（例如约 1.5 m）的人工秒数。"
   },
   "events": []
 }

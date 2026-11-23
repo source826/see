@@ -424,16 +424,38 @@ GT 三态不是人工语义真值，而是 `tools/label_gt_motion.py` 用脚点�
 | 字段 | 含义 |
 |---|---|
 | `video` / `gtFile` | 素材与对应 GT 文件 |
+| `record` | 可选；同一素材多次运行时指定对应实时记录 |
 | `targetId` | GT 轨迹 ID（拆分后的新 ID 也算独立目标） |
 | `startSec` | 人工事件起点，秒 |
 | `wideEntrySec` | 进入宽通道，秒 |
 | `strictEntrySec` | 进入严格通道，秒 |
+| `dangerSec` | 到达近身/危险距离的秒数（新口径截止点） |
+| `dangerDistanceM` | 可选；该危险点的估算距离 |
 | `note` | 可选，人工判断依据 |
 
 - 评测脚本：[tools/manual_events_eval.mjs](tools/manual_events_eval.mjs)。用法：`node tools/manual_events_eval.mjs --live=tmp/x.json --gt=gt/x_full.json`。
-- 口径：TP = 在 `wideEntrySec` 前 5 s 内、映射到 `targetId` 的第一条 level≥2 语音；提前量 = `wideEntrySec - 语音秒`，同时另报相对 `strictEntrySec` 的提前量。`targetId` 只按 GT 轨迹映射，不用自动走廊事件。FP 只在同一视频的事件列表完整时才有效，否则未列出的真实目标会被算成误报。
+- 口径：同时计算旧口径（`wideEntrySec` 前 5 s）和新口径（`dangerSec` 前 1.5–5.0 s），见下表。`targetId` 只按 GT 轨迹映射，不用自动走廊事件。FP 只在同一视频的事件列表完整时才有效，否则未列出的真实目标会被算成误报。
 - 当前 `events` 为空，脚本返回 `status=awaiting_user_data`，不计算召回/FP。等用户提供素材和时间点后填入，再按 9 条记录跑 A/B。
 - 旧的自动走廊事件指标暂停作为结论，避免和人工真值混用；上一轮数字只保留作历史对照。
+
+**人工事件新旧 TP 口径对照（9 条开发记录）**
+
+`manual_events_eval.mjs` 同时计算两套口径：
+
+- 旧口径：`wideEntrySec` 前 5 s 内、映射到 `targetId` 的首条 level≥2 语音；提前量 = `wideEntrySec - 语音秒`。
+- 新口径：`dangerSec` 前 1.5–5.0 s 内、映射到 `targetId` 的首条 level≥2 语音；提前量 = `dangerSec - 语音秒`。
+
+9 条开发记录的临时 `dangerSec` 由 [build_dev_manual_events.mjs](tools/build_dev_manual_events.mjs) 自动取“产品距离最近点”（不是人工 1.5 m 点），事件文件：[gt/events_manual_dev_20261123.json](gt/events_manual_dev_20261123.json)。同一目标多次宽通道重入共享同一 `dangerKey`，新口径只计一次，所以新口径分母是 21，旧口径仍是 22 个走廊事件。
+
+| 口径 | 可评事件 | TP | 召回 | 提前量 中位/P10 | FP/分（未匹配 GT） | 窗口外事件语音/分 | 合计未计入 TP/分 |
+|---|---|---|---|---|---|---|---|
+| 旧：wide 前 5 s | 22 | 1 | 4.5% | 1.43 / 1.43 s | 1.154 | 4.231 | 5.385 |
+| 新：danger 前 1.5–5 s | 21 | 3 | 14.3% | 2.03 / 1.93 s | 1.154 | 2.693 | 3.847 |
+
+- 新增 TP：narrow3 目标 2（1.93 s）、hutong1 目标 1（2.73 s）、hutong2 目标 2（2.03 s）；narrow1/2 目标 2 的新口径为“迟到”（约 0.5 s 前才响），不计 TP。
+- 标准 FP（未匹配任何 GT）两套口径相同，都是 3 次 / 1.154 每分；差别在“窗口外事件语音”从 11 条降到 7 条，说明新口径更贴近“真正有用的提前提醒”，而不是简单放松。
+- **风险**：开发集里目标最近只到 4.2–13 m，没有真正达到 1.5 m；`dangerSec` 是最近点代理值，不是人工 1.5 m 时间。等用户提供自拍素材和人工 `dangerSec` 后，数字可能变化，本轮结论只作为口径验证。
+- 本轮没有改检测、跟踪或报警规则；只改了评测脚本和数据文件。
 
 **提速方案与估算（只列方案，不改实时管线）**
 

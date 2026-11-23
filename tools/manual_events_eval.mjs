@@ -1,5 +1,6 @@
-// 人工事件时间点评测：读取 gt/events_manual.json，按 targetId 把语音映射到人工事件，
-// 计算提前量、漏报、迟到和未匹配语音。用法：
+// 人工事件时间点评测：读取 gt/events_manual.json，按 targetId 把语音映射到人工事件。
+// 同时计算旧口径（wideEntrySec 前 5 s）和新口径（dangerSec 前 1.5–5.0 s）。
+// 用法：
 //   node tools/manual_events_eval.mjs --live=tmp/x.json --gt=gt/x_full.json [--events=gt/events_manual.json] [--out=...]
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -19,13 +20,16 @@ const live = rd(args.live);
 const gt = rd(args.gt);
 const manual = rd(args.events || 'gt/events_manual.json');
 const leadSec = Number(args.leadSec || manual.evaluation?.leadSec || 5);
+const minLeadSec = Number(args.minLeadSec || manual.evaluation?.minLeadSec || 1.5);
 const minLevel = Number(args.minLevel || manual.evaluation?.minLevel || 2);
 const fps = Number(gt.fps || 30);
 const analysis = live.analysis || { width: 320, height: 180 };
 const sx = analysis.width / gt.width;
 const sy = analysis.height / gt.height;
 const events = (manual.events || []).filter((e) => {
-  if (e.gtFile) return norm(e.gtFile) === norm(args.gt);
+  if (e.gtFile && norm(e.gtFile) !== norm(args.gt)) return false;
+  if (e.record && norm(e.record) !== norm(args.live)) return false;
+  if (e.run && args.run && e.run !== args.run) return false;
   return true;
 });
 
@@ -99,10 +103,16 @@ for (const rec of frames) {
     if (usedA[p.a] || usedB[p.b]) continue;
     usedA[p.a] = 1;
     usedB[p.b] = 1;
-    map.set(pred[p.b].id, gtBoxes[p.a].id);
+    // 背景重复框通过 bgMap 归到事件 id；否则报警会被映射到背景 id，TP 判不出来。
+    const rawId = gtBoxes[p.a].id;
+    const mappedId =
+      gtBoxes[p.a].bg && gt.bgMap && gt.bgMap[String(rawId)]
+        ? Number(gt.bgMap[String(rawId)])
+        : rawId;
+    map.set(pred[p.b].id, mappedId);
     let votes = idVotes.get(pred[p.b].id);
     if (!votes) idVotes.set(pred[p.b].id, (votes = new Map()));
-    votes.set(gtBoxes[p.a].id, (votes.get(gtBoxes[p.a].id) || 0) + 1);
+    votes.set(mappedId, (votes.get(mappedId) || 0) + 1);
   }
   matchByFrame.set(rec.frame, map);
 }
@@ -119,103 +129,174 @@ const mappedGt = (frame, trackId) => {
   return direct !== undefined ? direct : idMap.get(trackId);
 };
 const eventTargets = new Set(events.map((e) => Number(e.targetId)));
-const used = new Set();
-const details = [];
-for (const e of events) {
-  const start = Number(e.startSec ?? 0);
-  const wide = Number(e.wideEntrySec);
-  const strict = Number(e.strictEntrySec);
-  const targetId = Number(e.targetId);
-  let best = null;
-  for (const a of alerts) {
-    if (a.level < minLevel) continue;
-    if (a.sec < Math.max(start, wide - leadSec)) continue;
-    if (a.sec > wide) continue;
-    if (mappedGt(a.frame, a.trackId) !== targetId) continue;
-    if (!best || a.sec < best.sec) best = a;
-  }
-  let late = null;
-  if (!best) {
-    for (const a of alerts) {
-      if (a.level < minLevel) continue;
-      if (a.sec <= wide || a.sec > strict) continue;
-      if (mappedGt(a.frame, a.trackId) !== targetId) continue;
-      if (!late || a.sec < late.sec) late = a;
-    }
-  }
-  if (best) {
-    used.add(`${best.frame}:${best.trackId}`);
-    details.push({
-      targetId,
-      startSec: start,
-      wideEntrySec: wide,
-      strictEntrySec: strict,
-      result: 'tp',
-      alertSec: Math.round(best.sec * 100) / 100,
-      leadVsWideSec: Math.round((wide - best.sec) * 100) / 100,
-      leadVsStrictSec: Math.round((strict - best.sec) * 100) / 100,
-      trackId: best.trackId,
-    });
-  } else if (late) {
-    used.add(`${late.frame}:${late.trackId}`);
-    details.push({
-      targetId,
-      startSec: start,
-      wideEntrySec: wide,
-      strictEntrySec: strict,
-      result: 'late',
-      alertSec: Math.round(late.sec * 100) / 100,
-      lateSec: Math.round((late.sec - wide) * 100) / 100,
-      trackId: late.trackId,
-    });
-  } else {
-    details.push({ targetId, startSec: start, wideEntrySec: wide, strictEntrySec: strict, result: 'fn' });
-  }
-}
-const unmatched = alerts.filter((a) => {
-  if (a.level < minLevel || a.trackId < 0) return false;
-  if (used.has(`${a.frame}:${a.trackId}`)) return false;
-  const gid = mappedGt(a.frame, a.trackId);
-  return gid === undefined || !eventTargets.has(gid);
-});
-const matchedEventAlerts = alerts.filter(
-  (a) => a.level >= minLevel && a.trackId >= 0 && used.has(`${a.frame}:${a.trackId}`)
-);
-const fpByTrack = new Map();
-for (const a of unmatched) {
-  const key = a.trackId;
-  if (!fpByTrack.has(key)) fpByTrack.set(key, []);
-  fpByTrack.get(key).push(a.sec);
-}
-let fpEpisodes = 0;
-for (const list of fpByTrack.values()) {
-  list.sort((a, b) => a - b);
-  let last = null;
-  for (const sec of list) {
-    if (last === null || sec - last > 1) fpEpisodes++;
-    last = sec;
-  }
-}
+const numOrNull = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
+const round2 = (v) => Math.round(v * 100) / 100;
 const pct = (arr, q) => {
   const a = arr.filter(Number.isFinite).sort((x, y) => x - y);
   return a.length ? Math.round(a[Math.min(a.length - 1, Math.floor((a.length - 1) * q))] * 1000) / 1000 : null;
 };
-const leads = details.filter((d) => d.result === 'tp').map((d) => d.leadVsWideSec);
-const leadsStrict = details.filter((d) => d.result === 'tp').map((d) => d.leadVsStrictSec);
+const episodesOf = (list) => {
+  const byTrack = new Map();
+  for (const a of list) {
+    if (!byTrack.has(a.trackId)) byTrack.set(a.trackId, []);
+    byTrack.get(a.trackId).push(a.sec);
+  }
+  let episodes = 0;
+  for (const secs of byTrack.values()) {
+    secs.sort((a, b) => a - b);
+    let last = null;
+    for (const sec of secs) {
+      if (last === null || sec - last > 1) episodes++;
+      last = sec;
+    }
+  }
+  return episodes;
+};
+
+// 旧口径：wideEntrySec 前 5 s 内的首条语音。新口径：dangerSec 前 1.5–5.0 s 内。
+function evaluateCriterion(e, criterion) {
+  const targetId = Number(e.targetId);
+  const start = Number(e.startSec ?? 0);
+  const wide = Number(e.wideEntrySec);
+  const strict = numOrNull(e.strictEntrySec);
+  const danger = numOrNull(e.dangerSec);
+  let deadline;
+  let winStart;
+  let winEnd;
+  if (criterion === 'old') {
+    deadline = wide;
+    winStart = Math.max(start, wide - leadSec);
+    winEnd = wide;
+  } else {
+    if (!Number.isFinite(danger)) return { result: 'missing_danger' };
+    deadline = danger;
+    winStart = danger - leadSec;
+    winEnd = danger - minLeadSec;
+  }
+  let best = null;
+  for (const a of alerts) {
+    if (a.level < minLevel) continue;
+    if (a.sec < winStart - 1e-6 || a.sec > winEnd + 1e-6) continue;
+    if (mappedGt(a.frame, a.trackId) !== targetId) continue;
+    if (!best || a.sec < best.sec) best = a;
+  }
+  if (best) {
+    return {
+      result: 'tp',
+      alertSec: round2(best.sec),
+      leadSec: round2(deadline - best.sec),
+      trackId: best.trackId,
+      key: `${best.frame}:${best.trackId}`,
+    };
+  }
+  // 迟到：旧口径 wide→strict；新口径 danger-1.5→danger。
+  const lateStart = criterion === 'old' ? wide : danger - minLeadSec;
+  const lateEnd = criterion === 'old' ? (Number.isFinite(strict) ? strict : wide + 1) : danger;
+  let late = null;
+  for (const a of alerts) {
+    if (a.level < minLevel) continue;
+    if (a.sec <= lateStart || a.sec > lateEnd) continue;
+    if (mappedGt(a.frame, a.trackId) !== targetId) continue;
+    if (!late || a.sec < late.sec) late = a;
+  }
+  if (late) {
+    return {
+      result: 'late',
+      alertSec: round2(late.sec),
+      lateSec: round2(late.sec - lateStart),
+      trackId: late.trackId,
+      key: `${late.frame}:${late.trackId}`,
+    };
+  }
+  return { result: 'fn' };
+}
+
+const details = [];
+const seenDanger = new Set();
+for (const e of events) {
+  const danger = numOrNull(e.dangerSec);
+  const dangerKey = e.dangerKey || (Number.isFinite(danger) ? `${e.targetId}|${danger}` : null);
+  let newResult;
+  if (!Number.isFinite(danger)) {
+    newResult = { result: 'missing_danger' };
+  } else if (dangerKey && seenDanger.has(dangerKey)) {
+    // 同一目标的多次宽通道重入共享同一个危险时刻，新口径只计一次。
+    newResult = { result: 'duplicate' };
+  } else {
+    newResult = evaluateCriterion(e, 'new');
+    if (dangerKey) seenDanger.add(dangerKey);
+  }
+  details.push({
+    targetId: Number(e.targetId),
+    startSec: Number(e.startSec ?? 0),
+    wideEntrySec: Number(e.wideEntrySec),
+    strictEntrySec: numOrNull(e.strictEntrySec),
+    dangerSec: danger,
+    dangerDistanceM: numOrNull(e.dangerDistanceM),
+    dangerKey,
+    old: evaluateCriterion(e, 'old'),
+    new: newResult,
+  });
+}
+
+// 与 live_eval_report 一致：只有完全没映射到 GT 的语音才算未匹配 FP；
+// 映射到背景 GT 的语音是真实背景目标，不算 FP。
+const unmatched = alerts.filter((a) => {
+  if (a.level < minLevel || a.trackId < 0) return false;
+  return mappedGt(a.frame, a.trackId) === undefined;
+});
+const durationSec = Number(live.duration) || null;
+const perMin = (n) => (durationSec ? Math.round((n / (durationSec / 60)) * 1000) / 1000 : null);
+const summarize = (criterion) => {
+  const rows = details.filter((d) => d[criterion] && d[criterion].result);
+  const missing = rows.filter((d) => d[criterion].result === 'missing_danger').length;
+  const duplicates = rows.filter((d) => d[criterion].result === 'duplicate').length;
+  const evaluable = rows.length - missing - duplicates;
+  const tps = rows.filter((d) => d[criterion].result === 'tp');
+  const late = rows.filter((d) => d[criterion].result === 'late');
+  const fn = rows.filter((d) => d[criterion].result === 'fn');
+  const handled = new Set(
+    rows
+      .filter((d) => d[criterion].result === 'tp' || d[criterion].result === 'late')
+      .map((d) => d[criterion].key)
+  );
+  const outside = alerts.filter(
+    (a) =>
+      a.level >= minLevel &&
+      a.trackId >= 0 &&
+      eventTargets.has(mappedGt(a.frame, a.trackId)) &&
+      !handled.has(`${a.frame}:${a.trackId}`)
+  );
+  const leads = tps.map((d) => d[criterion].leadSec);
+  const unmatchedEpisodes = episodesOf(unmatched);
+  const outsideEpisodes = episodesOf(outside);
+  return {
+    evaluable,
+    missingDanger: missing,
+    duplicates,
+    tp: tps.length,
+    fn: fn.length,
+    late: late.length,
+    recall: evaluable ? Math.round((tps.length / evaluable) * 1000) / 1000 : null,
+    leadMedian: pct(leads, 0.5),
+    leadP10: pct(leads, 0.1),
+    fpEpisodes: events.length ? unmatchedEpisodes : null,
+    fpPerMin: events.length ? perMin(unmatchedEpisodes) : null,
+    outsideWindowAlerts: events.length ? outside.length : null,
+    outsideWindowPerMin: events.length ? perMin(outsideEpisodes) : null,
+    notTpEpisodes: events.length ? unmatchedEpisodes + outsideEpisodes : null,
+    notTpPerMin: events.length ? perMin(unmatchedEpisodes + outsideEpisodes) : null,
+  };
+};
 const summary = {
   events: events.length,
-  tp: details.filter((d) => d.result === 'tp').length,
-  fn: details.filter((d) => d.result === 'fn').length,
-  late: details.filter((d) => d.result === 'late').length,
-  recall: events.length ? details.filter((d) => d.result === 'tp').length / events.length : null,
-  leadMedian: pct(leads, 0.5),
-  leadP10: pct(leads, 0.1),
-  leadVsStrictMedian: pct(leadsStrict, 0.5),
-  leadVsStrictP10: pct(leadsStrict, 0.1),
-  fpEpisodes: events.length ? fpEpisodes : null,
+  durationSec,
+  leadSec,
+  minLeadSec,
+  old: summarize('old'),
+  new: summarize('new'),
   unmatchedAlerts: events.length ? unmatched.length : null,
   envAlerts: alerts.filter((a) => a.trackId < 0 && a.level >= minLevel).length,
-  matchedAlerts: matchedEventAlerts.length,
 };
 const out = {
   status: events.length ? 'ok' : 'awaiting_user_data',
