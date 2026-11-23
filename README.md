@@ -389,7 +389,7 @@ GT 三态不是人工语义真值，而是 `tools/label_gt_motion.py` 用脚点�
 | `note` | 可选，人工判断依据 |
 
 - 评测脚本：[tools/manual_events_eval.mjs](tools/manual_events_eval.mjs)。用法：`node tools/manual_events_eval.mjs --live=tmp/x.json --gt=gt/x_full.json`。
-- 口径：TP = 在 `wideEntrySec` 前 5 s 内、映射到 `targetId` 的第一条 level≥2 语音；提前量 = `wideEntrySec - 语音秒`，同时另报相对 `strictEntrySec` 的提前量。`targetId` 只按 GT 轨迹映射，不用自动走廊事件。
+- 口径：TP = 在 `wideEntrySec` 前 5 s 内、映射到 `targetId` 的第一条 level≥2 语音；提前量 = `wideEntrySec - 语音秒`，同时另报相对 `strictEntrySec` 的提前量。`targetId` 只按 GT 轨迹映射，不用自动走廊事件。FP 只在同一视频的事件列表完整时才有效，否则未列出的真实目标会被算成误报。
 - 当前 `events` 为空，脚本返回 `status=awaiting_user_data`，不计算召回/FP。等用户提供素材和时间点后填入，再按 9 条记录跑 A/B。
 - 旧的自动走廊事件指标暂停作为结论，避免和人工真值混用；上一轮数字只保留作历史对照。
 
