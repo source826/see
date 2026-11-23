@@ -53,6 +53,8 @@ export const PIPELINE_DEFAULTS = {
   // 场景规则：'auto' 按画面里近处行人数量自动判人群，其余为街景/横穿。
   sceneMode: 'auto',
   crowdApproachMaxDist: 5,
+  crowdApproachMinHits: 8,
+  crowdApproachHeightRate: 0.03,
   crowdMinApproachFrames: 6,
   crossingMaxDistVehicle: 18,
   crossingEntrySec: 2,
@@ -305,6 +307,8 @@ export class GuidePipeline {
         primaryOnly: this.options.primaryOnly,
         sceneMode,
         crowdApproachMaxDist: this.options.crowdApproachMaxDist,
+        crowdApproachMinHits: this.options.crowdApproachMinHits,
+        crowdApproachHeightRate: this.options.crowdApproachHeightRate,
         crowdMinApproachFrames: this.options.crowdMinApproachFrames,
         crossingMaxDistVehicle: this.options.crossingMaxDistVehicle,
         crossingEntrySec: this.options.crossingEntrySec,

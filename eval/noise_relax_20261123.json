@@ -1,0 +1,853 @@
+{
+  "generatedAt": "2026-11-23T07:28:02.417Z",
+  "note": "每个视频连续跑 3 次实时；同一记录的离线回放与实时在召回/FP/提前量上一致，且同记录重复回放字节级一致。条件试验用 9 条记录（3 视频 x 3 次运行）。",
+  "offlineReplay": {
+    "tool": "tools/offline_replay.mjs",
+    "determinism": "同一记录重复回放 SHA256 相同",
+    "fidelity": "召回/FP/提前量/level2 帧与实时记录一致；语音条数与覆盖会因浏览器时钟与视频时钟差异有 0–3 条出入"
+  },
+  "noise": {
+    "runs": [
+      {
+        "video": "narrow_street",
+        "run": 1,
+        "live": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.67
+        },
+        "replay": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 3,
+          "confirmToL2Median": 9.67
+        }
+      },
+      {
+        "video": "narrow_street",
+        "run": 2,
+        "live": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.7
+        },
+        "replay": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.7
+        }
+      },
+      {
+        "video": "narrow_street",
+        "run": 3,
+        "live": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 4,
+          "confirmToL2Median": 9.63
+        },
+        "replay": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.63
+        }
+      },
+      {
+        "video": "narrow_hutong",
+        "run": 1,
+        "live": {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 1.4333333333333333,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        },
+        "replay": {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 1.4333333333333333,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        }
+      },
+      {
+        "video": "narrow_hutong",
+        "run": 2,
+        "live": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        },
+        "replay": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        }
+      },
+      {
+        "video": "narrow_hutong",
+        "run": 3,
+        "live": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.13
+        },
+        "replay": {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 5.13
+        }
+      },
+      {
+        "video": "tunnel",
+        "run": 1,
+        "live": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 10,
+          "confirmToL2Median": 0.7
+        },
+        "replay": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 7,
+          "confirmToL2Median": 0.7
+        }
+      },
+      {
+        "video": "tunnel",
+        "run": 2,
+        "live": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 8,
+          "confirmToL2Median": 0.67
+        },
+        "replay": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.67
+        }
+      },
+      {
+        "video": "tunnel",
+        "run": 3,
+        "live": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 8,
+          "confirmToL2Median": 0.73
+        },
+        "replay": {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.73
+        }
+      }
+    ],
+    "liveTotalsByRun": [
+      {
+        "run": 1,
+        "targetRecall": "1/8",
+        "fpEpisodes": 1,
+        "speech": 22
+      },
+      {
+        "run": 2,
+        "targetRecall": "0/7",
+        "fpEpisodes": 0,
+        "speech": 18
+      },
+      {
+        "run": 3,
+        "targetRecall": "0/7",
+        "fpEpisodes": 2,
+        "speech": 17
+      }
+    ]
+  },
+  "primaryRule": {
+    "change": "同等级内优先 approaching/crowdApproach/loomingInPath/crossing，再取最近",
+    "baseline": {
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "speech": 50,
+      "leadMedian": 1.4333333333333333,
+      "confirmToL2Median": 5.07
+    },
+    "experiment": {
+      "targetRecall": "1/22",
+      "groupRecall": "1/22",
+      "coverage": "9/21",
+      "fpEpisodes": 3,
+      "speech": 51,
+      "leadMedian": 0.2,
+      "confirmToL2Median": 5.07
+    },
+    "conclusion": "无召回/误报收益，唯一 TP 的提前量从 1.43 s 降到 0.20 s，已回退。"
+  },
+  "relaxConditions": {
+    "baseline": {
+      "aggregate": {
+        "targetRecall": "1/22",
+        "groupRecall": "1/22",
+        "coverage": "9/21",
+        "fpEpisodes": 3,
+        "speech": 50,
+        "leadMedian": 1.4333333333333333,
+        "confirmToL2Median": 5.07
+      },
+      "perRun": [
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 3,
+          "confirmToL2Median": 9.67
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.7
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.63
+        },
+        {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 1.4333333333333333,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 5.13
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 7,
+          "confirmToL2Median": 0.7
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.67
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.73
+        }
+      ]
+    },
+    "dist8": {
+      "aggregate": {
+        "targetRecall": "1/22",
+        "groupRecall": "1/22",
+        "coverage": "6/21",
+        "fpEpisodes": 3,
+        "speech": 54,
+        "leadMedian": 0.2,
+        "confirmToL2Median": 5.07
+      },
+      "perRun": [
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 8.97
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 9.03
+        },
+        {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 0.2,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 5.13
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 7,
+          "confirmToL2Median": 0.7
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.67
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.73
+        }
+      ]
+    },
+    "hits6": {
+      "aggregate": {
+        "targetRecall": "1/22",
+        "groupRecall": "1/22",
+        "coverage": "8/21",
+        "fpEpisodes": 3,
+        "speech": 50,
+        "leadMedian": 1.4333333333333333,
+        "confirmToL2Median": 5.07
+      },
+      "perRun": [
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 3,
+          "confirmToL2Median": 9.67
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.7
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.63
+        },
+        {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 1.4333333333333333,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 5.13
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 7,
+          "confirmToL2Median": 0.7
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.67
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.73
+        }
+      ]
+    },
+    "height0.02": {
+      "aggregate": {
+        "targetRecall": "1/22",
+        "groupRecall": "1/22",
+        "coverage": "9/21",
+        "fpEpisodes": 3,
+        "speech": 50,
+        "leadMedian": 1.4333333333333333,
+        "confirmToL2Median": 5.07
+      },
+      "perRun": [
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 3,
+          "confirmToL2Median": 9.67
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.7
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 9.63
+        },
+        {
+          "tp": 1,
+          "events": 3,
+          "groupTp": 1,
+          "groupN": 3,
+          "coverage": 2,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": 1.4333333333333333,
+          "speech": 7,
+          "confirmToL2Median": 4.97
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 1,
+          "coverageN": 2,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 5,
+          "confirmToL2Median": 5.07
+        },
+        {
+          "tp": 0,
+          "events": 2,
+          "groupTp": 0,
+          "groupN": 2,
+          "coverage": 0,
+          "coverageN": 2,
+          "fpEpisodes": 1,
+          "fpPerMin": 5.128205128205129,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 5.13
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 7,
+          "confirmToL2Median": 0.7
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 0,
+          "fpPerMin": 0,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.67
+        },
+        {
+          "tp": 0,
+          "events": 3,
+          "groupTp": 0,
+          "groupN": 3,
+          "coverage": 0,
+          "coverageN": 3,
+          "fpEpisodes": 1,
+          "fpPerMin": 2.980033773716102,
+          "leadMedian": null,
+          "speech": 6,
+          "confirmToL2Median": 0.73
+        }
+      ]
+    }
+  },
+  "conclusions": {
+    "dist8": "召回/FP 不变，覆盖 9/21→6/21，语音 50→54，唯一 TP 提前量 1.43→0.20 s；不采用。",
+    "hits6": "与基线完全相同；hits 门槛不是瓶颈。",
+    "height002": "与基线完全相同；0.02~0.03 之间的帧仍被其他闸挡住。",
+    "noise": "实时三次合计召回 1/8、0/7、0/7，FP 1/0/2；离线回放复现同样的召回序列。主要噪声来自检测/采样，规则执行是确定的。"
+  }
+}

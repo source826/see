@@ -1,0 +1,69 @@
+# 自拍最终检验素材：采集与标注协议
+
+用途：作为下一批**最终检验**。拍摄、标注期间不得查看或调参算法结果；GT 完成并冻结参数后只跑一次。
+
+## 1. 片段清单（5 段，每段 15–30 s）
+
+| 文件名 | 场景 | 该报事件 | 负样本/压力点 |
+|---|---|---|---|
+| `selfshot_frontal_01.mp4` | 3–5 m 宽人行道，单人正面走来，从左侧或右侧通过 | 1 次迎面逼近 | 对向路人不算 |
+| `selfshot_side_entry_01.mp4` | 侧方 3–8 m 处行人突然折入前方通道 | 1 次侧向进入 | 路边停留的人 |
+| `selfshot_crowd_01.mp4` | 4 人以上在 5 m 内，其中 1 人明确迎面逼近 | 至少 1 次 | 同向行走/横穿人群 |
+| `selfshot_lowlight_01.mp4` | 傍晚或地下通道，单人迎面走来 | 1 次 | 背光、低对比 |
+| `selfshot_negative_01.mp4` | 空旷街道或有路人但无人进入通道 | 0 次 | 静止障碍、同向/横向路人 |
+
+- 同一场景可拍 2–3 条，选 1 条入最终集；未入选的不要提前跑算法。
+- 拍摄前记录：地点、时间、天气/光照、相机高度、镜头、帧率、时长、事件大致秒数、目标衣着。
+- 所有出镜人员需知情同意；不要在未授权场所拍摄。
+
+## 2. 拍摄参数
+
+- 分辨率 ≥ 1280×720，横屏；30 fps **固定帧率**，H.264 MP4。
+- 关闭电子防抖/超广角裁切；手持或胸挂，相机高度约 1.5 m，步行速度 1.2–1.4 m/s。
+- 不要变焦、不要后期裁剪/加速；曝光锁定，避免自动曝光频繁跳变。
+- 每段开头留 1–2 s 静止或直行画面，便于预热与走廊估计。
+
+## 3. 入库与元数据
+
+- 放到 `assets/videos/selfshot/`，文件名按上表。
+- 在 `assets/videos/manifest.json` 的 `selfshot_plan.clips` 中登记：文件、时长、fps、分辨率、场景、事件秒数、拍摄备注。
+- 视频本体不入 Git（`.gitignore` 已排除 mp4/webm/ogv）。
+
+## 4. GT 标注（参数冻结前完成）
+
+1. 抽轨迹与核对图（工具已支持按视频实际帧率抽帧）：
+
+   ```powershell
+   D:\guidao\yolo-demo\.venv\Scripts\python.exe tools/gt_tracks.py `
+     --video assets/videos/selfshot/selfshot_frontal_01.mp4 `
+     --start 0 --end <末帧> --step 5 --cols 4
+   ```
+
+2. 看 `tmp/gt/trk_sheet_<name>.jpg`，确认哪些轨迹是**迎面逼近/进入通道**的事件目标；站立、同向、横穿但不会进入通道的标为背景。
+3. 用 `--keep "轨迹号:GT号,..."` 导出事件 GT 样例；背景轨迹用 `tools/merge_bg_gt.py` 合并：
+
+   ```powershell
+   python tools/merge_bg_gt.py --tracks tmp/gt/tracks_<name>.json `
+     --event-gt gt/<name>_sample.json --out gt/<name>_full.json --min-hits 5
+   ```
+
+4. 用 `python tools/label_gt_motion.py --gt gt/<name>_full.json` 补三态标签。
+5. 人工抽检：
+   - 事件轨迹逐条确认（100%）；
+   - 背景框至少抽 20% 帧，记录错框数；
+   - GT 覆盖片长 ≥80%，否则该段不用于误报评估。
+6. 把复核比例、事件数、覆盖帧数写入 `manifest.json` 与该片段记录。
+
+## 5. 冻结与一次性运行
+
+1. 5 段 GT 全部完成并复核后，运行 `node tools/freeze_params.mjs --out=eval/frozen_params_<日期>.json`。
+2. 冻结后不再改任何规则、阈值或 GT。
+3. 每段实时跑一次，记录 `tmp/selfshot_<name>.json`，用 `tools/live_eval_report.mjs` 出报告。
+4. 结果无论好坏都如实记录；不重跑、不调参。目标召回为主指标，群体召回和覆盖为辅。
+
+## 6. 最低验收
+
+- 至少 3 段可评估（有背景 GT、覆盖 ≥60% 片长）。
+- 至少 2 个明确的迎面逼近事件。
+- 至少 1 段负样本，用于看是否乱报。
+- 若达不到，补拍，不得用开发集/验证集片段顶替。

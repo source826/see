@@ -546,6 +546,8 @@ export function assessApproachRisk(args) {
   const primaryOnly = Boolean(args.primaryOnly);
   let sceneMode = args.sceneMode ?? 'street';
   const crowdApproachMaxDist = args.crowdApproachMaxDist ?? 5;
+  const crowdApproachMinHits = args.crowdApproachMinHits ?? 8;
+  const crowdApproachHeightRate = args.crowdApproachHeightRate ?? 0.03;
   const crowdMinApproachFrames = args.crowdMinApproachFrames ?? 6;
   const crossingMaxDistVehicle = args.crossingMaxDistVehicle ?? 18;
   const crossingEntrySec = args.crossingEntrySec ?? 2;
@@ -595,9 +597,9 @@ export function assessApproachRisk(args) {
       crowd &&
         inStrict &&
         distance <= crowdApproachMaxDist &&
-        t.hits >= 8 &&
+        t.hits >= crowdApproachMinHits &&
         typeof t.heightRate === 'number' &&
-        t.heightRate > 0.03,
+        t.heightRate > crowdApproachHeightRate,
     );
     // 街景早期提醒：人已经进了严格通道且框高持续膨胀，就不再等面积增长。
     // 诊断发现 dev 集的事件目标全部被面积法漏掉，但框高膨胀和检出都正常。

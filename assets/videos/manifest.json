@@ -24,6 +24,18 @@
     { "file": "handheld_night_run.mp4", "source": "夜间手持小跑（负样本）", "bv": "BV1mD4y1F74V", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "640x360", "gt": "gt/final_handheld_night_run_full.json" },
     { "file": "ebike_pov_traffic.mp4", "source": "电动车第一视角车流（负样本）", "bv": "BV1Mepoe4EbN", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720", "gt": "gt/final_ebike_pov_traffic_full.json" }
   ],
+  "selfshot_plan": {
+    "status": "planned",
+    "protocol": "assets/videos/selfshot/README.md",
+    "note": "下一批最终检验。拍摄和标注期间不看算法结果；GT 完成并冻结参数后只跑一次。",
+    "clips": [
+      { "file": "selfshot/selfshot_frontal_01.mp4", "scene": "单人正面走来", "targetEvents": 1, "status": "planned" },
+      { "file": "selfshot/selfshot_side_entry_01.mp4", "scene": "侧方折入通道", "targetEvents": 1, "status": "planned" },
+      { "file": "selfshot/selfshot_crowd_01.mp4", "scene": "人群中的迎面逼近", "targetEvents": 1, "status": "planned" },
+      { "file": "selfshot/selfshot_lowlight_01.mp4", "scene": "低照度迎面逼近", "targetEvents": 1, "status": "planned" },
+      { "file": "selfshot/selfshot_negative_01.mp4", "scene": "无通道侵入的负样本", "targetEvents": 0, "status": "planned" }
+    ]
+  },
   "final_test_next": [
     {
       "file": "zebra_b.mp4",

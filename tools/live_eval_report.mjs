@@ -58,15 +58,16 @@ function gtAt(frame) {
   return out;
 }
 const firstGtFrame = Math.min(...Object.keys(gt.frames).map(Number));
-// 评测以“真正播出的报警”为准（live.alerts 由播报器冷却后写入），
-// 而不是每帧风险等级；否则会把被冷却压掉的重复提示也算成误报。
+// 记录里有 alerts 字段就以“真正播出的报警”为准，即使它是空数组；
+// 只有旧记录没有该字段时才退回逐帧 level>=2，避免把“没播”当成“播了”。
+const hasSpoken = Array.isArray(live.alerts);
+const spokenAlerts = Array.isArray(live.alerts) ? live.alerts : [];
 const spokenByFrame = new Map();
-for (const a of live.alerts || []) {
+for (const a of spokenAlerts) {
   if (a.trackId < 0) continue;
   if (!spokenByFrame.has(a.frame)) spokenByFrame.set(a.frame, []);
   spokenByFrame.get(a.frame).push({ level: a.level, trackId: a.trackId });
 }
-const hasSpoken = spokenByFrame.size > 0;
 const matchByFrame = {};
 const eventFrames = [];
 const idVotes = new Map();

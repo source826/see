@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-23T07:07:16.049Z",
-  "note": "开发集五段拆解与单变量 A/B。所有改动均已回退，源码哈希与 frozen_params_final_20261123.json 一致。",
+  "generatedAt": "2026-11-23T07:27:15.919Z",
+  "note": "开发集五段拆解与单变量 A/B。所有改动均已回退；默认行为与 frozen_params_final_20261123.json 一致，源码只新增两个可覆盖选项（默认值等于原硬编码值）。",
   "definitions": {
     "entry": "GT 首次进入宽走廊（事件 entryFrame）",
     "firstDetect": "原始检测首次命中所属 GT（IoU 0.2/0.3，类别兼容）",
