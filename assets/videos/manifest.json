@@ -24,16 +24,16 @@
     { "file": "handheld_night_run.mp4", "source": "夜间手持小跑（负样本）", "bv": "BV1mD4y1F74V", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "640x360", "gt": "gt/final_handheld_night_run_full.json" },
     { "file": "ebike_pov_traffic.mp4", "source": "电动车第一视角车流（负样本）", "bv": "BV1Mepoe4EbN", "sourceNote": "B 站公开视频截取，仅本地评测", "durationSec": 20.1, "size": "1280x720", "gt": "gt/final_ebike_pov_traffic_full.json" }
   ],
-  "selfshot_plan": {
-    "status": "planned",
-    "protocol": "assets/videos/selfshot/README.md",
-    "note": "下一批最终检验。拍摄和标注期间不看算法结果；GT 完成并冻结参数后只跑一次。",
+  "final_selfshot": {
+    "status": "evaluated",
+    "note": "用户自拍负样本批次：素材以沿街停靠车辆和远处车流为主，没有可无争议标注且有提前量的迎面侵入事件，因此只评估误报，不计算召回。参数冻结与只跑一次见 eval/frozen_params_selfshot_20261123.json。",
     "clips": [
-      { "file": "selfshot/selfshot_frontal_01.mp4", "scene": "单人正面走来", "targetEvents": 1, "status": "planned" },
-      { "file": "selfshot/selfshot_side_entry_01.mp4", "scene": "侧方折入通道", "targetEvents": 1, "status": "planned" },
-      { "file": "selfshot/selfshot_crowd_01.mp4", "scene": "人群中的迎面逼近", "targetEvents": 1, "status": "planned" },
-      { "file": "selfshot/selfshot_lowlight_01.mp4", "scene": "低照度迎面逼近", "targetEvents": 1, "status": "planned" },
-      { "file": "selfshot/selfshot_negative_01.mp4", "scene": "无通道侵入的负样本", "targetEvents": 0, "status": "planned" }
+      { "file": "selfshot/selfshot_pass_01.mp4", "origin": "VID_20261122_160013.mp4 的 30-60s", "role": "negative", "durationSec": 30.07, "gt": "gt/selfshot_pass_01_full.json", "events": 0, "speech": 1, "fpPerMin": 0 },
+      { "file": "selfshot/selfshot_negative_01.mp4", "origin": "VID_20261122_160356.mp4 的 240-270s", "role": "negative", "durationSec": 30.07, "gt": "gt/selfshot_negative_01_full.json", "events": 0, "speech": 2, "fpPerMin": 0 }
+    ],
+    "excluded": [
+      { "file": "selfshot/selfshot_approach_02.mp4", "reason": "白色本田在窗口起点已贴近通过，无接近过程，无法评估提前量" },
+      { "file": "selfshot/selfshot_approach_01.mp4", "reason": "白色 SUV 为路边停放车辆，镜头只是走过" }
     ]
   },
   "final_test_next": [

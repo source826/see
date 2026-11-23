@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-11-23T08:45:00.000Z",
+  "note": "用户自拍素材的最终检验。该批素材以沿街停靠车辆和远处车流为主，没有可无争议标注、且有提前量的迎面侵入事件，因此按负样本批次评估误报；不计算召回。",
+  "freeze": "eval/frozen_params_selfshot_20261123.json",
+  "clips": [
+    {
+      "file": "assets/videos/selfshot/selfshot_pass_01.mp4",
+      "origin": "VID_20261122_160013.mp4 的 30-60s",
+      "role": "negative",
+      "durationSec": 30.07,
+      "gt": "gt/selfshot_pass_01_full.json",
+      "gtStats": { "frames": 181, "boxes": 1572, "bgTracks": 37, "eventTracks": 0 },
+      "events": 0,
+      "speech": 1,
+      "bgMatchedSpeech": 1,
+      "unmatchedSpeech": 0,
+      "fpEpisodes": 0,
+      "fpPerMin": 0
+    },
+    {
+      "file": "assets/videos/selfshot/selfshot_negative_01.mp4",
+      "origin": "VID_20261122_160356.mp4 的 240-270s",
+      "role": "negative",
+      "durationSec": 30.07,
+      "gt": "gt/selfshot_negative_01_full.json",
+      "gtStats": { "frames": 177, "boxes": 1032, "bgTracks": 49, "eventTracks": 0 },
+      "events": 0,
+      "speech": 2,
+      "bgMatchedSpeech": 2,
+      "unmatchedSpeech": 0,
+      "fpEpisodes": 0,
+      "fpPerMin": 0
+    }
+  ],
+  "totals": {
+    "durationSec": 60.13,
+    "events": 0,
+    "recall": null,
+    "speech": 3,
+    "bgMatchedSpeech": 3,
+    "unmatchedSpeech": 0,
+    "fpEpisodes": 0,
+    "fpPerMin": 0
+  },
+  "excluded": [
+    {
+      "file": "assets/videos/selfshot/selfshot_approach_02.mp4",
+      "reason": "白色本田在窗口起点已经贴近并通过，没有可见的接近过程；把它记成事件会得到 0 提前量，不能反映预测能力，故不作为事件，也不进入该批最终检验。"
+    },
+    {
+      "file": "assets/videos/selfshot/selfshot_approach_01.mp4",
+      "reason": "复核发现画面中的白色 SUV 为路边停放车辆，镜头只是走过；无移动目标进通道。"
+    }
+  ],
+  "conclusion": "自拍负样本批次 60 s 内共 3 条语音，全部映射到背景 GT，未匹配误报 0 次，FP 0/min。该结果只说明没有乱报，不能当作召回结论；下一批自拍需要按协议拍到有 10-15 m 接近过程的正面来人或来车。"
+}

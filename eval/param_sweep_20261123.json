@@ -1,0 +1,368 @@
+{
+  "generatedAt": "2026-11-23T08:12:30.446Z",
+  "runs": [
+    "narrow_street1",
+    "narrow_street2",
+    "narrow_street3",
+    "hutong1",
+    "hutong2",
+    "hutong3",
+    "tunnel1",
+    "tunnel2",
+    "tunnel3"
+  ],
+  "points": [
+    {
+      "tag": "default",
+      "kind": "rule",
+      "param": "",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "dist3",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:3",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.2857142857142857,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 47,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "dist4",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:4",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.2857142857142857,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 47,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "dist6",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:6",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "dist8",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:8",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.2857142857142857,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 54,
+      "leads": [
+        0.2
+      ],
+      "leadMedian": 0.2,
+      "leadP10": 0.2,
+      "leadMax": 0.2
+    },
+    {
+      "tag": "dist10",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:10",
+      "recall": 0.18181818181818182,
+      "tp": 4,
+      "events": 22,
+      "groupRecall": 0.18181818181818182,
+      "coverage": 0.23809523809523808,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leads": [
+        0.1,
+        0.13,
+        0,
+        0.2
+      ],
+      "leadMedian": 0.1,
+      "leadP10": 0,
+      "leadMax": 0.2
+    },
+    {
+      "tag": "dist12",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:12",
+      "recall": 0.18181818181818182,
+      "tp": 4,
+      "events": 22,
+      "groupRecall": 0.18181818181818182,
+      "coverage": 0.38095238095238093,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leads": [
+        0.1,
+        0.13,
+        0,
+        0.2
+      ],
+      "leadMedian": 0.1,
+      "leadP10": 0,
+      "leadMax": 0.2
+    },
+    {
+      "tag": "hits4",
+      "kind": "rule",
+      "param": "crowdApproachMinHits:4",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 49,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "hits6",
+      "kind": "rule",
+      "param": "crowdApproachMinHits:6",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.38095238095238093,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "hits10",
+      "kind": "rule",
+      "param": "crowdApproachMinHits:10",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "height001",
+      "kind": "rule",
+      "param": "crowdApproachHeightRate:0.01",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "height002",
+      "kind": "rule",
+      "param": "crowdApproachHeightRate:0.02",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "height005",
+      "kind": "rule",
+      "param": "crowdApproachHeightRate:0.05",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.42857142857142855,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 50,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "looseCombo",
+      "kind": "rule",
+      "param": "crowdApproachMaxDist:8,crowdApproachMinHits:6,crowdApproachHeightRate:0.02",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.2857142857142857,
+      "fpEpisodes": 3,
+      "fpPerMin": 1.153979305304458,
+      "speech": 55,
+      "leads": [
+        1.43
+      ],
+      "leadMedian": 1.4333333333333333,
+      "leadP10": 1.4333333333333333,
+      "leadMax": 1.4333333333333333
+    },
+    {
+      "tag": "naiveNearestPerson",
+      "kind": "naive",
+      "param": "nearestPerson",
+      "recall": 0.045454545454545456,
+      "tp": 1,
+      "events": 22,
+      "groupRecall": 0.045454545454545456,
+      "coverage": 0.9523809523809523,
+      "fpEpisodes": 9,
+      "fpPerMin": 3.4619379159133743,
+      "speech": 129,
+      "leads": [
+        1.87
+      ],
+      "leadMedian": 1.8666666666666667,
+      "leadP10": 1.8666666666666667,
+      "leadMax": 1.8666666666666667
+    },
+    {
+      "tag": "naiveNearestPerson5",
+      "kind": "naive",
+      "param": "nearestPerson5",
+      "recall": 0,
+      "tp": 0,
+      "events": 22,
+      "groupRecall": 0,
+      "coverage": 0.6190476190476191,
+      "fpEpisodes": 1,
+      "fpPerMin": 0.38465976843481936,
+      "speech": 72,
+      "leads": [],
+      "leadMedian": null,
+      "leadP10": null,
+      "leadMax": null
+    },
+    {
+      "tag": "naiveNearestWide",
+      "kind": "naive",
+      "param": "nearestTargetWide",
+      "recall": 0.2727272727272727,
+      "tp": 6,
+      "events": 22,
+      "groupRecall": 0.2727272727272727,
+      "coverage": 0.8571428571428571,
+      "fpEpisodes": 8,
+      "fpPerMin": 3.077278147478555,
+      "speech": 118,
+      "leads": [
+        2.47,
+        0.57,
+        2.53,
+        1.87,
+        0,
+        0.17
+      ],
+      "leadMedian": 0.5666666666666667,
+      "leadP10": 0,
+      "leadMax": 2.533333333333333
+    },
+    {
+      "tag": "naiveHeight40",
+      "kind": "naive",
+      "param": "height40",
+      "recall": 0.09090909090909091,
+      "tp": 2,
+      "events": 22,
+      "groupRecall": 0.09090909090909091,
+      "coverage": 0.9047619047619048,
+      "fpEpisodes": 13,
+      "fpPerMin": 5.000576989652652,
+      "speech": 131,
+      "leads": [
+        0.1,
+        1.7
+      ],
+      "leadMedian": 0.1,
+      "leadP10": 0.1,
+      "leadMax": 1.7
+    }
+  ]
+}

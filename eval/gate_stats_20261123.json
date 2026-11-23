@@ -1,0 +1,767 @@
+{
+  "generatedAt": "2026-11-23T08:18:04.601Z",
+  "note": "确认→level2 之间逐帧统计每道闸门为假的帧数；同一帧可命中多道门。9 条实时记录的离线回放。",
+  "gates": [
+    "crowdScene",
+    "notStrict",
+    "notWide",
+    "far5m",
+    "notApproaching",
+    "flatHeight",
+    "lowHits"
+  ],
+  "total": {
+    "events": 21,
+    "blockedFrames": 307,
+    "gates": {
+      "crowdScene": 212,
+      "notStrict": 126,
+      "notWide": 58,
+      "far5m": 296,
+      "notApproaching": 307,
+      "flatHeight": 156,
+      "lowHits": 90
+    },
+    "shares": {
+      "crowdScene": 69.1,
+      "notStrict": 41,
+      "notWide": 18.9,
+      "far5m": 96.4,
+      "notApproaching": 100,
+      "flatHeight": 50.8,
+      "lowHits": 29.3
+    }
+  },
+  "byVideo": {
+    "narrow_street": {
+      "events": 6,
+      "blockedFrames": 224,
+      "gates": {
+        "crowdScene": 194,
+        "notStrict": 81,
+        "notWide": 34,
+        "far5m": 224,
+        "notApproaching": 224,
+        "flatHeight": 89,
+        "lowHits": 50
+      },
+      "shares": {
+        "crowdScene": 86.6,
+        "notStrict": 36.2,
+        "notWide": 15.2,
+        "far5m": 100,
+        "notApproaching": 100,
+        "flatHeight": 39.7,
+        "lowHits": 22.3
+      }
+    },
+    "narrow_hutong": {
+      "events": 6,
+      "blockedFrames": 65,
+      "gates": {
+        "crowdScene": 18,
+        "notStrict": 27,
+        "notWide": 24,
+        "far5m": 54,
+        "notApproaching": 65,
+        "flatHeight": 49,
+        "lowHits": 22
+      },
+      "shares": {
+        "crowdScene": 27.7,
+        "notStrict": 41.5,
+        "notWide": 36.9,
+        "far5m": 83.1,
+        "notApproaching": 100,
+        "flatHeight": 75.4,
+        "lowHits": 33.8
+      }
+    },
+    "tunnel": {
+      "events": 9,
+      "blockedFrames": 18,
+      "gates": {
+        "crowdScene": 0,
+        "notStrict": 18,
+        "notWide": 0,
+        "far5m": 18,
+        "notApproaching": 18,
+        "flatHeight": 18,
+        "lowHits": 18
+      },
+      "shares": {
+        "crowdScene": 0,
+        "notStrict": 100,
+        "notWide": 0,
+        "far5m": 100,
+        "notApproaching": 100,
+        "flatHeight": 100,
+        "lowHits": 100
+      }
+    }
+  },
+  "speechAfterLevel2": {
+    "level2Frames": 137,
+    "primaryOther": 0,
+    "notStrict": 82,
+    "cooldown": 47
+  },
+  "conclusions": {
+    "main": "notApproaching（逼近判定不成立）100%，far5m（距离>5m）96%，两者几乎完全重合，是真正的卡点。",
+    "secondary": "crowdScene 69%、flatHeight 51% 说明人群模式和框高膨胀也在参与；hits 仅 29%，不是主因。",
+    "speech": "level2 后仍有 82 帧因未进严格通道不能播，47 帧被冷却/其他规则压住，主目标被抢 0 帧。"
+  },
+  "perEvent": [
+    {
+      "run": "narrow_street1",
+      "gtId": 2,
+      "entryFrame": 280,
+      "frames": {
+        "strict": 277,
+        "wide": 265,
+        "dist5": 327,
+        "dist12": 231,
+        "hits8": 237,
+        "height3": 234,
+        "approaching": 327,
+        "crowdApproach": 327,
+        "loomingInPath": null,
+        "level2": 327,
+        "spoken": 327
+      },
+      "secondsFromEntry": {
+        "strict": -0.1,
+        "wide": -0.5,
+        "dist5": 1.57,
+        "dist12": -1.63,
+        "hits8": -1.43,
+        "height3": -1.53,
+        "approaching": 1.57,
+        "level2": 1.57,
+        "spoken": 1.57
+      },
+      "trigger": "crowdApproach",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "narrow_street1",
+      "gtId": 1,
+      "entryFrame": 331,
+      "frames": {
+        "strict": 353,
+        "wide": 257,
+        "dist5": 544,
+        "dist12": 254,
+        "hits8": 254,
+        "height3": 261,
+        "approaching": null,
+        "crowdApproach": 544,
+        "loomingInPath": 551,
+        "level2": 544,
+        "spoken": 544
+      },
+      "secondsFromEntry": {
+        "strict": 0.73,
+        "wide": -2.47,
+        "dist5": 7.1,
+        "dist12": -2.57,
+        "hits8": -2.57,
+        "height3": -2.33,
+        "approaching": null,
+        "level2": 7.1,
+        "spoken": 7.1
+      },
+      "trigger": "crowdApproach",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "narrow_street2",
+      "gtId": 2,
+      "entryFrame": 283,
+      "frames": {
+        "strict": 279,
+        "wide": 262,
+        "dist5": 329,
+        "dist12": 237,
+        "hits8": 254,
+        "height3": 258,
+        "approaching": null,
+        "crowdApproach": 329,
+        "loomingInPath": null,
+        "level2": 329,
+        "spoken": 329
+      },
+      "secondsFromEntry": {
+        "strict": -0.13,
+        "wide": -0.7,
+        "dist5": 1.53,
+        "dist12": -1.53,
+        "hits8": -0.97,
+        "height3": -0.83,
+        "approaching": null,
+        "level2": 1.53,
+        "spoken": 1.53
+      },
+      "trigger": "crowdApproach",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "narrow_street2",
+      "gtId": 1,
+      "entryFrame": 333,
+      "frames": {
+        "strict": 292,
+        "wide": 258,
+        "dist5": 545,
+        "dist12": 254,
+        "hits8": 375,
+        "height3": 401,
+        "approaching": null,
+        "crowdApproach": 545,
+        "loomingInPath": 554,
+        "level2": 545,
+        "spoken": 545
+      },
+      "secondsFromEntry": {
+        "strict": -1.37,
+        "wide": -2.5,
+        "dist5": 7.07,
+        "dist12": -2.63,
+        "hits8": 1.4,
+        "height3": 2.27,
+        "approaching": null,
+        "level2": 7.07,
+        "spoken": 7.07
+      },
+      "trigger": "crowdApproach",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "narrow_street3",
+      "gtId": 2,
+      "entryFrame": 280,
+      "frames": {
+        "strict": 280,
+        "wide": 263,
+        "dist5": 338,
+        "dist12": 237,
+        "hits8": 254,
+        "height3": 254,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": 284,
+        "level2": 284,
+        "spoken": 284
+      },
+      "secondsFromEntry": {
+        "strict": 0,
+        "wide": -0.57,
+        "dist5": 1.93,
+        "dist12": -1.43,
+        "hits8": -0.87,
+        "height3": -0.87,
+        "approaching": null,
+        "level2": 0.13,
+        "spoken": 0.13
+      },
+      "trigger": "loomingInPath",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "narrow_street3",
+      "gtId": 1,
+      "entryFrame": 334,
+      "frames": {
+        "strict": 330,
+        "wide": 258,
+        "dist5": 543,
+        "dist12": 254,
+        "hits8": 311,
+        "height3": 330,
+        "approaching": null,
+        "crowdApproach": 543,
+        "loomingInPath": 547,
+        "level2": 543,
+        "spoken": 543
+      },
+      "secondsFromEntry": {
+        "strict": -0.13,
+        "wide": -2.53,
+        "dist5": 6.97,
+        "dist12": -2.67,
+        "hits8": -0.77,
+        "height3": -0.13,
+        "approaching": null,
+        "level2": 6.97,
+        "spoken": 6.97
+      },
+      "trigger": "crowdApproach",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong1",
+      "gtId": 1,
+      "entryFrame": 164,
+      "frames": {
+        "strict": 173,
+        "wide": 173,
+        "dist5": 328,
+        "dist12": 293,
+        "hits8": 173,
+        "height3": 219,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 233,
+        "spoken": 246
+      },
+      "secondsFromEntry": {
+        "strict": 0.3,
+        "wide": 0.3,
+        "dist5": 5.47,
+        "dist12": 4.3,
+        "hits8": 0.3,
+        "height3": 1.83,
+        "approaching": null,
+        "level2": 2.3,
+        "spoken": 2.73
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong1",
+      "gtId": 2,
+      "entryFrame": 223,
+      "frames": {
+        "strict": 15,
+        "wide": 15,
+        "dist5": 15,
+        "dist12": 15,
+        "hits8": 41,
+        "height3": 26,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 164,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": -6.93,
+        "wide": -6.93,
+        "dist5": -6.93,
+        "dist12": -6.93,
+        "hits8": -6.07,
+        "height3": -6.57,
+        "approaching": null,
+        "level2": -1.97,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong2",
+      "gtId": 1,
+      "entryFrame": 165,
+      "frames": {
+        "strict": 200,
+        "wide": 200,
+        "dist5": null,
+        "dist12": 297,
+        "hits8": 200,
+        "height3": 238,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 234,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": 1.17,
+        "wide": 1.17,
+        "dist5": null,
+        "dist12": 4.4,
+        "hits8": 1.17,
+        "height3": 2.43,
+        "approaching": null,
+        "level2": 2.3,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong2",
+      "gtId": 2,
+      "entryFrame": 224,
+      "frames": {
+        "strict": 18,
+        "wide": 18,
+        "dist5": 18,
+        "dist12": 18,
+        "hits8": 71,
+        "height3": 32,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 170,
+        "spoken": 277
+      },
+      "secondsFromEntry": {
+        "strict": -6.87,
+        "wide": -6.87,
+        "dist5": -6.87,
+        "dist12": -6.87,
+        "hits8": -5.1,
+        "height3": -6.4,
+        "approaching": null,
+        "level2": -1.8,
+        "spoken": 1.77
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong3",
+      "gtId": 1,
+      "entryFrame": 161,
+      "frames": {
+        "strict": 223,
+        "wide": 223,
+        "dist5": null,
+        "dist12": 298,
+        "hits8": 234,
+        "height3": 234,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 240,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": 2.07,
+        "wide": 2.07,
+        "dist5": null,
+        "dist12": 4.57,
+        "hits8": 2.43,
+        "height3": 2.43,
+        "approaching": null,
+        "level2": 2.63,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "hutong3",
+      "gtId": 2,
+      "entryFrame": 223,
+      "frames": {
+        "strict": 18,
+        "wide": 18,
+        "dist5": 18,
+        "dist12": 18,
+        "hits8": 43,
+        "height3": 38,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 172,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": -6.83,
+        "wide": -6.83,
+        "dist5": -6.83,
+        "dist12": -6.83,
+        "hits8": -6,
+        "height3": -6.17,
+        "approaching": null,
+        "level2": -1.7,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel1",
+      "gtId": 2,
+      "entryFrame": 129,
+      "frames": {
+        "strict": null,
+        "wide": 150,
+        "dist5": null,
+        "dist12": 236,
+        "hits8": 169,
+        "height3": 195,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 159,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0.7,
+        "dist5": null,
+        "dist12": 3.57,
+        "hits8": 1.33,
+        "height3": 2.2,
+        "approaching": null,
+        "level2": 1,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel1",
+      "gtId": 1,
+      "entryFrame": 254,
+      "frames": {
+        "strict": null,
+        "wide": 19,
+        "dist5": 266,
+        "dist12": 7,
+        "hits8": 23,
+        "height3": 19,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": null,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": -7.83,
+        "dist5": 0.4,
+        "dist12": -8.23,
+        "hits8": -7.7,
+        "height3": -7.83,
+        "approaching": null,
+        "level2": null,
+        "spoken": null
+      },
+      "trigger": null,
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel1",
+      "gtId": 3,
+      "entryFrame": 513,
+      "frames": {
+        "strict": null,
+        "wide": 513,
+        "dist5": 572,
+        "dist12": 545,
+        "hits8": 534,
+        "height3": 542,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 534,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0,
+        "dist5": 1.97,
+        "dist12": 1.07,
+        "hits8": 0.7,
+        "height3": 0.97,
+        "approaching": null,
+        "level2": 0.7,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel2",
+      "gtId": 2,
+      "entryFrame": 129,
+      "frames": {
+        "strict": null,
+        "wide": 135,
+        "dist5": null,
+        "dist12": 240,
+        "hits8": 182,
+        "height3": 182,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 135,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0.2,
+        "dist5": null,
+        "dist12": 3.7,
+        "hits8": 1.77,
+        "height3": 1.77,
+        "approaching": null,
+        "level2": 0.2,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel2",
+      "gtId": 1,
+      "entryFrame": 256,
+      "frames": {
+        "strict": null,
+        "wide": 26,
+        "dist5": null,
+        "dist12": 12,
+        "hits8": 39,
+        "height3": 26,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": null,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": -7.67,
+        "dist5": null,
+        "dist12": -8.13,
+        "hits8": -7.23,
+        "height3": -7.67,
+        "approaching": null,
+        "level2": null,
+        "spoken": null
+      },
+      "trigger": null,
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel2",
+      "gtId": 3,
+      "entryFrame": 510,
+      "frames": {
+        "strict": null,
+        "wide": 514,
+        "dist5": 576,
+        "dist12": 542,
+        "hits8": 538,
+        "height3": 542,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 534,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0.13,
+        "dist5": 2.2,
+        "dist12": 1.07,
+        "hits8": 0.93,
+        "height3": 1.07,
+        "approaching": null,
+        "level2": 0.8,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel3",
+      "gtId": 2,
+      "entryFrame": 132,
+      "frames": {
+        "strict": null,
+        "wide": 132,
+        "dist5": null,
+        "dist12": 237,
+        "hits8": 151,
+        "height3": 189,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 132,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0,
+        "dist5": null,
+        "dist12": 3.5,
+        "hits8": 0.63,
+        "height3": 1.9,
+        "approaching": null,
+        "level2": 0,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel3",
+      "gtId": 1,
+      "entryFrame": 254,
+      "frames": {
+        "strict": null,
+        "wide": 25,
+        "dist5": 267,
+        "dist12": 9,
+        "hits8": 30,
+        "height3": 25,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": null,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": -7.63,
+        "dist5": 0.43,
+        "dist12": -8.17,
+        "hits8": -7.47,
+        "height3": -7.63,
+        "approaching": null,
+        "level2": null,
+        "spoken": null
+      },
+      "trigger": null,
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    },
+    {
+      "run": "tunnel3",
+      "gtId": 3,
+      "entryFrame": 510,
+      "frames": {
+        "strict": null,
+        "wide": 514,
+        "dist5": 574,
+        "dist12": 544,
+        "hits8": 540,
+        "height3": 544,
+        "approaching": null,
+        "crowdApproach": null,
+        "loomingInPath": null,
+        "level2": 536,
+        "spoken": null
+      },
+      "secondsFromEntry": {
+        "strict": null,
+        "wide": 0.13,
+        "dist5": 2.13,
+        "dist12": 1.13,
+        "hits8": 1,
+        "height3": 1.13,
+        "approaching": null,
+        "level2": 0.87,
+        "spoken": null
+      },
+      "trigger": "other",
+      "note": "bindingGate 由“最后满足的门”近似，仅作参考；以 blockedFrames 占比为准"
+    }
+  ]
+}

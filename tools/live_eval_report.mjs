@@ -226,6 +226,7 @@ for (const gtId of eventGtIdsForCoverage) {
     firstStrictFrame: null,
     firstSpokenFrame: null,
     firstSpokenLeadSec: null,
+    blockedFrames: 0,
     blockers: {
       crowdScene: 0,
       notStrict: 0,
@@ -290,6 +291,7 @@ for (const gtId of eventGtIdsForCoverage) {
       if (predId === undefined) continue;
       const p = (rec.perTrack || []).find((x) => x.id === predId);
       if (!p || p.level >= 2) continue;
+      d.blockedFrames++;
       if (rec.sceneMode === 'crowd') d.blockers.crowdScene++;
       if (!p.inStrict) d.blockers.notStrict++;
       if (!p.inPath) d.blockers.notWide++;

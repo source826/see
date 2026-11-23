@@ -1,5 +1,5 @@
 {
-  "frozenAt": "2026-11-23T07:28:39.463Z",
+  "frozenAt": "2026-11-23T08:46:47.390Z",
   "note": "此文件生成后不再改规则；新素材只跑一次。",
   "pipelineDefaults": {
     "pyramidLevels": 3,
@@ -95,6 +95,6 @@
     "src/app/announce.js": "d3c74474d5de386a505bb1c8e316a026459ad433cbb2c9a1575fb0f448ef543a",
     "src/app/pipeline.js": "cc35fe7da217d6a533d550c1a6db7767ca77296a835298dcb59cdedc8f1b2906",
     "eval/events.js": "5f6f318ab026ec793a3dcd3d56ee6fdf692ba13678ad9378da5770744d5aaf4a",
-    "tools/live_eval_report.mjs": "9bec20f10367c233cf124bf5902bc1b9f3d4329ed0728e5b03ec7e29e92fac64"
+    "tools/live_eval_report.mjs": "9ca91ca3964e716936b6b06d9e0f1675daf2f0e20244645666e9219f5f98f8ea"
   }
 }
